@@ -46,8 +46,8 @@ angular.module('neonDemo.controllers').controller('lineChartController', ['$scop
         return !$scope.hideNoDataError;
     };
 
-    $scope.functions.onResize = function(elementHeight, elementWidth, headersHeight) {
-        var height = elementHeight - headersHeight - $scope.functions.getElement(".legend>.divider").outerHeight(true) - $scope.functions.getElement(".legend>.header-text").outerHeight(true) - 20;
+    $scope.functions.onResize = function(elementHeight, elementWidth, titleHeight) {
+        var height = elementHeight - titleHeight - $scope.functions.getElement(".legend>.divider").outerHeight(true) - $scope.functions.getElement(".legend>.header-text").outerHeight(true);
         var width = elementWidth - $scope.functions.getElement(".filter-reset").outerWidth(true) - $scope.functions.getElement(".olControlZoom").outerWidth(true) - 25;
         var legendDetails = $scope.functions.getElement(".legend>.legend-details");
         legendDetails.css("max-height", height + "px");
@@ -77,7 +77,7 @@ angular.module('neonDemo.controllers').controller('lineChartController', ['$scop
 
     $scope.changeGranularity = function() {
         $scope.chart.setGranularity($scope.active.granularity);
-        $scope.functions.logChangeAndUpdateData("granularity", $scope.active.granularity, "button");
+        $scope.functions.logChangeAndUpdate("granularity", $scope.active.granularity, "button");
     };
 
     $scope.toggleShowTrendlines = function() {
@@ -119,14 +119,14 @@ angular.module('neonDemo.controllers').controller('lineChartController', ['$scop
         return $scope.brushExtent.length >= 2 ? $scope.functions.getLinksPopupService().generateDateRangeKey($scope.brushExtent[0].toUTCString(), $scope.brushExtent[1].toUTCString()) : "";
     };
 
-    $scope.functions.haveValidDataFields = function(layers) {
+    $scope.functions.areDataFieldsValid = function(layers) {
         // The line chart will only query for data from one layer at a time.
         var layer = layers[0];
 
         return $scope.functions.isFieldValid(layer.dateField) && (layer.aggregationType !== "count" ? $scope.functions.isFieldValid(layer.aggregationField) : true);
     };
 
-    $scope.functions.createNeonQueryClause = function(layers) {
+    $scope.functions.createNeonQueryWhereClause = function(layers) {
         // The line chart will only query for data from one layer at a time.
         var layer = layers[0];
 
@@ -202,9 +202,26 @@ angular.module('neonDemo.controllers').controller('lineChartController', ['$scop
         return query;
     };
 
-    $scope.functions.updateFilter = function(neonFilter) {
+    $scope.functions.removeFilterValues = function() {
+        $scope.brushExtent = [];
+        $scope.functions.removeLinks($scope.visualizationId);
+    };
+
+    $scope.functions.updateFilterValues = function(neonFilter) {
         if($scope.functions.getNumberOfFilterClauses(neonFilter) === 2) {
             $scope.brushExtent = [new Date(neonFilter.filter.whereClause.whereClauses[0].rhs), new Date(neonFilter.filter.whereClause.whereClauses[1].rhs)];
+            updateLinks();
+        }
+    };
+
+    var updateLinks = function() {
+        if(external.services[neonMappings.DATE]) {
+            var linkData = {};
+            linkData[neonMappings.DATE] = {};
+            linkData[neonMappings.DATE][neonMappings.START_DATE] = $scope.brushExtent[0].toISOString();
+            linkData[neonMappings.DATE][neonMappings.END_DATE] = $scope.brushExtent[1].toISOString();
+            var links = $scope.functions.createLinksForData("date", $scope.getDateKeyForLinksPopupButton(), linkData);
+            $scope.showLinksPopupButton = !!links.length;
         }
     };
 
@@ -234,9 +251,9 @@ angular.module('neonDemo.controllers').controller('lineChartController', ['$scop
     };
 
     var updateFields = function(layer, config) {
-        layer.dateField = $scope.functions.findFieldObject(layer, config.date, null, neonMappings.DATE);
-        layer.aggregationField = $scope.functions.findFieldObject(layer, config.aggregation, null, neonMappings.Y_AXIS);
-        layer.groupField = $scope.functions.findFieldObject(layer, config.group, null, neonMappings.LINE_GROUPS);
+        layer.dateField = $scope.functions.findFieldObject(config.date, neonMappings.DATE, layer);
+        layer.aggregationField = $scope.functions.findFieldObject(config.aggregation, neonMappings.Y_AXIS, layer);
+        layer.groupField = $scope.functions.findFieldObject(config.group, neonMappings.LINE_GROUPS, layer);
         $scope.validateLayerFields(layer);
     };
 
@@ -673,7 +690,8 @@ angular.module('neonDemo.controllers').controller('lineChartController', ['$scop
         $scope.chart.setBrushHandler(function(brushExtent) {
             $scope.$apply(function() {
                 $scope.brushExtent = brushExtent;
-                $scope.functions.addNeonFilter();
+                updateLinks();
+                $scope.functions.updateNeonFilter();
             });
         });
         $scope.chart.draw(data);
@@ -771,17 +789,6 @@ angular.module('neonDemo.controllers').controller('lineChartController', ['$scop
         return text;
     };
 
-    $scope.functions.onAddFilter = function() {
-        if(external.services[neonMappings.DATE]) {
-            var linkData = {};
-            linkData[neonMappings.DATE] = {};
-            linkData[neonMappings.DATE][neonMappings.START_DATE] = $scope.brushExtent[0].toISOString();
-            linkData[neonMappings.DATE][neonMappings.END_DATE] = $scope.brushExtent[1].toISOString();
-            var links = $scope.functions.createLinksForData("date", $scope.getDateKeyForLinksPopupButton(), linkData);
-            $scope.showLinksPopupButton = !!links.length;
-        }
-    };
-
     $scope.functions.getFilterFields = function(layer) {
         return [layer.dateField];
     };
@@ -819,7 +826,12 @@ angular.module('neonDemo.controllers').controller('lineChartController', ['$scop
         return dateString;
     };
 
-    $scope.functions.updateData = function(data, layers, reset) {
+    $scope.functions.updateData = function(data, layers) {
+        if(!layers || !layers.length) {
+            drawLineChart([], {});
+            return;
+        }
+
         // The line chart will only query for data from one layer at a time.
         var layer = layers[0];
 
@@ -865,7 +877,7 @@ angular.module('neonDemo.controllers').controller('lineChartController', ['$scop
 
             // Get any color mappings set in the configuration file
             if($scope.functions.isFieldValid(layer.groupField)) {
-                var colors = $scope.functions.getColorMaps(layer.database, layer.table, layer.groupField);
+                var colors = $scope.functions.getColorMaps(layer, layer.groupField.columnName);
                 colors = _.transform(colors, function(result, value, key) {
                     result[layer.id + ":" + key] = value;
                 });
@@ -951,11 +963,6 @@ angular.module('neonDemo.controllers').controller('lineChartController', ['$scop
      */
     $scope.removeBrush = function() {
         $scope.functions.removeNeonFilter();
-    };
-
-    $scope.functions.onRemoveFilter = function() {
-        $scope.brushExtent = [];
-        $scope.functions.removeLinks($scope.visualizationId);
     };
 
     /**

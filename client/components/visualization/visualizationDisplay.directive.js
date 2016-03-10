@@ -33,7 +33,9 @@ angular.module('neonDemo.directives').directive('visualizationDisplay', function
                     $element.attr("id", $scope.visualizationId);
                 },
                 post: function($scope, $element) {
-                    $scope.functions.init();
+                    neon.ready(function() {
+                        $scope.init();
+                    });
                 }
             };
         }

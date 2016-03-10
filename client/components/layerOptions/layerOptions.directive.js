@@ -18,6 +18,6 @@
 
 angular.module('neonDemo.directives').directive('layerOptions', function() {
     return {
-        templateUrl: "components/multipleTableVisualization/layerOptions.html"
+        templateUrl: "components/layerOptions/layerOptions.html"
     };
 });

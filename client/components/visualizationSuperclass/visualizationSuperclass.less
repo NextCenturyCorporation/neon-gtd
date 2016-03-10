@@ -13,16 +13,29 @@
 // limitations under the License.
 //
 
-.single-table-visualization {
+.superclass {
     padding: 10px;
     height: 100%;
     width: 100%;
 
-    .filter-container {
-        // Shrink the filter container whenever unused to trigger a jquery resize event that will update the size of the table.
-        &.shrink {
-            height: 0px;
-            min-height: 0px;
+    .superclass-implementation {
+        height: 100%;
+        width: 100%;
+
+        .visualization {
+            height: 100%;
+            width: 100%;
+        }
+    }
+}
+
+.gridster-mobile {
+    .superclass {
+        .superclass-implementation {
+            .visualization {
+                height: @mobile-widget-height;
+                width: @mobile-widget-width;
+            }
         }
     }
 }

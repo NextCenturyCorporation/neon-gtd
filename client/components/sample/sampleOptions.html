@@ -1,7 +1,7 @@
 <!-- Let the user select the data field for this visualization from the available fields. -->
 <div class="form-group" ng-hide="bindings.hideAdvancedOptions">
     <label>Data Field</label>
-    <select class="form-control" ng-model="active.dataField" ng-options="field.prettyName for field in fields" ng-required="true" ng-disabled="(fields.length < 2)" ng-change="handleChangeDataField()">
+    <select class="form-control" ng-model="active.dataField" ng-options="field.prettyName for field in active.fields" ng-required="true" ng-disabled="(active.fields.length < 2)" ng-change="handleChangeDataField()">
         <option disabled selected value="">Please choose a field</option>
     </select>
 </div>

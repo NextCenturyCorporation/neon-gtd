@@ -85,13 +85,13 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
         });
     };
 
-    $scope.functions.onResize = function(elementHeight, elementWidth, headersHeight) {
+    $scope.functions.onResize = function(elementHeight, elementWidth, titleHeight, headersHeight) {
         if($scope.map) {
             $scope.map.resizeToElement(elementHeight - headersHeight, elementWidth);
         }
 
-        var height = elementHeight - headersHeight - $scope.functions.getElement(".legend>.divider").outerHeight(true) - $scope.functions.getElement(".legend>.header-text").outerHeight(true) - 20;
-        var width = elementWidth - $scope.functions.getElement(".filter-reset").outerWidth(true) - $scope.functions.getElement(".olControlZoom").outerWidth(true) - 25;
+        var height = elementHeight - titleHeight - $scope.functions.getElement(".legend>.divider").outerHeight(true) - $scope.functions.getElement(".legend>.header-text").outerHeight(true) - 10;
+        var width = elementWidth - $scope.functions.getElement(".filter-reset").outerWidth(true) - $scope.functions.getElement(".olControlZoom").outerWidth(true) - 20;
         var legendDetails = $scope.functions.getElement(".legend>.legend-details");
         legendDetails.css("max-height", height + "px");
         legendDetails.css("max-width", width + "px");
@@ -162,11 +162,12 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
                 maximumLatitude: Math.max(lowerLeftPoint.lat, upperRightPoint.lat)
             };
 
-            $scope.functions.addNeonFilter();
+            updateLinksAndBoundsBox();
+            $scope.functions.updateNeonFilter();
         };
     };
 
-    $scope.functions.onAddFilter = function() {
+    var updateLinksAndBoundsBox = function() {
         if(external.services.bounds) {
             var linkData = {};
             linkData[neonMappings.BOUNDS] = {};
@@ -273,19 +274,19 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
      * @private
      */
     var updateFields = function(layer, config) {
-        layer.latitudeField = $scope.functions.findFieldObject(layer, config.latitudeField, null, neonMappings.LATITUDE);
-        layer.longitudeField = $scope.functions.findFieldObject(layer, config.longitudeField, null, neonMappings.LONGITUDE);
-        layer.dateField = $scope.functions.findFieldObject(layer, config.dateField, null, neonMappings.DATE);
-        layer.sizeField = $scope.functions.findFieldObject(layer, config.sizeField, null, neonMappings.SIZE);
-        layer.colorField = $scope.functions.findFieldObject(layer, config.colorField, null, neonMappings.COLOR);
-        layer.sourceLatitudeField = $scope.functions.findFieldObject(layer, config.sourceLatitudeField, null, neonMappings.SOURCE_LATITUDE_FIELD);
-        layer.sourceLongitudeField = $scope.functions.findFieldObject(layer, config.sourceLongitudeField, null, neonMappings.SOURCE_LONGITUDE_FIELD);
-        layer.targetLatitudeField = $scope.functions.findFieldObject(layer, config.targetLatitudeField, null, neonMappings.TARGET_LATITUDE_FIELD);
-        layer.targetLongitudeField = $scope.functions.findFieldObject(layer, config.targetLongitudeField, null, neonMappings.TARGET_LONGITUDE_FIELD);
-        layer.lineColorField = $scope.functions.findFieldObject(layer, config.lineColorField, null, neonMappings.LINE_COLOR_BY);
-        layer.nodeColorField = $scope.functions.findFieldObject(layer, config.nodeColorField, null, neonMappings.NODE_COLOR_BY);
-        layer.lineSizeField = $scope.functions.findFieldObject(layer, config.lineSizeField, null, neonMappings.LINE_SIZE);
-        layer.nodeSizeField = $scope.functions.findFieldObject(layer, config.nodeSizeField, null, neonMappings.NODE_SIZE);
+        layer.latitudeField = $scope.functions.findFieldObject(config.latitudeField, neonMappings.LATITUDE, layer);
+        layer.longitudeField = $scope.functions.findFieldObject(config.longitudeField, neonMappings.LONGITUDE, layer);
+        layer.dateField = $scope.functions.findFieldObject(config.dateField, neonMappings.DATE, layer);
+        layer.sizeField = $scope.functions.findFieldObject(config.sizeField, neonMappings.SIZE, layer);
+        layer.colorField = $scope.functions.findFieldObject(config.colorField, neonMappings.COLOR, layer);
+        layer.sourceLatitudeField = $scope.functions.findFieldObject(config.sourceLatitudeField, neonMappings.SOURCE_LATITUDE_FIELD, layer);
+        layer.sourceLongitudeField = $scope.functions.findFieldObject(config.sourceLongitudeField, neonMappings.SOURCE_LONGITUDE_FIELD, layer);
+        layer.targetLatitudeField = $scope.functions.findFieldObject(config.targetLatitudeField, neonMappings.TARGET_LATITUDE_FIELD, layer);
+        layer.targetLongitudeField = $scope.functions.findFieldObject(config.targetLongitudeField, neonMappings.TARGET_LONGITUDE_FIELD, layer);
+        layer.lineColorField = $scope.functions.findFieldObject(config.lineColorField, neonMappings.LINE_COLOR_BY, layer);
+        layer.nodeColorField = $scope.functions.findFieldObject(config.nodeColorField, neonMappings.NODE_COLOR_BY, layer);
+        layer.lineSizeField = $scope.functions.findFieldObject(config.lineSizeField, neonMappings.LINE_SIZE, layer);
+        layer.nodeSizeField = $scope.functions.findFieldObject(config.nodeSizeField, neonMappings.NODE_SIZE, layer);
         $scope.validateLayerFields(layer);
     };
 
@@ -336,10 +337,11 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
         return layer;
     };
 
-    $scope.functions.updateFilter = function(neonFilter, fieldNames) {
+    $scope.functions.updateFilterValues = function(neonFilter, fieldNames) {
         var extentInFilter = findExtentInNeonFilter(neonFilter, fieldNames);
         if(_.keys(extentInFilter).length) {
             $scope.extent = extentInFilter;
+            updateLinksAndBoundsBox();
         }
     };
 
@@ -783,7 +785,7 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
         $scope.functions.removeNeonFilter();
     };
 
-    $scope.functions.onRemoveFilter = function() {
+    $scope.functions.removeFilterValues = function() {
         removeZoomRect();
         $scope.extent = undefined;
         $scope.error = "";
@@ -869,7 +871,7 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
         }
     };
 
-    $scope.functions.onUpdateLayer = function(layer) {
+    $scope.functions.updateLayerDisplay = function(layer) {
         if(layer.olLayer) {
             var legendIndex = _.findIndex($scope.active.legend.layers, {
                 olLayerId: layer.olLayer.id
@@ -899,7 +901,7 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
         var options = {
             database: layer.database.name,
             table: layer.table.name,
-            colors: $scope.functions.isFieldValid(layer.colorField) ? $scope.functions.getColorMaps(layer.database, layer.table, layer.colorField) || {} : {},
+            colors: $scope.functions.isFieldValid(layer.colorField) ? $scope.functions.getColorMaps(layer, layer.colorField.columnName) || {} : {},
             latitudeMapping: $scope.functions.isFieldValid(layer.latitudeField) ? layer.latitudeField.columnName : "",
             longitudeMapping: $scope.functions.isFieldValid(layer.longitudeField) ? layer.longitudeField.columnName : "",
             categoryMapping: $scope.functions.isFieldValid(layer.colorField) ? layer.colorField.columnName : "",
@@ -1016,7 +1018,7 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
                 ignoredFilterIds: queryData.query.ignoredFilterIds_,
                 type: "query"
             };
-            for(var count = 0, fields = $scope.functions.getUnsortedFields(queryData.layer.database.name, queryData.layer.table.name); count < fields.length; count++) {
+            for(var count = 0, fields = $scope.functions.getUnsortedFields(queryData.layer); count < fields.length; count++) {
                 tempObject.fields.push({
                     query: fields[count].columnName,
                     pretty: fields[count].prettyName || fields[count].columnName

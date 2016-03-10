@@ -443,7 +443,7 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
         }
     };
 
-    $scope.functions.onResize = function(elementHeight, elementWidth, headersHeight) {
+    $scope.functions.onResize = function(elementHeight, elementWidth, titleHeight, headersHeight) {
         $scope.functions.getElement(".neon-datetimepicker .dropdown-menu").css("max-height", (elementHeight - headersHeight) + "px");
 
         if($scope.chart) {
@@ -470,7 +470,7 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
                 onChangeBrush();
             }
         }
-        $scope.functions.logChangeAndUpdateData("granularity", $scope.active.granularity, "button");
+        $scope.functions.logChangeAndUpdate("granularity", $scope.active.granularity, "button");
     };
 
     var onChangeBrush = function() {
@@ -497,7 +497,7 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
         updateChartTimesAndTotal();
 
         if($scope.brush.length) {
-            $scope.functions.replaceFilter();
+            $scope.functions.updateNeonFilter();
         }
 
         if($scope.showFocus === "on_filter") {
@@ -541,7 +541,7 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
             setDateTimePickerStart($scope.bucketizer.getStartDate());
             setDateTimePickerEnd($scope.bucketizer.getEndDate());
         }
-        $scope.functions.replaceFilter(true);
+        $scope.functions.updateNeonFilter(true);
     };
 
     $scope.functions.createNeonFilterClause = function(databaseAndTableName, fieldName) {
@@ -575,7 +575,7 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
         return $scope.brush.length === 2;
     };
 
-    $scope.functions.hasValidDataFields = function() {
+    $scope.functions.areDataFieldsValid = function() {
         return $scope.functions.isFieldValid($scope.active.dateField);
     };
 
@@ -583,7 +583,7 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
         return [$scope.active.dateField];
     };
 
-    $scope.functions.updateFilterFromNeonFilterClause = function(neonFilter) {
+    $scope.functions.updateFilterValues = function(neonFilter) {
         if($scope.functions.getNumberOfFilterClauses(neonFilter) === 2) {
             $scope.brush = [
                 new Date(neonFilter.filter.whereClause.whereClauses[0].rhs),
@@ -594,17 +594,17 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
         }
     };
 
-    $scope.functions.onRemoveFilter = function() {
+    $scope.functions.removeFilterValues = function() {
         $scope.brush = [];
         onChangeBrush();
         $scope.active.showInvalidDatesFilter = false;
     };
 
     $scope.functions.onUpdateFields = function() {
-        $scope.active.dateField = $scope.functions.findFieldObject("dateField", neonMappings.DATE, "date");
+        $scope.active.dateField = $scope.functions.findFieldObject("dateField", neonMappings.DATE);
     };
 
-    $scope.functions.onChangeDataOption = function() {
+    $scope.functions.onChangeOption = function() {
         $scope.bucketizer.setStartDate(undefined);
         clearDisplayDates();
         $scope.referenceStartDate = undefined;
@@ -637,7 +637,7 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
         return query;
     };
 
-    $scope.functions.createNeonQueryClause = function() {
+    $scope.functions.createNeonQueryWhereClause = function() {
         return neon.query.and(
             neon.query.where($scope.active.dateField.columnName, '>=', new Date("1970-01-01T00:00:00.000Z")),
             neon.query.where($scope.active.dateField.columnName, '<=', new Date("2025-01-01T00:00:00.000Z"))
@@ -651,7 +651,7 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
      * @return {neon.query.Query} query The Query object to be used by queryForChartData()
      */
     var buildInvalidDatesQuery = function(query) {
-        // Replace the where clause created by $scope.functions.createNeonQueryClause with an invalid date where clause.
+        // Replace the where clause created by $scope.functions.createNeonQueryWhereClause with an invalid date where clause.
         query.filter.whereClause.whereClauses[0] = neon.query.or(
             neon.query.where($scope.active.dateField.columnName, '<', new Date("1970-01-01T00:00:00.000Z")),
             neon.query.where($scope.active.dateField.columnName, '>', new Date("2025-01-01T00:00:00.000Z")),
@@ -818,15 +818,19 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
         } else {
             // TODO: neon doesn't yet support a more efficient way to just get the min/max fields without aggregating
             // TODO: This could be done better with a promise framework - just did this in a pinch for a demo
-            $scope.functions.queryAndUpdate(function(query) {
-                query.sortBy($scope.active.dateField.columnName, neon.query.ASCENDING).limit(1).ignoreFilters();
-                return query;
-            }, function(connection, query) {
-                return connection.executeQuery(query);
-            }, function(data) {
-                if(data.length) {
-                    $scope.referenceStartDate = new Date(getDateField(data[0]));
-                    queryForMaxDate(callback);
+            $scope.functions.queryAndUpdate({
+                addToQuery: function(query) {
+                    query.sortBy($scope.active.dateField.columnName, neon.query.ASCENDING).limit(1).ignoreFilters();
+                    return query;
+                }, 
+                executeQuery: function(connection, query) {
+                    return connection.executeQuery(query);
+                },
+                updateData: function(data) {
+                    if(data.length) {
+                        $scope.referenceStartDate = new Date(getDateField(data[0]));
+                        queryForMaxDate(callback);
+                    }
                 }
             });
         }
@@ -837,15 +841,19 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
             $scope.referenceEndDate = new Date($scope.overrideEndDate);
             callback();
         } else {
-            $scope.functions.queryAndUpdate(function(query) {
-                query.sortBy($scope.active.dateField.columnName, neon.query.DESCENDING).limit(1).ignoreFilters();
-                return query;
-            }, function(connection, query) {
-                return connection.executeQuery(query);
-            }, function(data) {
-                if(data.length) {
-                    $scope.referenceEndDate = new Date(getDateField(data[0]));
-                    callback();
+            $scope.functions.queryAndUpdate({
+                addToQuery: function(query) {
+                    query.sortBy($scope.active.dateField.columnName, neon.query.DESCENDING).limit(1).ignoreFilters();
+                    return query;
+                },
+                executeQuery: function(connection, query) {
+                    return connection.executeQuery(query);
+                },
+                updateData: function(data) {
+                    if(data.length) {
+                        $scope.referenceEndDate = new Date(getDateField(data[0]));
+                        callback();
+                    }
                 }
             });
         }
@@ -1133,11 +1141,11 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
             setDateTimePickerStart($scope.bucketizer.getStartDate());
             setDateTimePickerEnd($scope.bucketizer.getEndDate());
         }
-        $scope.functions.removeFilter();
+        $scope.functions.removeNeonFilter();
     };
 
     $scope.handleChangeDateField = function() {
-        $scope.functions.logChangeAndUpdateData("dateField", $scope.active.dateField.columName);
+        $scope.functions.logChangeAndUpdate("dateField", $scope.active.dateField.columnName);
     };
 
     $scope.functions.createExportDataObject = function(exportId, query) {

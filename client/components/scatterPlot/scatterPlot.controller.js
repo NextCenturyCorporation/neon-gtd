@@ -40,11 +40,11 @@ angular.module('neonDemo.controllers').controller('scatterPlotController', ['$sc
         $scope.active.textField = $scope.functions.findFieldObject("textField");
     };
 
-    $scope.functions.hasValidDataFields = function() {
+    $scope.functions.areDataFieldsValid = function() {
         return $scope.functions.isFieldValid($scope.active.xAxisField) && $scope.functions.isFieldValid($scope.active.yAxisField);
     };
 
-    $scope.functions.createNeonQueryClause = function() {
+    $scope.functions.createNeonQueryWhereClause = function() {
         return neon.query.where($scope.active.xAxisField.columnName, "!=", null);
     };
 
@@ -256,9 +256,9 @@ angular.module('neonDemo.controllers').controller('scatterPlotController', ['$sc
     var updateFilter = function(event, focus) {
         $scope.focus = focus;
         if(focus['xaxis.autorange'] && focus['yaxis.autorange']) {
-            $scope.functions.removeFilter();
+            $scope.functions.removeNeonFilter();
         } else {
-            $scope.functions.addFilter();
+            $scope.functions.updateNeonFilter();
         };
     };
 
@@ -266,8 +266,13 @@ angular.module('neonDemo.controllers').controller('scatterPlotController', ['$sc
         return [$scope.active.xAxisField, $scope.active.yAxisField];
     };
 
-    $scope.functions.updateFilterFromNeonFilterClause = function() {
-        // TODO
+    $scope.functions.updateFilterValues = function(neonFilter) {
+        // TODO NEON-1939
+    };
+
+    $scope.functions.removeFilterValues = function() {
+        $scope.focus = [];
+        // TODO NEON-1939
     };
 
     $scope.functions.createNeonFilterClause = function(databaseAndTableName, fieldNames) {
@@ -338,15 +343,15 @@ angular.module('neonDemo.controllers').controller('scatterPlotController', ['$sc
     };
 
     $scope.handleChangeXAxisField = function() {
-        $scope.functions.logChangeAndUpdateData("xAxisField", $scope.active.xAxisField.columnName);
+        $scope.functions.logChangeAndUpdate("xAxisField", $scope.active.xAxisField.columnName);
     };
 
     $scope.handleChangeYAxisField = function() {
-        $scope.functions.logChangeAndUpdateData("yAxisField", $scope.active.yAxisField.columnName);
+        $scope.functions.logChangeAndUpdate("yAxisField", $scope.active.yAxisField.columnName);
     };
 
     $scope.handleChangeTextField = function() {
-        $scope.functions.logChangeAndUpdateData("textField", $scope.active.textField.columnName);
+        $scope.functions.logChangeAndUpdate("textField", $scope.active.textField.columnName);
     };
 
     $scope.handleChangeType = function() {
@@ -355,6 +360,6 @@ angular.module('neonDemo.controllers').controller('scatterPlotController', ['$sc
     };
 
     $scope.handleChangeLimit = function() {
-        $scope.functions.logChangeAndUpdateData("limit", $scope.active.limit, "button");
+        $scope.functions.logChangeAndUpdate("limit", $scope.active.limit, "button");
     };
 }]);

@@ -42,14 +42,14 @@ angular.module('neonDemo.controllers').controller('ganttChartController', ['$sco
 
     var addFilterForId = function(id) {
         $scope.filter = id;
-        $scope.functions.addFilter(id);
+        $scope.functions.updateNeonFilter();
     };
 
     $scope.removeFilter = function() {
-        $scope.functions.removeFilter();
+        $scope.functions.removeNeonFilter();
     };
 
-    $scope.functions.updateFilterFromNeonFilterClause = function(neonFilter) {
+    $scope.functions.updateFilterValues = function(neonFilter) {
         if($scope.functions.getNumberOfFilterClauses() === 1) {
             $scope.filter = neonFilter.filter.whereClause.rhs;
         }
@@ -65,7 +65,7 @@ angular.module('neonDemo.controllers').controller('ganttChartController', ['$sco
         if($scope.bindings.groupFields) {
             var groupFieldNames = $scope.bindings.groupFields.split(",");
             groupFieldNames.forEach(function(groupFieldName) {
-                var groupFieldObject = _.find($scope.fields, function(field) {
+                var groupFieldObject = _.find($scope.active.fields, function(field) {
                     return field.columnName === groupFieldName;
                 });
                 if(groupFieldObject) {
@@ -80,7 +80,10 @@ angular.module('neonDemo.controllers').controller('ganttChartController', ['$sco
 
     var queryForSelectedGroups = function() {
         if($scope.active.groupFields.length && $scope.functions.isFieldValid($scope.active.groupFields[0])) {
-            $scope.functions.queryAndUpdate(addToSelectedGroupsQuery, $scope.functions.executeQuery, updateSelectedGroups);
+            $scope.functions.queryAndUpdate({
+                addToQuery: addToSelectedGroupsQuery,
+                updateData: updateSelectedGroups
+            });
         } else {
             // Run the query for the gantt chart data and update the gantt chart.
             $scope.functions.queryAndUpdate();
@@ -99,8 +102,8 @@ angular.module('neonDemo.controllers').controller('ganttChartController', ['$sco
         return query;
     };
 
-    var updateSelectedGroups = function(data, reset) {
-        if(reset) {
+    var updateSelectedGroups = function(data) {
+        if(!data.length) {
             $scope.active.selectableGroups = [];
             $scope.functions.updateData([]);
         } else {
@@ -116,7 +119,7 @@ angular.module('neonDemo.controllers').controller('ganttChartController', ['$sco
         return $scope.filter;
     };
 
-    $scope.functions.hasValidDataFields = function() {
+    $scope.functions.areDataFieldsValid = function() {
         return $scope.functions.isFieldValid($scope.active.startField) && $scope.functions.isFieldValid($scope.active.endField);
     };
 
@@ -127,7 +130,7 @@ angular.module('neonDemo.controllers').controller('ganttChartController', ['$sco
         }];
     };
 
-    $scope.functions.onRemoveFilter = function() {
+    $scope.functions.removeFilterValues = function() {
         $scope.filter = undefined;
     };
 
@@ -147,7 +150,7 @@ angular.module('neonDemo.controllers').controller('ganttChartController', ['$sco
         return $scope.functions.isFilterSet() || $scope.active.selectedGroups.length;
     };
 
-    $scope.functions.createNeonQueryClause = function() {
+    $scope.functions.createNeonQueryWhereClause = function() {
         if($scope.active.groupFields.length && $scope.functions.isFieldValid($scope.active.groupFields[0])) {
             var whereClauses = $scope.active.selectedGroups.map(function(group) {
                 return neon.query.where($scope.active.groupFields[0].columnName, "=", group);
@@ -300,19 +303,19 @@ angular.module('neonDemo.controllers').controller('ganttChartController', ['$sco
     };
 
     $scope.handleChangeStartField = function() {
-        $scope.functions.logChangeAndUpdateData("startField", $scope.active.startField.columnName);
+        $scope.functions.logChangeAndUpdate("startField", $scope.active.startField.columnName);
     };
 
     $scope.handleChangeEndField = function() {
-        $scope.functions.logChangeAndUpdateData("endField", $scope.active.endField.columnName);
+        $scope.functions.logChangeAndUpdate("endField", $scope.active.endField.columnName);
     };
 
     $scope.handleChangeColorField = function() {
-        $scope.functions.logChangeAndUpdateData("colorField", $scope.active.colorField.columnName);
+        $scope.functions.logChangeAndUpdate("colorField", $scope.active.colorField.columnName);
     };
 
     $scope.handleChangeTitleField = function() {
-        $scope.functions.logChangeAndUpdateData("titleField", $scope.active.titleField.columnName);
+        $scope.functions.logChangeAndUpdate("titleField", $scope.active.titleField.columnName);
     };
 
     $scope.handleChangeGroupField = function(index, field) {

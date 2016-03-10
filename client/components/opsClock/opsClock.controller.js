@@ -98,11 +98,11 @@ angular.module('neonDemo.controllers').controller('opsClockController', ['$scope
         $scope.active.dateField = $scope.functions.findFieldObject("dateField", neonMappings.DATE);
     };
 
-    $scope.functions.hasValidDataFields = function() {
+    $scope.functions.areDataFieldsValid = function() {
         return $scope.functions.isFieldValid($scope.active.dateField);
     };
 
-    $scope.functions.createNeonQueryClause = function() {
+    $scope.functions.createNeonQueryWhereClause = function() {
         return neon.query.and(
             neon.query.where($scope.active.dateField.columnName, '>=', new Date("1970-01-01T00:00:00.000Z")),
             neon.query.where($scope.active.dateField.columnName, '<=', new Date("2025-01-01T00:00:00.000Z"))
@@ -167,11 +167,11 @@ angular.module('neonDemo.controllers').controller('opsClockController', ['$scope
     };
 
     $scope.handleChangeDateField = function() {
-        $scope.functions.logChangeAndUpdateData("dateField", $scope.active.dateField.columnName);
+        $scope.functions.logChangeAndUpdate("dateField", $scope.active.dateField.columnName);
     };
 
-    $scope.functions.showFilterHeader = function() {
-        return true;
+    $scope.functions.hideHeaders = function() {
+        return false;
     };
 
     $scope.functions.createExportDataObject = function(exportId, query) {

@@ -16,7 +16,7 @@
 .text-cloud {
     text-align: center;
     overflow-y: auto;
-    margin: 0 -10px;
+    margin: 0 -9px;
     height: inherit;
 
     @media (min-width: 1860px) {
@@ -36,22 +36,10 @@
 }
 
 .textCloudDirective {
-    height: 100%;
-    width: 100%;
-
     .filter-container {
         .filter-label {
             /* Ensure long text strings (like urls) don't cause the filter reset notification to line wrap. */
             max-width: 200px;
-        }
-    }
-}
-
-.gridster-mobile {
-    .visualization-widget {
-        .textCloudDirective {
-            height: @mobile-widget-height;
-            width: @mobile-widget-width;
         }
     }
 }
