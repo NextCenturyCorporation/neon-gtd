@@ -34,9 +34,10 @@ angular.module('neonDemo.directives')
         templateUrl: 'components/filterBuilder/filterBuilder.html',
         restrict: 'EA',
         scope: {
-            filterCount: '=?'
+            filterCount: '=?',
+            updateMenus: '=?'
         },
-        controller: 'neonDemoController',
+        
         link: function($scope, $element) {
             $scope.databases = [];
             $scope.tables = [];
@@ -207,6 +208,10 @@ angular.module('neonDemo.directives')
                 $scope.updateTables();
                 displaySavedFilters();
             };
+
+            $scope.updateMenus = function() {
+                displayActiveDataset();
+            }
 
             $scope.updateTables = function() {
                 $scope.tables = datasetService.getTables($scope.selectedDatabase.name);
