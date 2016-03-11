@@ -42,7 +42,8 @@
         <link rel="stylesheet" type="text/css" ng-href="app/themes/{{theme.selected.file}}.css">
         <!-- Widget Config -->
         <div class="visualization-well visualization-widget">
-            <div filter-builder name="Filter Builder" type="filterBuilder" class="filter-builder"></div>
+            <div filter-builder  implementation="singleLayer" type="filterBuilder" name="Filter Builder" class="filter-directive"
+                visualization-id="{{visualizationId}}" state-id="{{visualizationId}}" bindings="bindings" update-menus="updateFilterBuilderMenus"></div>
         </div>
         <!-- In production use:
         <script src="//ajax.googleapis.com/ajax/libs/angularjs/x.x.x/angular.min.js"></script>
@@ -296,28 +297,19 @@
 
                 $scope.element = $(window);
 
-                // Load the possible datasets.
-                // for (var i = 0; i < datasets.length; i++) {
-                //     datasetService.addDataset(datasets[i]);
-                // }
-                datasetService.addDataset(datasets[0]);
-                connectionService.createActiveConnection(datasets[0].datastore, datasets[0].hostname);
-                datasetService.updateDatabases(datasets[0], connectionService.getActiveConnection());
                 datasetService.setActiveDataset(datasets[0]);
-                
-                $scope.active = {
-                    database: {'name': 'test'},
-                    table: {'name': 'earthquakes'}
-                };
-
-                
-                $scope.bindings = {
-                    aggregation: 'count',
-                    limit: 1000,
-                    database: {'name': 'test'},
-                    table: {'name': 'earthquakes'},
-                    groupField: 'type'
-                };
+                connectionService.createActiveConnection(datasets[0].datastore, datasets[0].hostname);                
+                datasetService.updateDatabases(datasets[0], connectionService.getActiveConnection(), function(dataset) {
+                    $scope.$apply(function(dataset) {
+                        datasets[0] = dataset;
+                        if ($scope.updateFilterBuilderMenus) {
+                            $scope.updateFilterBuilderMenus();
+                        }
+                    });
+                    
+                 }, 0);
+                $scope.active = {};
+                $scope.bindings = {};
                 $scope.bindings.hideAdvancedOptions = config.hideAdvancedOptions;
                 $scope.bindings.hideHeader = config.hideHeader;
                 $scope.visualizationId = OWF.getInstanceId();
