@@ -42,7 +42,7 @@
         <link rel="stylesheet" type="text/css" ng-href="app/themes/{{theme.selected.file}}.css">
         <!-- Widget Config -->
         <div class="visualization-well visualization-widget">
-            <div filter-tray name="Filter Builder" type="filterBuilder" class="filter-builder"></div>
+            <div filter-builder name="Filter Builder" type="filterBuilder" class="filter-builder"></div>
         </div>
         <!-- In production use:
         <script src="//ajax.googleapis.com/ajax/libs/angularjs/x.x.x/angular.min.js"></script>
@@ -276,7 +276,7 @@
             .controller('neonDemoController', ['$scope', '$timeout', '$location', 'config', 'layouts', 'datasets', 'ThemeService', 'ConnectionService', 'DatasetService', 'ErrorNotificationService',
             function($scope, $timeout, $location, config, layouts, datasets, themeService, connectionService, datasetService, errorNotificationService) {
                 $scope.messenger = new neon.eventing.Messenger();
-                $scope.messenger.clearFilters();
+
                 themeService.setTheme("Dark Green");
                 $scope.theme = {
                     list: themeService.getThemes(),
@@ -301,9 +301,10 @@
                 //     datasetService.addDataset(datasets[i]);
                 // }
                 datasetService.addDataset(datasets[0]);
-                datasetService.setActiveDataset(datasets[0]);
                 connectionService.createActiveConnection(datasets[0].datastore, datasets[0].hostname);
                 datasetService.updateDatabases(datasets[0], connectionService.getActiveConnection());
+                datasetService.setActiveDataset(datasets[0]);
+                
                 $scope.active = {
                     database: {'name': 'test'},
                     table: {'name': 'earthquakes'}

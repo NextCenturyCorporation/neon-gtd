@@ -42,7 +42,7 @@
         <link rel="stylesheet" type="text/css" ng-href="app/themes/{{theme.selected.file}}.css">
         <!-- Widget Config -->
         <div class="visualization-well visualization-widget">
-            <div single-table-visualization name="Data Table" type="dataTable" class="single-table-visualization" active="active" bindings="bindings" log-element-group="table_group" log-element-type="table" visualization-id="{{visualizationId}}"></div>
+            <div single-table-visualization name="Network Graph" type="networkGraph" class="single-table-visualization" active="active" bindings="bindings" log-element-group="graph_group" log-element-type="networkGraph" visualization-id="{{visualizationId}}"></div>
         </div>
         <div id="tooltip-container"></div>
         <!-- In production use:
@@ -313,9 +313,17 @@
                 
                 $scope.bindings = {
                     aggregation: 'count',
-                    limit: 5000,
+                    limitField: 1000,
                     database: {'name': 'test'},
                     table: {'name': 'earthquakes'},
+                    nodeField: 'type',
+                    nameField: 'type',
+                    linkedNodeField: 'magType',
+                    linkedNameField: 'magType',
+                    linkedSizeField: 'mag',
+                    dateField: 'time',
+                    textField: 'place'
+
                 };
                 $scope.bindings.hideAdvancedOptions = config.hideAdvancedOptions;
                 $scope.bindings.hideHeader = config.hideHeader;
@@ -345,14 +353,14 @@
         <script src="components/ganttChart/ganttChart.controller.js"></script>
         <script src="components/import/import.directive.js"></script>
         <script src="components/import/removeDataset.directive.js"></script>
-        <script src="components/lineChart/lineChart.directive.js"></script>
+        <script src="components/lineChart/lineChart.controller.js"></script>
         <script src="components/lineChart/lineChart.js"></script>
         <script src="components/linksPopup/linksPopup.directive.js"></script>
         <script src="components/linksPopup/linksPopup.service.js"></script>
         <script src="components/linksPopup/linksPopupButton.directive.js"></script>
         <script src="components/map/coremap.js"></script>
         <script src="components/map/heatmapLayer.js"></script>
-        <script src="components/map/map.directive.js"></script>
+        <script src="components/map/map.controller.js"></script>
         <script src="components/map/nodeLayer.js"></script>
         <script src="components/map/pointsLayer.js"></script>
         <script src="components/map/selectedPointsLayer.js"></script>
