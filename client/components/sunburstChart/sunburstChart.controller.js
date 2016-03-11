@@ -111,7 +111,7 @@ angular.module('neonDemo.controllers').controller('sunburstChartController', ['$
     };
 
     $scope.functions.updateData = function(data) {
-        var tree = buildDataTree(data);
+        var tree = buildDataTree(data || []);
         $scope.chart.clearData();
         $scope.active.hasData = $scope.chart.drawData(tree);
     };

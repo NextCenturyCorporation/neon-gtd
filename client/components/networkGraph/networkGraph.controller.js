@@ -234,7 +234,7 @@ angular.module('neonDemo.controllers').controller('networkGraphController', ['$s
     };
 
     $scope.functions.areDataFieldsValid = function() {
-        return $scope.functions.isFieldValid($scope.active.nodeField);
+        return $scope.functions.isFieldValid($scope.active.nodeField) && ($scope.runQuery || $scope.active.selectedNodeIds.length);
     };
 
     /**
@@ -242,6 +242,7 @@ angular.module('neonDemo.controllers').controller('networkGraphController', ['$s
      * @method queryForNetworkGraph
      */
     $scope.queryForNetworkGraph = function() {
+        $scope.runQuery = true;
         // TODO Log user button click
         $scope.functions.queryAndUpdate();
     };
@@ -253,6 +254,7 @@ angular.module('neonDemo.controllers').controller('networkGraphController', ['$s
      * @private
      */
     $scope.queryForNodeList = function() {
+        $scope.runQuery = true;
         // TODO Log user button click
         $scope.functions.queryAndUpdate({
             addToQuery: function(query) {
@@ -264,7 +266,11 @@ angular.module('neonDemo.controllers').controller('networkGraphController', ['$s
     };
 
     var updateNodeListData = function(data) {
-        data.forEach(function(item) {
+        if(data) {
+            $scope.runQuery = false;
+        }
+
+        (data || []).forEach(function(item) {
             var nodeId = item[i][$scope.active.nodeField.columnName];
             if($scope.existingNodeIds.indexOf(nodeId) < 0) {
                 $scope.existingNodeIds.push(nodeId);
@@ -353,16 +359,20 @@ angular.module('neonDemo.controllers').controller('networkGraphController', ['$s
     };
 
     $scope.functions.updateData = function(data) {
+        if(data) {
+            $scope.runQuery = false;
+        }
+
+        var graphData = data || [];
+        $scope.dataIsLimited = graphData.length ? (graphData.length >= $scope.active.limit) : false;
+        $scope.active.legend = graphData.length ? $scope.mediator.createLegend($scope.active.clusterNodes, $scope.functions.isFieldValid($scope.active.flagField), $scope.tooltip.flagLabel) : [];
+
         recreateGraph();
-
-        $scope.dataIsLimited = data.length ? (data.length >= $scope.active.limit) : false;
-        $scope.active.legend = data.length ? $scope.mediator.createLegend($scope.active.clusterNodes, $scope.functions.isFieldValid($scope.active.flagField), $scope.tooltip.flagLabel) : [];
-
-        publishNews(data);
+        publishNews(graphData);
         publishNewsHighlights();
 
-        if(data.length && $scope.mediator) {
-            $scope.mediator.evaluateDataAndUpdateGraph(data, gatherMediatorOptions());
+        if(graphData.length && $scope.mediator) {
+            $scope.mediator.evaluateDataAndUpdateGraph(graphData, gatherMediatorOptions());
         }
     };
 

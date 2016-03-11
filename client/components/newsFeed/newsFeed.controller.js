@@ -119,9 +119,11 @@ angular.module('neonDemo.controllers').controller('newsFeedController', ['$scope
                 $scope.loadingNews = true;
                 $scope.functions.queryAndUpdate({
                     updateData: function(data) {
-                        // Only add the items to the feed that aren't there already.
-                        updateData(data.slice($scope.active.limit - LIMIT_INTERVAL, $scope.active.limit));
-                        $scope.loadingNews = false;
+                        if(data) {
+                            // Only add the items to the feed that aren't there already.
+                            updateData(data.slice($scope.active.limit - LIMIT_INTERVAL, $scope.active.limit));
+                            $scope.loadingNews = false;
+                        }
                     }
                 });
             }
@@ -273,10 +275,13 @@ angular.module('neonDemo.controllers').controller('newsFeedController', ['$scope
 
     $scope.functions.updateData = function(data) {
         deleteData();
-        updateData(data);
-        $scope.functions.updateTranslations();
-        if(data.length) {
-            queryForNewsCount();
+
+        if(data) {
+            updateData(data);
+            $scope.functions.updateTranslations();
+            if(data.length) {
+                queryForNewsCount();
+            }
         }
     };
 
@@ -436,7 +441,7 @@ angular.module('neonDemo.controllers').controller('newsFeedController', ['$scope
                 return query;
             },
             updateData: function(data) {
-                newsTotalCount = data.length ? data[0].count : 0;
+                newsTotalCount = data && data.length ? data[0].count : 0;
             }
         });
     };

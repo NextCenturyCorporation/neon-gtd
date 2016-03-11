@@ -445,14 +445,14 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
         $scope.active.legend.layers[index].show = !$scope.active.legend.layers[index].show;
     };
 
-    $scope.functions.updateData = function(data, layers, reset) {
-        $scope.dataBounds = $scope.dataBounds || computeDataBounds(data);
+    $scope.functions.updateData = function(data, layers) {
+        $scope.dataBounds = $scope.dataBounds || computeDataBounds(data || []);
 
-        layers.forEach(function(layer) {
+        (layers || $scope.active.layers).forEach(function(layer) {
             if(layer.olLayer) {
-                layer.queryLimited = data.length >= layer.limit ? layer.limit : 0;
+                layer.queryLimited = data && data.length >= layer.limit ? layer.limit : 0;
                 // Only use elements up to the limit of this layer; other layers for this database/table may have a higher limit.
-                var layerData = data.slice(0, layer.limit);
+                var layerData = data ? data.slice(0, layer.limit) : [];
 
                 // Only set data and update features if all attributes exist in data
                 if($scope.map.doAttributesExist(layerData, layer.olLayer)) {

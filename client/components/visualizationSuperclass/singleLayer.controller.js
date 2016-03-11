@@ -217,7 +217,7 @@ angular.module('neonDemo.controllers').controller('singleLayerController', ['$sc
             return title + $scope.bindings.title;
         }
         if(_.keys($scope.active).length) {
-            return title + $scope.active.table.prettyName;
+            return title + ($scope.active.table ? $scope.active.table.prettyName : "");
         }
         return title;
     };

@@ -65,8 +65,10 @@ angular.module('neonDemo.controllers').controller('textCloudController', ['$scop
     };
 
     $scope.functions.updateData = function(data) {
+        var cloudData = data || [];
+
         if($scope.functions.isFilterSet() && $scope.active.andFilters) {
-            data = data.filter(function(item) {
+            cloudData = cloudData.filter(function(item) {
                 var index = _.findIndex($scope.filters, {
                     value: item.key
                 });
@@ -74,7 +76,7 @@ angular.module('neonDemo.controllers').controller('textCloudController', ['$scop
             });
         }
 
-        $scope.active.data = data.map(function(item) {
+        $scope.active.data = cloudData.map(function(item) {
             item.keyTranslated = item.key;
             return item;
         });

@@ -382,7 +382,8 @@ coreMap.Map.prototype.createSelectControl =  function(layer) {
             tags: ["map", "tooltip"]
         });
         var createAndShowFeaturePopup = function(data) {
-            if(!data.length) {
+            if(!data) {
+                removePopup();
                 return;
             }
 
@@ -486,6 +487,10 @@ coreMap.Map.prototype.createSelectControl =  function(layer) {
             tags: ["map", "tooltip"]
         });
 
+        removePopup();
+    };
+
+    var removePopup = function() {
         if(me.featurePopup) {
             me.map.removePopup(me.featurePopup);
             me.featurePopup.destroy();

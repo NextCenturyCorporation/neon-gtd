@@ -128,7 +128,7 @@ angular.module('neonDemo.controllers').controller('barChartController', ['$scope
 
     $scope.functions.updateData = function(data) {
         var opts = {
-            data: data,
+            data: data || [],
             x: $scope.active.groupField.columnName,
             y: COUNT_FIELD_NAME,
             responsive: false,
@@ -149,7 +149,7 @@ angular.module('neonDemo.controllers').controller('barChartController', ['$scope
 
         // Save the limit for the most recent query to show in the options menu button text.
         // Don't use the current limit because that may be changed to a different number.
-        $scope.queryLimit = data.length >= $scope.active.limit ? $scope.active.limit : 0;
+        $scope.queryLimit = data && data.length >= $scope.active.limit ? $scope.active.limit : 0;
     };
 
     /**

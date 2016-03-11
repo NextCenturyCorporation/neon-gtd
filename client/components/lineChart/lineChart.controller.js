@@ -827,7 +827,7 @@ angular.module('neonDemo.controllers').controller('lineChartController', ['$scop
     };
 
     $scope.functions.updateData = function(data, layers) {
-        if(!layers || !layers.length) {
+        if(!data) {
             drawLineChart([], {});
             return;
         }

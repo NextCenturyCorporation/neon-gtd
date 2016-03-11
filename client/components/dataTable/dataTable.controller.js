@@ -210,16 +210,17 @@ angular.module('neonDemo.controllers').controller('dataTableController', ['$scop
     };
 
     $scope.functions.updateData = function(data) {
-        data = escapeDataRecursively(data);
+        var tableData = escapeDataRecursively(data || []);
 
         if(external.active) {
-            data = addExternalLinksToColumnData(data);
+            tableData = addExternalLinksToColumnData(tableData);
         }
 
-        $scope.active.count = data.length;
-        $scope.active.gridOptions.api.setRowData(data);
+        $scope.active.count = tableData.length;
+        $scope.active.total = tableData.length;
+        $scope.active.gridOptions.api.setRowData(tableData);
 
-        if(data.length) {
+        if(tableData.length) {
             // Query for the total number of rows in the data.
             $scope.functions.queryAndUpdate({
                 addToQuery: function(query) {
@@ -227,12 +228,12 @@ angular.module('neonDemo.controllers').controller('dataTableController', ['$scop
                     return query;
                 },
                 updateData: function(data) {
-                    $scope.active.total = data.length ? data[0].count : 0
+                    $scope.active.total = data && data.length ? data[0].count : 0
                 }
             });
 
             $timeout(function() {
-                linkifyRows(data);
+                linkifyRows(tableData);
             });
         }
     };

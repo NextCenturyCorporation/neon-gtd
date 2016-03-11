@@ -136,21 +136,23 @@ angular.module('neonDemo.controllers').controller('aggregationTableController', 
     };
 
     $scope.functions.updateData = function(data) {
+        var tableData = data || [];
+
         if(external.active) {
-            data = addExternalLinksToColumnData(data);
+            tableData = addExternalLinksToColumnData(tableData);
         }
 
-        data = _.map(data, function(row) {
+        tableData = _.map(tableData, function(row) {
             delete row._id;
             return row;
         });
 
         $scope.active.showTooMuchDataError = false;
-        $scope.active.dataLength = data.length;
+        $scope.active.dataLength = tableData.length;
         $scope.active.queryLimit = $scope.active.limit;
-        $scope.active.gridOptions.api.setRowData(data);
+        $scope.active.gridOptions.api.setRowData(tableData);
 
-        if($scope.functions.isFilterSet() && data.length) {
+        if($scope.functions.isFilterSet() && tableData.length) {
             selectRow($scope.filter);
         }
     };

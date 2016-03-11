@@ -103,7 +103,7 @@ angular.module('neonDemo.controllers').controller('ganttChartController', ['$sco
     };
 
     var updateSelectedGroups = function(data) {
-        if(!data.length) {
+        if(!data) {
             $scope.active.selectableGroups = [];
             $scope.functions.updateData([]);
         } else {
@@ -182,7 +182,7 @@ angular.module('neonDemo.controllers').controller('ganttChartController', ['$sco
 
         var colorScale = d3.scale.ordinal().range(neonColors.LIST);
         var colors = [];
-
+        var chartData = data || [];
         var groupsToColors = {};
 
         if($scope.functions.isFieldValid($scope.active.colorField)) {
@@ -195,7 +195,7 @@ angular.module('neonDemo.controllers').controller('ganttChartController', ['$sco
                     });
                 });
             } else {
-                colors = createFieldValueList($scope.active.colorField.columnName, data);
+                colors = createFieldValueList($scope.active.colorField.columnName, chartData);
                 colors.forEach(function(color, index) {
                     $scope.active.legend.push({
                         color: colorScale(index),
@@ -208,10 +208,10 @@ angular.module('neonDemo.controllers').controller('ganttChartController', ['$sco
         $scope.active.data = [];
         $scope.tree = {};
         if($scope.active.groupFields.length) {
-            buildTree(data);
+            buildTree(chartData);
         }
 
-        data.forEach(function(item, index) {
+        chartData.forEach(function(item, index) {
             var treeParent;
             if($scope.active.groupFields.length) {
                 treeParent = getTreeParent(item);

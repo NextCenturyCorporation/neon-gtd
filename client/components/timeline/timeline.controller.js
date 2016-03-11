@@ -757,13 +757,15 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
     };
 
     $scope.functions.updateData = function(data) {
-        var invalidData = _.filter(data, function(item) {
+        var inputData = data || [];
+
+        var invalidData = _.filter(inputData, function(item) {
             return item.invalidCount;
         });
 
         $scope.active.numberInvalid = invalidData.length ? invalidData[0].invalidCount : 0;
 
-        var validData = $scope.active.showInvalidDatesFilter ? [] : _.filter(data, function(item) {
+        var validData = $scope.active.showInvalidDatesFilter ? [] : _.filter(inputData, function(item) {
             return !item.invalidCount;
         });
 
@@ -779,7 +781,7 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
                 $scope.data = timelineData;
                 $scope.active.showNoDataError = !$scope.data || !$scope.data.length || !$scope.data[0].data || !$scope.data[0].data.length;
                 updateChartTimesAndTotal();
-                addTimeSeriesAnalysis(data[0].data, timelineData);
+                addTimeSeriesAnalysis($scope.data[0].data, timelineData);
                 $scope.chart.updateGranularity($scope.active.granularity);
                 $scope.chart.render($scope.data);
                 $scope.chart.renderExtent($scope.brush);
@@ -827,7 +829,7 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
                     return connection.executeQuery(query);
                 },
                 updateData: function(data) {
-                    if(data.length) {
+                    if(data) {
                         $scope.referenceStartDate = new Date(getDateField(data[0]));
                         queryForMaxDate(callback);
                     }
@@ -850,7 +852,7 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
                     return connection.executeQuery(query);
                 },
                 updateData: function(data) {
-                    if(data.length) {
+                    if(data) {
                         $scope.referenceEndDate = new Date(getDateField(data[0]));
                         callback();
                     }

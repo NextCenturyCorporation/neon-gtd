@@ -51,7 +51,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
 
     var resizeListeners = [];
 
-    /*************** SUBCLASS ABSTRACT FUNCTIONS ***************/
+    /******************** SUBCLASS ABSTRACT FUNCTIONS ********************/
 
     /**
      * Adds properties to the given collection of bindings and returns the updated collection for this visualization.
@@ -336,11 +336,10 @@ function($scope, external, connectionService, datasetService, errorNotificationS
     };
 
     /**
-     * Updates the data and display in this visualization for the given layers.  Clears the display if the data array is empty or reset is true.
+     * Updates the data and display in this visualization using the given data for the given layers.  Removes all data from the display instead if the arguments are undefined.
      * @method updateData
      * @param {Array} data
      * @param {Array} layers
-     * @param {Boolean} reset
      */
     $scope.functions.updateData = function() {
         // Do nothing by default.
@@ -373,7 +372,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
         // Do nothing by default.
     };
 
-    /*************** SUBCLASS UTILITY FUNCTIONS ***************/
+    /******************** SUBCLASS UTILITY FUNCTIONS ********************/
 
     /**
      * Adds or replaces the Neon filter in the dashboard on all filterable layers based on the filter values set in this visualization.
@@ -646,14 +645,15 @@ function($scope, external, connectionService, datasetService, errorNotificationS
     /**
      * Builds and executes a query and updates the data for this visualization using the given options.
      * @method queryAndUpdate
-     * @param {Object} options The collection of function arguments.
+     * @param {Object} [options] The collection of function arguments.
      * @param {String} [options.databaseName] (Optional) The name of a databse.  If not given, queries and updates all layers.
      * @param {String} [options.tableName] (Optional) The name of a table.  If not given, queries and updates all layers.
      * @param {Function} [options.addToQuery] (Optional) The function to help build the Neon query.  If not given, it uses $scope.functions.addToQuery.
      * @param {Function} [options.executeQuery] (Optional) The function to execute the Neon query.  If not given, it uses $scope.functions.executeQuery.
      * @param {Function} [options.updateData] (Optional) The function to update the data in this visualization.  If not given, it uses $scope.functions.updateData.
      */
-    $scope.functions.queryAndUpdate = function(options) {
+    $scope.functions.queryAndUpdate = function(inputOptions) {
+        var options = inputOptions || {};
         findQueryAndUpdateData(options.database, options.table).forEach(function(item) {
             queryAndUpdate(item.layers, item.database, item.table, options.addToQuery || $scope.functions.addToQuery, options.executeQuery || $scope.functions.executeQuery,
                 options.updateData || $scope.functions.updateData);
@@ -775,7 +775,8 @@ function($scope, external, connectionService, datasetService, errorNotificationS
                 }
             } else {
                 checkNeonDashboardFilters({
-                    doNotAutoQuery: true
+                    databaseName: layer.database.name,
+                    tableName: layer.table.name
                 });
             }
         }
@@ -838,7 +839,9 @@ function($scope, external, connectionService, datasetService, errorNotificationS
                     queryAfterFilter: true
                 });
             } else {
-                checkNeonDashboardFilters({});
+                checkNeonDashboardFilters({
+                    queryAndUpdate: true
+                });
             }
         } else {
             runDefaultQueryAndUpdate(layer.database.name, layer.table.name);
@@ -866,7 +869,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
         validateLayerName(layer, $scope.active.layers.length - 1 - indexReversed);
     };
 
-    /******************** SUPERCLASS FUNCTIONS ********************/
+    /************************* SUPERCLASS FUNCTIONS *************************/
 
     /**
      * Initializes this visualization.
@@ -925,7 +928,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
 
             exportService.unregister($scope.exportId);
             linksPopupService.deleteLinks($scope.visualizationId);
-            $scope.active.layers.forEach(function(layer) {
+            $scope.getDataLayers().forEach(function(layer) {
                 linksPopupService.deleteLinks(createLayerLinksSource(layer));
             });
             themeService.unregisterListener($scope.visualizationId);
@@ -952,7 +955,9 @@ function($scope, external, connectionService, datasetService, errorNotificationS
         $scope.initData();
 
         if($scope.getDataLayers().length) {
-            checkNeonDashboardFilters({});
+            checkNeonDashboardFilters({
+                queryAndUpdate: true
+            });
         }
 
         $scope.initializing = false;
@@ -1073,7 +1078,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
      * @param {Object} options The collection of function arguments.
      * @param {String} [options.databaseName] (Optional)
      * @param {String} [options.tableName] (Optional)
-     * @param {Boolean} [options.doNotAutoQuery] (Optional) If true, will only query for new data and update this visualization if a filter was changed
+     * @param {Boolean} [options.queryAndUpdate] (Optional) If true, will query and update even if shouldQueryAfterFilter is false
      * @private
      */
     var checkNeonDashboardFilters = function(options) {
@@ -1107,7 +1112,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
             return;
         }
 
-        if(!options.doNotAutoQuery) {
+        if(options.queryAndUpdate) {
             runDefaultQueryAndUpdate(options.databaseName, options.tableName);
         }
     };
@@ -1246,8 +1251,8 @@ function($scope, external, connectionService, datasetService, errorNotificationS
             layer.querying = true;
         });
 
-        // Clear the display.
-        updateDataFunction([], layers, true);
+        // Remove all data from the display.
+        updateDataFunction();
 
         var finishQueryingLayers = function() {
             // Reset the querying status of each layer.
@@ -1346,7 +1351,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
                 });
 
                 $scope.$apply(function() {
-                    updateDataFunction([], layers, true);
+                    updateDataFunction([], layers);
                 });
 
                 // See if the error response contains a Neon notification to show through the Error Notification Service.
@@ -1446,7 +1451,8 @@ function($scope, external, connectionService, datasetService, errorNotificationS
 
             checkNeonDashboardFilters({
                 databaseName: message.addedFilter.databaseName,
-                tableName: message.addedFilter.tableName
+                tableName: message.addedFilter.tableName,
+                queryAndUpdate: true
             });
         } else if(message.type === 'CLEAR') {
             XDATA.userALE.log({
@@ -1508,7 +1514,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
         return bindings;
     };
 
-    /******************** FILTERING FUNCTIONS ********************/
+    /************************* FILTERING FUNCTIONS *************************/
 
     /**
      * Adds or replaces the Neon filter in the dashboard on filterable layers based on the filter values set in this visualization.
@@ -1622,7 +1628,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
         });
     };
 
-    /******************** ANGULAR FUNCTIONS ********************/
+    /************************* ANGULAR FUNCTIONS *************************/
 
     /**
      * Generates and returns the title for this visualization.

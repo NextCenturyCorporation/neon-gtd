@@ -124,7 +124,7 @@ angular.module('neonDemo.controllers').controller('opsClockController', ['$scope
         var days = createDaysList();
         var times = createTimesList();
 
-        data.forEach(function(item) {
+        (data || []).forEach(function(item) {
             hours[(item.day - 1) * HOURS_IN_DAY + item.hour] = item.count;
 
             // Add count to total for this day of the week.
