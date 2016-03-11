@@ -47,7 +47,7 @@ angular.module('neonDemo.controllers').controller('sunburstChartController', ['$
         $scope.active.groupFields = [];
         if($scope.bindings.groupFields) {
             _.each($scope.bindings.groupFields.split(","), function(groupFieldName) {
-                var groupFieldObject = _.find($scope.fields, function(field) {
+                var groupFieldObject = _.find($scope.active.fields, function(field) {
                     return field.columnName === groupFieldName;
                 });
                 if(groupFieldObject) {
@@ -121,7 +121,7 @@ angular.module('neonDemo.controllers').controller('sunburstChartController', ['$
     };
 
     $scope.handleChangeCountField = function() {
-        $scope.functions.logChangeAndUpdateData("countField", $scope.active.valueField.columnName);
+        $scope.functions.logChangeAndUpdate("countField", $scope.active.valueField.columnName);
     };
 
     $scope.handleChangeArcValue = function() {
@@ -131,7 +131,7 @@ angular.module('neonDemo.controllers').controller('sunburstChartController', ['$
     $scope.handleAddGroup = function() {
         if($scope.active.groupFields.indexOf($scope.active.addField) === -1 && $scope.active.addField.columnName !== "") {
             $scope.active.groupFields.push($scope.active.addField);
-            $scope.functions.logChangeAndUpdateData("groupFieldAdded", $scope.active.addField.columnName);
+            $scope.functions.logChangeAndUpdate("groupFieldAdded", $scope.active.addField.columnName);
         }
         $scope.active.addField = {};
     };
@@ -140,7 +140,7 @@ angular.module('neonDemo.controllers').controller('sunburstChartController', ['$
         var index = $scope.active.groupFields.indexOf(groupField);
         if(index >= 0) {
             $scope.active.groupFields.splice(index, 1);
-            $scope.functions.logChangeAndUpdateData("groupFieldRemoved", groupField, "button");
+            $scope.functions.logChangeAndUpdate("groupFieldRemoved", groupField, "button");
         }
     };
 

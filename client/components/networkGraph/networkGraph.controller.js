@@ -88,7 +88,7 @@ angular.module('neonDemo.controllers').controller('networkGraphController', ['$s
         $scope.functions.addResizeListener(".legend");
     };
 
-    $scope.functions.updateFilterFromNeonFilterClause = function(neonFilter) {
+    $scope.functions.updateFilterValues = function(neonFilter) {
         // Select the networks for the nodes with IDs in the where clause(s) in the given Neon filter.
         var selectNodeNetworkFromWhereClause = function(whereClause) {
             if(whereClause.whereClauses) {
@@ -233,7 +233,7 @@ angular.module('neonDemo.controllers').controller('networkGraphController', ['$s
         });
     };
 
-    $scope.functions.hasValidDataFields = function() {
+    $scope.functions.areDataFieldsValid = function() {
         return $scope.functions.isFieldValid($scope.active.nodeField);
     };
 
@@ -254,10 +254,13 @@ angular.module('neonDemo.controllers').controller('networkGraphController', ['$s
      */
     $scope.queryForNodeList = function() {
         // TODO Log user button click
-        $scope.functions.queryAndUpdate(function(query) {
-            query.withFields([$scope.active.nodeField.columnName]).groupBy($scope.active.nodeField).aggregate(neon.query.COUNT, '*', 'count');
-            return query;
-        }, $scope.functions.executeQuery, updateNodeListData);
+        $scope.functions.queryAndUpdate({
+            addToQuery: function(query) {
+                query.withFields([$scope.active.nodeField.columnName]).groupBy($scope.active.nodeField).aggregate(neon.query.COUNT, '*', 'count');
+                return query;
+            },
+            updateData: updateNodeListData
+        });
     };
 
     var updateNodeListData = function(data) {
@@ -401,51 +404,51 @@ angular.module('neonDemo.controllers').controller('networkGraphController', ['$s
     };
 
     $scope.handleChangeNodeField = function() {
-        $scope.functions.logChangeAndUpdateData("nodeField", $scope.active.nodeField.columnName);
+        $scope.functions.logChangeAndUpdate("nodeField", $scope.active.nodeField.columnName);
     };
 
     $scope.handleChangeNameField = function() {
-        $scope.functions.logChangeAndUpdateData("nameField", $scope.active.nameField.columnName);
+        $scope.functions.logChangeAndUpdate("nameField", $scope.active.nameField.columnName);
     };
 
     $scope.handleChangeSizeField = function() {
-        $scope.functions.logChangeAndUpdateData("sizeField", $scope.active.sizeField.columnName);
+        $scope.functions.logChangeAndUpdate("sizeField", $scope.active.sizeField.columnName);
     };
 
     $scope.handleChangeLinkedNodeField = function() {
-        $scope.functions.logChangeAndUpdateData("linkedNodeField", $scope.active.linkedNodeField.columnName);
+        $scope.functions.logChangeAndUpdate("linkedNodeField", $scope.active.linkedNodeField.columnName);
     };
 
     $scope.handleChangeLinkedNameField = function() {
-        $scope.functions.logChangeAndUpdateData("linkedNameField", $scope.active.linkedNameField.columnName);
+        $scope.functions.logChangeAndUpdate("linkedNameField", $scope.active.linkedNameField.columnName);
     };
 
     $scope.handleChangeLinkedSizeField = function() {
-        $scope.functions.logChangeAndUpdateData("linkedSizeField", $scope.active.linkedSizeField.columnName);
+        $scope.functions.logChangeAndUpdate("linkedSizeField", $scope.active.linkedSizeField.columnName);
     };
 
     $scope.handleChangeDateField = function() {
-        $scope.functions.logChangeAndUpdateData("dateField", $scope.active.dateField.columnName);
+        $scope.functions.logChangeAndUpdate("dateField", $scope.active.dateField.columnName);
     };
 
     $scope.handleChangeFlagField = function() {
-        $scope.functions.logChangeAndUpdateData("flagField", $scope.active.flagField.columnName);
+        $scope.functions.logChangeAndUpdate("flagField", $scope.active.flagField.columnName);
     };
 
     $scope.handleChangeTextField = function() {
-        $scope.functions.logChangeAndUpdateData("textField", $scope.active.textField.columnName);
+        $scope.functions.logChangeAndUpdate("textField", $scope.active.textField.columnName);
     };
 
     $scope.handleChangeLimit = function() {
-        $scope.functions.logChangeAndUpdateData("limit", $scope.active.limit, "button");
+        $scope.functions.logChangeAndUpdate("limit", $scope.active.limit, "button");
     };
 
     $scope.handleToggleHideSimpleNetworks = function() {
-        $scope.functions.logChangeAndUpdateData("hideSimpleNetworks", $scope.active.limit, "button");
+        $scope.functions.logChangeAndUpdate("hideSimpleNetworks", $scope.active.limit, "button");
     };
 
     $scope.handleToggleClusterNodes = function() {
-        $scope.functions.logChangeAndUpdateData("clusterNodes", $scope.active.limit, "button");
+        $scope.functions.logChangeAndUpdate("clusterNodes", $scope.active.limit, "button");
     };
 
     $scope.functions.hideHeaders = function() {

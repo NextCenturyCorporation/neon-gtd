@@ -48,39 +48,34 @@ angular.module('neonDemo.controllers').controller('barChartController', ['$scope
     };
 
     $scope.handleChangeAggregation = function() {
-        $scope.functions.logChangeAndUpdateData("aggregation", $scope.active.aggregation);
+        $scope.functions.logChangeAndUpdate("aggregation", $scope.active.aggregation);
     };
 
     $scope.handleChangeAggregationField = function() {
-        $scope.functions.logChangeAndUpdateData("aggregationField", $scope.active.aggregationField.columnName);
+        $scope.functions.logChangeAndUpdate("aggregationField", $scope.active.aggregationField.columnName);
     };
 
     $scope.handleChangeGroupField = function() {
-        $scope.functions.logChangeAndUpdateData("groupField", $scope.active.groupField.columnName);
+        $scope.functions.logChangeAndUpdate("groupField", $scope.active.groupField.columnName);
     };
 
     $scope.handleChangeLimit = function() {
-        $scope.functions.logChangeAndUpdateData("limit", $scope.active.limit);
+        $scope.functions.logChangeAndUpdate("limit", $scope.active.limit);
     };
 
-    $scope.functions.updateFilterFromNeonFilterClause = function(neonFilter) {
+    $scope.functions.updateFilterValues = function(neonFilter) {
         if($scope.functions.getNumberOfFilterClauses(neonFilter) === 1) {
-            onAddFilter(neonFilter.filter.whereClause.rhs);
+            $scope.filter = neonFilter.filter.whereClause.rhs;
+            updateLinks();
         }
     };
 
-    /**
-     * Performs additional behavior needed for this visualization to add a filter on the given value.
-     * @param {String} value
-     * @method onAddFilter
-     */
-    var onAddFilter = function(value) {
-        $scope.filter = value;
-        var links = $scope.functions.createLinks($scope.active.groupField, value);
+    var updateLinks = function() {
+        var links = $scope.functions.createLinks($scope.active.groupField, $scope.filter);
         $scope.showLinksPopupButton = !!links.length;
     };
 
-    $scope.functions.onRemoveFilter = function() {
+    $scope.functions.removeFilterValues = function() {
         $scope.filter = undefined;
         $scope.chart.clearSelectedBar();
         $scope.functions.removeLinks();
@@ -91,7 +86,7 @@ angular.module('neonDemo.controllers').controller('barChartController', ['$scope
         $scope.active.aggregationField = $scope.functions.findFieldObject("groupField", neonMappings.BAR_GROUPS);
     };
 
-    $scope.functions.createNeonQueryClause = function() {
+    $scope.functions.createNeonQueryWhereClause = function() {
         return neon.query.where($scope.active.groupField.columnName, '!=', null);
     };
 
@@ -128,10 +123,7 @@ angular.module('neonDemo.controllers').controller('barChartController', ['$scope
      * @method removeFilter
      */
     $scope.removeFilter = function(value) {
-        $scope.functions.removeFilter({
-            field: $scope.active.groupField.columnName,
-            value: value
-        });
+        $scope.functions.removeNeonFilter();
     };
 
     $scope.functions.updateData = function(data) {
@@ -142,8 +134,9 @@ angular.module('neonDemo.controllers').controller('barChartController', ['$scope
             responsive: false,
             selectedKey: $scope.filter,
             clickHandler: function(value) {
-                onAddFilter(value);
-                $scope.functions.replaceFilter();
+                $scope.filter = value;
+                updateLinks();
+                $scope.functions.updateNeonFilter();
             }
         };
 
@@ -179,7 +172,7 @@ angular.module('neonDemo.controllers').controller('barChartController', ['$scope
         return "";
     };
 
-    $scope.functions.hasValidDataFields = function() {
+    $scope.functions.areDataFieldsValid = function() {
         return $scope.functions.isFieldValid($scope.active.groupField);
     };
 

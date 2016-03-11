@@ -77,7 +77,7 @@ angular.module('neonDemo.controllers').controller('dataTableController', ['$scop
     };
 
     $scope.functions.onUpdateFields = function() {
-        $scope.fields.forEach(function(field) {
+        $scope.active.fields.forEach(function(field) {
             if(field.hide) {
                 hiddenFields[field.columnName] = true;
             }
@@ -86,7 +86,7 @@ angular.module('neonDemo.controllers').controller('dataTableController', ['$scop
         $scope.active.sortByField = $scope.functions.findFieldObject("sortField", neonMappings.SORT);
     };
 
-    $scope.functions.onChangeDataOption = function() {
+    $scope.functions.onChangeOption = function() {
         updateColumns();
     };
 
@@ -96,7 +96,7 @@ angular.module('neonDemo.controllers').controller('dataTableController', ['$scop
      * @private
      */
     var updateColumns = function() {
-        // Use the fields in the order they are defined in the dashboard configuration (so we can't use sorted $scope.fields) for the order of the columns.
+        // Use the fields in the order they are defined in the Neon dashboard configuration (so we can't use sorted $scope.active.fields) for the order of the columns.
         var columnDefinitions = _.map($scope.functions.getUnsortedFields(), function(field) {
             var config = {
                 field: field.columnName,
@@ -221,11 +221,14 @@ angular.module('neonDemo.controllers').controller('dataTableController', ['$scop
 
         if(data.length) {
             // Query for the total number of rows in the data.
-            $scope.functions.queryAndUpdate(function(query) {
-                query.aggregate(neon.query.COUNT, '*', 'count');
-                return query;
-            }, $scope.functions.executeQuery, function(data) {
-                $scope.active.total = data.length ? data[0].count : 0
+            $scope.functions.queryAndUpdate({
+                addToQuery: function(query) {
+                    query.aggregate(neon.query.COUNT, '*', 'count');
+                    return query;
+                },
+                updateData: function(data) {
+                    $scope.active.total = data.length ? data[0].count : 0
+                }
             });
 
             $timeout(function() {
@@ -243,7 +246,7 @@ angular.module('neonDemo.controllers').controller('dataTableController', ['$scop
      */
     var addExternalLinksToColumnData = function(data) {
         var idFieldName = $scope.bindings.idField || "_id";
-        var idField = _.find($scope.fields, function(field) {
+        var idField = _.find($scope.active.fields, function(field) {
             return field.columnName === idFieldName;
         });
 
@@ -325,16 +328,16 @@ angular.module('neonDemo.controllers').controller('dataTableController', ['$scop
 
     $scope.handleChangeSortField = function() {
         handleChangeSort();
-        $scope.functions.logChangeAndUpdateData("sortField", $scope.active.sortByField.name);
+        $scope.functions.logChangeAndUpdate("sortField", $scope.active.sortByField.name);
     };
 
     $scope.handleChangeSortDirection = function() {
         handleChangeSort();
-        $scope.functions.logChangeAndUpdateData("sortDirection", $scope.active.sortDirection, "button");
+        $scope.functions.logChangeAndUpdate("sortDirection", $scope.active.sortDirection, "button");
     };
 
     $scope.handleChangeLimit = function() {
-        $scope.functions.logChangeAndUpdateData("limit", $scope.active.limit, "button");
+        $scope.functions.logChangeAndUpdate("limit", $scope.active.limit, "button");
     };
 
     $scope.functions.addToBindings = function(bindings) {

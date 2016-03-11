@@ -40,7 +40,7 @@ angular.module('neonDemo.controllers').controller('sampleController', ['$scope',
         return $scope.filter;
     };
 
-    $scope.functions.hasValidDataFields = function() {
+    $scope.functions.areDataFieldsValid = function() {
         return $scope.functions.isFieldValid($scope.active.dataField);
     };
 
@@ -58,13 +58,13 @@ angular.module('neonDemo.controllers').controller('sampleController', ['$scope',
     };
 
     // Called during filters-changed events for filters on this visualization's filter field ($scope.active.dataField).
-    $scope.functions.updateFilterFromNeonFilterClause = function(neonFilter) {
+    $scope.functions.updateFilterValues = function(neonFilter) {
         if($scope.functions.getNumberOfFilterClauses(neonFilter) === 1) {
             $scope.filter = neonFilter.filter.whereClause.rhs;
         }
     };
 
-    $scope.functions.onRemoveFilter = function() {
+    $scope.functions.removeFilterValues = function() {
         $scope.filter = undefined;
     };
 
@@ -74,7 +74,7 @@ angular.module('neonDemo.controllers').controller('sampleController', ['$scope',
     };
 
     // Create and return the default where clause for queries for  this visualization.
-    $scope.functions.createNeonQueryClause = function() {
+    $scope.functions.createNeonQueryWhereClause = function() {
         return neon.query.where($scope.active.dataField.columnName, "!=", null);
     };
 
@@ -105,10 +105,10 @@ angular.module('neonDemo.controllers').controller('sampleController', ['$scope',
     };
 
     $scope.addFilter = function(value) {
-        // Save the filter to display in the visualization and use in createNeonFilterClause.
+        // Save the filter for this visualization which will be shown in the display and used in the createNeonFilterClause function.
         $scope.filter = value;
-        // Replaces the dashboard filter for this visualization with a filter on the given value.
-        $scope.functions.replaceFilter(value);
+        // Update the dashboard filter for this visualization with the value in $scope.filter through the createNeonFilterClause function.
+        $scope.functions.updateNeonFilter();
     };
 
     $scope.functions.createNeonFilterClause = function(databaseAndTableName, fieldName) {
@@ -121,13 +121,13 @@ angular.module('neonDemo.controllers').controller('sampleController', ['$scope',
     };
 
     $scope.removeFilter = function() {
-        // Removes the dashboard filter for this visualization.
-        $scope.functions.removeFilter();
+        // Remove the dashboard filter for this visualization.
+        $scope.functions.removeNeonFilter();
     };
 
     $scope.handleChangeDataField = function() {
         // Log the change of the data field option, query for new data, and update the visualization display.
-        $scope.functions.logChangeAndUpdateData("dataField", $scope.active.dataField.columnName);
+        $scope.functions.logChangeAndUpdate("dataField", $scope.active.dataField.columnName);
     };
 
     // The following two functions display the active filter in the filter notification directive.

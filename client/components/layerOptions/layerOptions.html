@@ -1,0 +1,79 @@
+<div class="form-group">
+    <button type="button" class="btn btn-primary" title="Create New Layer" ng-click="functions.createLayer()">Create New Layer</button>
+</div>
+
+<!-- The ng-drag and ng-drop directives are from the ngDraggable library. -->
+<div class="form-group layer-options-container" ng-drop="true" ng-drop-success="functions.reorderLayer($data, $index)" ng-repeat="layer in active.layers | reverse">
+    <div class="form-group layer-options-well neon-well" ng-drag="true" ng-drag-data="layer">
+        <div class="layer-options-row">
+            <div class="btn-group layer-options-col layer-options-col-wide" ng-if="!bindings.hideAdvancedOptions">
+                <label class="btn btn-default" ng-cancel-drag ng-class="{true: 'active', false: ''}[layer.show]" title="{{'Layer Visibility ' + (layer.show ? 'On' : 'Off')}}">
+                    <input type="checkbox" style="display:none" ng-model="layer.show" ng-change="functions.toggleShowLayer(layer)">
+                    <span class="glyphicon glyphicon-eye-open"></span>
+                </label>
+                <label class="btn btn-default" ng-cancel-drag ng-class="{true: 'active', false: ''}[layer.filterable]" title="{{'Layer Filtering ' + (layer.filterable ? 'On' : 'Off')}}">
+                    <input type="checkbox" style="display:none" ng-model="layer.filterable" ng-change="functions.toggleFilterLayer(layer)">
+                    <span class="glyphicon glyphicon-filter"></span>
+                </label>
+                <label class="btn btn-default" ng-cancel-drag title="Edit Layer" ng-show="!layer.edit">
+                    <input type="button" style="display:none" ng-click="functions.toggleEditLayer(layer)">
+                    <span class="glyphicon glyphicon-edit"></span>
+                </label>
+                <label class="btn btn-default" ng-cancel-drag ng-class="{true: 'disabled', false: ''}[layer.error != undefined]" title="Save Layer" ng-show="layer.edit">
+                    <input type="button" style="display:none" ng-click="functions.updateLayer(layer)">
+                    <span class="glyphicon glyphicon-ok"></span>
+                </label>
+                <label class="btn btn-default" ng-cancel-drag title="Delete Layer">
+                    <input type="button" style="display:none" ng-click="functions.deleteLayer(layer, $index)">
+                    <span class="glyphicon glyphicon-remove"></span>
+                </label>
+            </div>
+
+            <div class="btn-group layer-options-col layer-options-col-wide" ng-if="bindings.hideAdvancedOptions">
+                <label class="btn btn-default" ng-cancel-drag ng-class="{true: 'active', false: ''}[layer.show]" style="width: 50%;" title="{{'Layer Visibility ' + (layer.show ? 'On' : 'Off')}}">
+                    <input type="checkbox" style="display:none" ng-model="layer.show" ng-change="functions.toggleShowLayer(layer)">
+                    <span class="glyphicon glyphicon-eye-open"></span>
+                    Visibility
+                </label>
+                <label class="btn btn-default" ng-cancel-drag ng-class="{true: 'active', false: ''}[layer.filterable]" style="width: 50%;" title="{{'Layer Filtering ' + (layer.filterable ? 'On' : 'Off')}}">
+                    <input type="checkbox" style="display:none" ng-model="layer.filterable" ng-change="functions.toggleFilterLayer(layer)">
+                    <span class="glyphicon glyphicon-filter"></span>
+                    Filtering
+                </label>
+            </div>
+
+            <div class="form-group layer-options-col layer-options-col-wide">
+                <label>Layer Name</label>
+                <input type="text" class="form-control" ng-cancel-drag placeholder="{{layer.table.prettyName.toUpperCase()}}" style="text-transform: uppercase;" ng-model="layer.name" ng-required="false" ng-disabled="!layer.new && !layer.edit" ng-class="{true: 'ng-invalid', false: ''}[layer.error != undefined]" ng-change="functions.validateLayerName(layer, $index)"/>
+            </div>
+        </div>
+
+        <div class="layer-options-edit" ng-show="layer.new || layer.edit">
+            <div class="layer-options-row">
+                <div class="form-group layer-options-col">
+                    <label>Database</label>
+                    <select class="form-control" ng-cancel-drag ng-model="layer.database" ng-options="database.prettyName for database in layer.databases" ng-required="true" ng-disabled="layer.databases.length < 2" ng-change="functions.updateTables(layer)"></select>
+                </div>
+
+                <div class="form-group layer-options-col">
+                    <label>Table</label>
+                    <select class="form-control" ng-cancel-drag ng-model="layer.table" ng-options="table.prettyName for table in layer.tables" ng-required="true" ng-disabled="layer.tables.length < 2" ng-change="functions.updateFields(layer)"></select>
+                </div>
+
+                <div class="form-group layer-options-col layer-options-col-wide">
+                    <label>Unshared Filter</label>
+                    <div class="input-group">
+                        <select class="form-control col-half" ng-cancel-drag ng-model="layer.unsharedFilterField" ng-options="field.prettyName for field in layer.fields" ng-required="false" ng-disabled="active.layers.fields.length < 2">
+                            <option selected value="">None</option>
+                        </select>
+                        <input type="text" class="form-control col-half" placeholder="{{'Filter for ' + layer.unsharedFilterField.prettyName + '...'}}" ng-cancel-drag ng-model="layer.unsharedFilterValue" ng-disabled="!layer.unsharedFilterField.columnName">
+                    </div>
+                </div>
+            </div>
+
+            <visualization-layer-options layer="layer" ng-include="'components/' + type + '/' + type + 'LayerOptions.html'"></visualization-layer-options>
+
+            <div class="layer-options-error" ng-show="layer.error" ng-bind="layer.error"></div>
+        </div>
+    </div>
+</div>

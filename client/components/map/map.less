@@ -14,8 +14,6 @@
 //
 
 .mapDirective {
-    height: @widget-height;
-    width: @widget-width;
     min-height: 100px;
 
     .alert {
@@ -119,8 +117,8 @@
 
     .filter-container {
         position: absolute;
-        top: 50px;
-        left: 55px;
+        top: 30px;
+        left: 35px;
         right: 10px;
 
         .filter-reset {
@@ -138,6 +136,8 @@
 
             .olControlZoom {
                 background: transparent;
+                left: 3px;
+                top: 3px;
 
                 a {
                     background-color: @button-background-color;
@@ -204,12 +204,3 @@
         pointer-events: none;
     }
 }
-
-.gridster-mobile  {
-    .mapDirective {
-        .olMap {
-            height: @mobile-widget-height !important;
-        }
-    }
-}
-

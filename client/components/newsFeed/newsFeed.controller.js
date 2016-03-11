@@ -65,6 +65,9 @@ angular.module('neonDemo.controllers').controller('newsFeedController', ['$scope
     $scope.active.secondaryTitleField = {};
     $scope.active.sortDirection = neon.query.ASCENDING;
 
+    // Set this option so the superclass shows the translation options in the options menu.
+    $scope.active.allowsTranslations = true;
+
     $scope.functions.createMenuText = function() {
         if($scope.active.data.length) {
             if($scope.active.data.length < newsTotalCount) {
@@ -114,10 +117,12 @@ angular.module('neonDemo.controllers').controller('newsFeedController', ['$scope
                 updateData(newsEventData.slice($scope.active.limit - LIMIT_INTERVAL, $scope.active.limit));
             } else {
                 $scope.loadingNews = true;
-                $scope.functions.queryAndUpdate($scope.functions.addToQuery, $scope.functions.executeQuery, function(data) {
-                    // Only add the items to the feed that aren't there already.
-                    updateData(data.slice($scope.active.limit - LIMIT_INTERVAL, $scope.active.limit));
-                    $scope.loadingNews = false;
+                $scope.functions.queryAndUpdate({
+                    updateData: function(data) {
+                        // Only add the items to the feed that aren't there already.
+                        updateData(data.slice($scope.active.limit - LIMIT_INTERVAL, $scope.active.limit));
+                        $scope.loadingNews = false;
+                    }
                 });
             }
         }
@@ -238,7 +243,7 @@ angular.module('neonDemo.controllers').controller('newsFeedController', ['$scope
         newsEventData = [];
     };
 
-    $scope.functions.onChangeDataOption = function() {
+    $scope.functions.onChangeOption = function() {
         deleteData();
     }
 
@@ -250,7 +255,7 @@ angular.module('neonDemo.controllers').controller('newsFeedController', ['$scope
         newsEventData = [];
     };
 
-    $scope.functions.hasValidDataFields = function() {
+    $scope.functions.areDataFieldsValid = function() {
         return $scope.functions.isFieldValid($scope.active.dateField) || $scope.functions.isFieldValid($scope.active.contentField);
     };
 
@@ -425,28 +430,31 @@ angular.module('neonDemo.controllers').controller('newsFeedController', ['$scope
      * @private
      */
     var queryForNewsCount = function() {
-        $scope.functions.queryAndUpdate(function(query) {
-            query.aggregate(neon.query.COUNT, "*", "count");
-            return query;
-        }, $scope.functions.executeQuery, function(data) {
-            newsTotalCount = data.length ? data[0].count : 0;
+        $scope.functions.queryAndUpdate({
+            addToQuery: function(query) {
+                query.aggregate(neon.query.COUNT, "*", "count");
+                return query;
+            },
+            updateData: function(data) {
+                newsTotalCount = data.length ? data[0].count : 0;
+            }
         });
     };
 
     $scope.handleChangePrimaryTitleField = function() {
-        $scope.functions.logChangeAndUpdateData("primaryTitleField", $scope.active.primaryTitleField);
+        $scope.functions.logChangeAndUpdate("primaryTitleField", $scope.active.primaryTitleField);
     };
 
     $scope.handleChangeSecondaryTitleField = function() {
-        $scope.functions.logChangeAndUpdateData("secondaryTitleField", $scope.active.secondaryTitleField);
+        $scope.functions.logChangeAndUpdate("secondaryTitleField", $scope.active.secondaryTitleField);
     };
 
     $scope.handleChangeDateField = function() {
-        $scope.functions.logChangeAndUpdateData("dateField", $scope.active.dateField);
+        $scope.functions.logChangeAndUpdate("dateField", $scope.active.dateField);
     };
 
     $scope.handleChangeContentField = function() {
-        $scope.functions.logChangeAndUpdateData("contentField", $scope.active.contentField);
+        $scope.functions.logChangeAndUpdate("contentField", $scope.active.contentField);
     };
 
     /**
@@ -459,12 +467,12 @@ angular.module('neonDemo.controllers').controller('newsFeedController', ['$scope
             $scope.active.data.reverse();
             translatedIndexRange = [$scope.active.data.length - translatedIndexRange[1], $scope.active.data.length - translatedIndexRange[0]];
         } else {
-            $scope.functions.logChangeAndUpdateData("sortDirection", $scope.active.sortDirection, "button");
+            $scope.functions.logChangeAndUpdate("sortDirection", $scope.active.sortDirection, "button");
         }
     };
 
     $scope.handleChangeLimit = function() {
-        $scope.functions.logChangeAndUpdateData("limit", $scope.active.limit, "button");
+        $scope.functions.logChangeAndUpdate("limit", $scope.active.limit, "button");
     };
 
     /**
@@ -499,9 +507,5 @@ angular.module('neonDemo.controllers').controller('newsFeedController', ['$scope
         bindings.feedName = $scope.feedName || undefined;
         bindings.feedType = $scope.active.feedType || undefined;
         return bindings;
-    };
-
-    $scope.functions.allowTranslation = function() {
-        return true;
     };
 }]);

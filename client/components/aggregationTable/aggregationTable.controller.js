@@ -33,8 +33,9 @@ angular.module('neonDemo.controllers').controller('aggregationTableController', 
             $scope.active.gridOptions.api.selectIndex(cell.rowIndex, false);
         }
 
-        onAddFilter(cell.node.data[$scope.active.groupField.columnName]);
-        $scope.functions.replaceFilter();
+        $scope.filter = cell.node.data[$scope.active.groupField.columnName];
+        selectRow($scope.filter);
+        $scope.functions.updateNeonFilter();
     };
 
     $scope.active.gridOptions = {
@@ -53,7 +54,7 @@ angular.module('neonDemo.controllers').controller('aggregationTableController', 
         $scope.active.aggregationField = $scope.functions.findFieldObject("aggregationField");
     };
 
-    $scope.functions.onChangeDataOption = function() {
+    $scope.functions.onChangeOption = function() {
         updateColumns();
     };
 
@@ -95,11 +96,11 @@ angular.module('neonDemo.controllers').controller('aggregationTableController', 
         $scope.active.gridOptions.api.sizeColumnsToFit();
     };
 
-    $scope.functions.hasValidDataFields = function() {
+    $scope.functions.areDataFieldsValid = function() {
         return $scope.functions.isFieldValid($scope.active.groupField) && ($scope.active.aggregation === "count" || $scope.functions.isFieldValid($scope.active.aggregationField));
     };
 
-    $scope.functions.createNeonQueryClause = function() {
+    $scope.functions.createNeonQueryWhereClause = function() {
         return neon.query.where($scope.active.groupField.columnName, "!=", null);
     };
 
@@ -185,18 +186,14 @@ angular.module('neonDemo.controllers').controller('aggregationTableController', 
         return $scope.filter ? $scope.active.groupField.columnName + " = " + $scope.filter : "";
     };
 
-    $scope.functions.updateFilterFromNeonFilterClause = function(neonFilter) {
+    $scope.functions.updateFilterValues = function(neonFilter) {
         if($scope.functions.getNumberOfFilterClauses(neonFilter) === 1) {
-            onAddFilter(neonFilter.filter.whereClause.rhs);
+            $scope.filter = neonFilter.filter.whereClause.rhs;
+            selectRow($scope.filter);
         }
     };
 
-    var onAddFilter = function(value) {
-        $scope.filter = value;
-        selectRow(value);
-    };
-
-    $scope.functions.onRemoveFilter = function() {
+    $scope.functions.removeFilterValues = function() {
         $scope.filter = undefined;
         $scope.active.gridOptions.api.deselectAll();
     };
@@ -207,10 +204,7 @@ angular.module('neonDemo.controllers').controller('aggregationTableController', 
      * @method removeFilter
      */
     $scope.removeFilter = function(value) {
-        $scope.functions.removeFilter({
-            field: $scope.active.groupField.columnName,
-            value: value
-        });
+        $scope.functions.removeNeonFilter();
     };
 
     $scope.functions.onError = function(response, errorCodes) {
@@ -272,19 +266,19 @@ angular.module('neonDemo.controllers').controller('aggregationTableController', 
     };
 
     $scope.handleChangeGroupField = function() {
-        $scope.functions.logChangeAndUpdateData("groupField", $scope.active.groupField.columnName);
+        $scope.functions.logChangeAndUpdate("groupField", $scope.active.groupField.columnName);
     };
 
     $scope.handleChangeAggregation = function() {
-        $scope.functions.logChangeAndUpdateData("aggregation", $scope.active.aggregation);
+        $scope.functions.logChangeAndUpdate("aggregation", $scope.active.aggregation);
     };
 
     $scope.handleChangeAggregationField = function() {
-        $scope.functions.logChangeAndUpdateData("aggregationField", $scope.active.aggregationField.columnName);
+        $scope.functions.logChangeAndUpdate("aggregationField", $scope.active.aggregationField.columnName);
     };
 
     $scope.handleChangeLimit = function() {
-        $scope.functions.logChangeAndUpdateData("limit", $scope.active.limit, "button");
+        $scope.functions.logChangeAndUpdate("limit", $scope.active.limit, "button");
     };
 
     $scope.functions.createMenuText = function() {

@@ -39,40 +39,35 @@ angular.module('neonDemo.directives').directive('visualizationWidget', ["config"
             var MAXIMIZED_ROW_SIZE = MAXIMIZED_COLUMN_SIZE * (2 / 3);
 
             // TODO Add to visualization configuration.
-            var superclass = "single-table-visualization";
-            if($scope.gridsterConfigs[$scope.gridsterConfigIndex].type === "lineChart" || $scope.gridsterConfigs[$scope.gridsterConfigIndex].type === "map") {
-                superclass = "multiple-table-visualization";
-            }
-            if($scope.gridsterConfigs[$scope.gridsterConfigIndex].type === "filterBuilder") {
-                superclass = "filter-builder";
-            }
+            var implementation = $scope.gridsterConfigs[$scope.gridsterConfigIndex].type === "lineChart" || $scope.gridsterConfigs[$scope.gridsterConfigIndex].type === "map" ? "multipleLayer" : "singleLayer";
+            var superclassType = $scope.gridsterConfigs[$scope.gridsterConfigIndex].type === "filterBuilder" ? "filter-builder" : "visualization-superclass";
 
-            var visualization = document.createElement("div");
-            visualization.setAttribute(superclass, "");
-            visualization.setAttribute("class", superclass);
-            visualization.setAttribute("name", $scope.gridsterConfigs[$scope.gridsterConfigIndex].name);
-            visualization.setAttribute("type", $scope.gridsterConfigs[$scope.gridsterConfigIndex].type);
-            visualization.setAttribute("state-id", $scope.gridsterConfigs[$scope.gridsterConfigIndex].id);
-            visualization.setAttribute("visualization-id", $scope.gridsterConfigs[$scope.gridsterConfigIndex].type + "-" + uuid());
+            var visualizationSuperclass = document.createElement("div");
+            visualizationSuperclass.setAttribute(superclassType, "");
+            visualizationSuperclass.setAttribute("implementation", implementation);
+            visualizationSuperclass.setAttribute("name", $scope.gridsterConfigs[$scope.gridsterConfigIndex].name);
+            visualizationSuperclass.setAttribute("type", $scope.gridsterConfigs[$scope.gridsterConfigIndex].type);
+            visualizationSuperclass.setAttribute("state-id", $scope.gridsterConfigs[$scope.gridsterConfigIndex].id);
+            visualizationSuperclass.setAttribute("visualization-id", $scope.gridsterConfigs[$scope.gridsterConfigIndex].type + "-" + uuid());
 
             // TODO Add to visualization configuration.
             if($scope.gridsterConfigs[$scope.gridsterConfigIndex].type === "map") {
-                visualization.setAttribute("log-element-group", "map_group");
+                visualizationSuperclass.setAttribute("log-element-group", "map_group");
             }
 
             // TODO Add to visualization configuration.
             if($scope.gridsterConfigs[$scope.gridsterConfigIndex].type === "aggregationTable" || $scope.gridsterConfigs[$scope.gridsterConfigIndex].type === "dataTable") {
-                visualization.setAttribute("log-element-group", "table_group");
-                visualization.setAttribute("log-element-type", "datagrid");
+                visualizationSuperclass.setAttribute("log-element-group", "table_group");
+                visualizationSuperclass.setAttribute("log-element-type", "datagrid");
             }
 
             // Save the bindings as a new object so that removing elements from the gridster configs doesn't cause errors.
             $scope.bindings = $scope.gridsterConfigs[$scope.gridsterConfigIndex].bindings || {};
             $scope.bindings.hideAdvancedOptions = config.hideAdvancedOptions;
             $scope.bindings.hideHeader = config.hideHeader;
-            visualization.setAttribute("bindings", "bindings");
+            visualizationSuperclass.setAttribute("bindings", "bindings");
 
-            $element.append($compile(visualization)($scope));
+            $element.append($compile(visualizationSuperclass)($scope));
 
             if(config.hideCloseButton) {
                 $scope.hideCloseButton = config.hideCloseButton;

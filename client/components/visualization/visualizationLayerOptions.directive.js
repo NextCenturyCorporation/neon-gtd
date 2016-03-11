@@ -16,8 +16,15 @@
  *
  */
 
+/**
+ * This generic directive represents the options of a layer for a Neon dashboard visualization.
+ * @namespace neonDemo.directives
+ * @class visualizationLayerOptions
+ * @constructor
+ */
 angular.module('neonDemo.directives').directive('visualizationLayerOptions', function() {
     return {
+        // HTML template and controller are set during compilation by the visualization superclass.
         scope: {
             layer: '='
         }

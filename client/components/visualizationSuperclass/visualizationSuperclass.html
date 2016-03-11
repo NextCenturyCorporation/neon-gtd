@@ -1,0 +1,62 @@
+<!-- An ng-controller is added before compilation. -->
+<div class="superclass-implementation">
+    <!-- An ng-controller is added before compilation. -->
+    <div class="visualization {{type + 'Directive'}}" active="active" bindings="bindings" functions="functions">
+        <div class="header-container options-container" ng-hide="bindings.hideHeader">
+            <div class="title header-text pull-left" ng-bind="createTitle()" title="{{createTitle()}}" style="max-width: 0px;"></div>
+
+            <options-menu parent-element="element" export-function="getExportData" resize-menu="resizeOptionsMenu" button-text="functions.createMenuText" show-button-text="functions.showMenuText">
+                <translation-options ng-if="translationsOn" on-translate="handleToggleTranslations"
+                    from-language-change="handleChangeFromLanguage" to-language-change="handleChangeToLanguage"
+                    from-language-options="languages.fromLanguageOptions" to-language-options="languages.toLanguageOptions">
+                </translation-options>
+
+                <layer-options ng-if="implementation === MULTIPLE_LAYER"></layer-options>
+
+                <div class="form-group" ng-if="implementation === SINGLE_LAYER" ng-hide="bindings.hideAdvancedOptions">
+                    <label>Database</label>
+                    <select class="form-control" ng-model="active.database" ng-options="database.prettyName for database in active.databases" ng-required="true" ng-disabled="(active.databases.length < 2)" ng-change="handleChangeDatabase()">
+                    </select>
+                </div>
+
+                <div class="form-group" ng-if="implementation === SINGLE_LAYER" ng-hide="bindings.hideAdvancedOptions">
+                    <label>Table</label>
+                    <select class="form-control" ng-model="active.table" ng-options="table.prettyName for table in active.tables" ng-required="true" ng-disabled="(active.tables.length < 2)" ng-change="handleChangeTable()">
+                    </select>
+                </div>
+
+                <visualization-options class="visualization-options"></visualization-options>
+
+                <div class="form-group" ng-if="implementation === SINGLE_LAYER" ng-hide="bindings.hideAdvancedOptions">
+                    <label>Unshared Filter</label>
+                    <select class="form-control" ng-model="active.unsharedFilterField" ng-required="false" ng-disabled="!(active.fields.length > 0)" ng-options="field.prettyName for field in active.fields" ng-change="handleChangeUnsharedFilterField()">
+                        <option selected value="">None</option>
+                    </select>
+
+                    <div class="input-group">
+                        <input type="text" class="form-control" placeholder="{{'Filter for ' + active.unsharedFilterField.prettyName + '...'}}" ng-model="active.unsharedFilterValue" ng-disabled="!(active.unsharedFilterField.columnName)">
+                        <div class="input-group-btn">
+                            <button type="button" class="btn btn-default refresh" title="Remove Unshared Filter" ng-disabled="(active.unsharedFilterField.columnName == undefined || active.unsharedFilterValue == '')" ng-click="handleRemoveUnsharedFilter()">
+                                <span class="glyphicon glyphicon-remove"></span>
+                            </button>
+                            <button type="button" class="btn btn-default refresh" title="Set Unshared Filter" ng-click="handleChangeUnsharedFilterValue()">
+                                <span class="glyphicon glyphicon-refresh"></span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </options-menu>
+        </div>
+
+        <div class="clearfix"></div>
+
+        <!-- Shrink the container instead of hiding it in order to trigger a resize event. -->
+        <div class="header-container filter-container legend-container" ng-class="{true: 'shrink', false: ''}[functions.hideHeaders()]">
+            <visualization-headers class="visualization-headers"></visualization-headers>
+        </div>
+
+        <div class="clearfix"></div>
+
+        <visualization-display class="visualization-display" style="height: 0px; width: 0px;"></visualization-display>
+    </div>
+</div>

@@ -16,13 +16,15 @@
  *
  */
 
+/**
+ * This generic directive represents the headers for a Neon dashboard visualization.
+ * @namespace neonDemo.directives
+ * @class visualizationHeaders
+ * @constructor
+ */
 angular.module('neonDemo.directives').directive('visualizationHeaders', function() {
     return {
-        scope: {
-            active: '=',
-            filter: '=',
-            functions: '='
-        }
+        // HTML template and controller are set during compilation by the visualization superclass.
     };
 });
 
