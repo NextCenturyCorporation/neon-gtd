@@ -16,6 +16,12 @@
  *
  */
 
+/**
+ * This visualization shows connected data in a directed network graph.
+ * @namespace neonDemo.controllers
+ * @class networkGraphController
+ * @constructor
+ */
 angular.module('neonDemo.controllers').controller('networkGraphController', ['$scope', '$timeout', '$filter', function($scope, $timeout, $filter) {
     var TIMEOUT_MS = 250;
 

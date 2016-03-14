@@ -16,7 +16,13 @@
  *
  */
 
-angular.module('neonDemo.controllers').controller('timelineController', ['$scope', '$interval', '$filter', 'external', 'opencpu', function($scope, $interval, $filter, external, opencpu) {
+/**
+ * This visualization shows aggregated time data in a timeline.
+ * @namespace neonDemo.controllers
+ * @class timelineController
+ * @constructor
+ */
+angular.module('neonDemo.controllers').controller('timelineController', ['$scope', '$interval', '$filter', 'opencpu', function($scope, $interval, $filter, opencpu) {
     $scope.active.OPENCPU = opencpu;
     $scope.active.YEAR = "year";
     $scope.active.MONTH = "month";
@@ -32,8 +38,8 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
     $scope.referenceStartDate = undefined;
     $scope.referenceEndDate = undefined;
 
-    // The brush for the chart contains either zero or two elements [startDate, endDate].
-    $scope.brush = [];
+    // The extent filter for the chart brush contains either zero or two elements [startDate, endDate].
+    $scope.extent = [];
 
     // Displayed dates.
     $scope.active.startDateForDisplay = undefined;
@@ -130,15 +136,15 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
 
     /**
      * Get the animation frame for the first non-empty bucket within our brushed time range, or simply
-     * the first non-empty time bucket if no brush exists.
+     * the first non-empty time bucket if no chart brush extent exists.
      * @method getAnimationStartFrame
      */
     $scope.getAnimationStartFrame = function() {
-        var origStartBucketIndex = ($scope.brush.length && $scope.brush[0]) ?
-            $scope.bucketizer.getBucketIndex($scope.brush[0]) : 0;
+        var origStartBucketIndex = ($scope.extent.length && $scope.extent[0]) ?
+            $scope.bucketizer.getBucketIndex($scope.extent[0]) : 0;
 
-        var indexLimit = ($scope.brush.length && $scope.brush[1]) ?
-            $scope.bucketizer.getBucketIndex($scope.brush[1]) : $scope.bucketizer.getNumBuckets();
+        var indexLimit = ($scope.extent.length && $scope.extent[1]) ?
+            $scope.bucketizer.getBucketIndex($scope.extent[1]) : $scope.bucketizer.getNumBuckets();
 
         var startBucketIndex = nextNonEmptyDate(origStartBucketIndex, indexLimit);
 
@@ -171,15 +177,15 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
 
     /**
      * Get the animation frame limit for the brushed time range, or simply
-     * the overall frame limit if no brush exists.
+     * the overall frame limit if no chart brush extent exists.
      * @method getAnimationFrameLimit
      */
     $scope.getAnimationFrameLimit = function() {
-        var origFrameLimit = ($scope.brush.length && $scope.brush[1]) ?
-            $scope.bucketizer.getBucketIndex($scope.brush[1]) : $scope.bucketizer.getNumBuckets();
+        var origFrameLimit = ($scope.extent.length && $scope.extent[1]) ?
+            $scope.bucketizer.getBucketIndex($scope.extent[1]) : $scope.bucketizer.getNumBuckets();
 
-        var indexMin = ($scope.brush.length && $scope.brush[0]) ?
-            $scope.bucketizer.getBucketIndex($scope.brush[0]) : 0;
+        var indexMin = ($scope.extent.length && $scope.extent[0]) ?
+            $scope.bucketizer.getBucketIndex($scope.extent[0]) : 0;
 
         var frameLimit = previousNonEmptyDate(origFrameLimit - 1, indexMin);
 
@@ -248,9 +254,9 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
         var start = getDateTimePickerStart();
         var end = getDateTimePickerEnd();
 
-        if($scope.brush.length && datesEqual(start, $scope.brush[0]) && datesEqual(end, $scope.brush[1])) {
+        if($scope.extent.length && datesEqual(start, $scope.extent[0]) && datesEqual(end, $scope.extent[1])) {
             $scope.functions.getElement(".save-button").addClass("disabled");
-        } else if(!$scope.brush.length && datesEqual(start, $scope.bucketizer.getStartDate()) && datesEqual(end, $scope.bucketizer.getEndDate())) {
+        } else if(!$scope.extent.length && datesEqual(start, $scope.bucketizer.getStartDate()) && datesEqual(end, $scope.bucketizer.getEndDate())) {
             $scope.functions.getElement(".save-button").addClass("disabled");
         } else {
             $scope.functions.getElement(".save-button").removeClass("disabled");
@@ -266,21 +272,21 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
         $scope.functions.getElement(".neon-datetimepicker").removeClass("open");
 
         if(datesEqual(start, $scope.bucketizer.getStartDate()) && datesEqual(end, $scope.bucketizer.getEndDate())) {
-            if($scope.brush.length) {
-                $scope.clearBrush();
+            if($scope.extent.length) {
+                $scope.removeFilter();
             }
             return;
         }
 
-        $scope.brush = [start, end];
-        onChangeBrush();
-        $scope.chart.renderExtent($scope.brush);
+        $scope.extent = [start, end];
+        onChangeFilter();
+        $scope.chart.renderExtent($scope.extent);
     };
 
     $scope.handleDateTimePickCancel = function() {
-        if($scope.brush.length) {
-            setDateTimePickerStart($scope.brush[0]);
-            setDateTimePickerEnd($scope.brush[1]);
+        if($scope.extent.length) {
+            setDateTimePickerStart($scope.extent[0]);
+            setDateTimePickerEnd($scope.extent[1]);
         } else if($scope.bucketizer.getStartDate() && $scope.bucketizer.getEndDate()) {
             setDateTimePickerStart($scope.bucketizer.getStartDate());
             setDateTimePickerEnd($scope.bucketizer.getEndDate());
@@ -333,14 +339,12 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
     var setDisplayDates = function(displayStartDate, displayEndDate) {
         $scope.active.startDateForDisplay = $scope.formatStartDate(displayStartDate);
         $scope.active.endDateForDisplay = $scope.formatEndDate(displayEndDate);
-        if(external.services.date) {
-            var linkData = {};
-            linkData[neonMappings.DATE] = {};
-            linkData[neonMappings.DATE][neonMappings.START_DATE] = displayStartDate.toISOString();
-            linkData[neonMappings.DATE][neonMappings.END_DATE] = displayEndDate.toISOString();
-            var links = $scope.functions.createLinksForData("date", $scope.getDateKeyForLinksPopupButton(), linkData);
-            $scope.showLinksPopupButton = !!links.length;
-        }
+
+        var linkData = {};
+        linkData[neonMappings.DATE] = {};
+        linkData[neonMappings.DATE][neonMappings.START_DATE] = displayStartDate.toISOString();
+        linkData[neonMappings.DATE][neonMappings.END_DATE] = displayEndDate.toISOString();
+        $scope.showLinksPopupButton = $scope.functions.createLinksForData(neonMappings.DATE, linkData, $scope.getLinksPopupDateKey());
     };
 
     /**
@@ -383,12 +387,11 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
 
     $scope.functions.onInit = function() {
         $scope.functions.subscribe("date_selected", onDateSelected);
-        // TODO The timeline selector chart should be able to initialize itself without the visualization element.
         $scope.chart = new charts.TimelineSelectorChart($scope.functions.getElement(".timeline-selector-chart")[0]);
         $scope.chart.render([]);
 
-        $scope.chart.addBrushHandler(function(brush) {
-            // Wrap our brush change in $apply since this is fired from a D3 event and outside of angular's digest cycle.
+        $scope.chart.addBrushHandler(function(extent) {
+            // Wrap our extent change in $apply since this is fired from a D3 event and outside of angular's digest cycle.
             $scope.$apply(function() {
                 XDATA.userALE.log({
                     activity: "select",
@@ -401,8 +404,8 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
                     tags: ["timeline", "date-range", "filter"]
                 });
 
-                $scope.brush = brush;
-                onChangeBrush();
+                $scope.extent = extent;
+                onChangeFilter();
 
                 if($scope.active.showFocus === "on_filter") {
                     $scope.chart.toggleFocus(true);
@@ -451,7 +454,7 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
             $scope.chart.config.height = elementHeight - headersHeight - 20;
             $scope.chart.config.width = elementWidth + 30;
 
-            if($scope.active.showFocus === "always" || ($scope.active.showFocus === "on_filter" && $scope.brush.length > 0)) {
+            if($scope.active.showFocus === "always" || ($scope.active.showFocus === "on_filter" && $scope.extent.length > 0)) {
                 $scope.chart.toggleFocus(true);
             } else {
                 $scope.chart.toggleFocus(false);
@@ -462,46 +465,46 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
     $scope.handleChangeGranularity = function() {
         updateBucketizer();
         updateDates();
-        if($scope.brush.length) {
-            var newBrushStart = $scope.bucketizer.roundDownBucket($scope.brush[0]);
-            var newBrushEnd = $scope.bucketizer.roundUpBucket($scope.brush[1]);
-            if(newBrushStart.getTime() !== $scope.brush[0].getTime() || newBrushEnd.getTime() !== $scope.brush[1].getTime()) {
-                $scope.brush = [newBrushStart, newBrushEnd];
-                onChangeBrush();
+        if($scope.extent.length) {
+            var newExtentStart = $scope.bucketizer.roundDownBucket($scope.extent[0]);
+            var newExtentEnd = $scope.bucketizer.roundUpBucket($scope.extent[1]);
+            if(newExtentStart.getTime() !== $scope.extent[0].getTime() || newExtentEnd.getTime() !== $scope.extent[1].getTime()) {
+                $scope.extent = [newExtentStart, newExtentEnd];
+                onChangeFilter();
             }
         }
         $scope.functions.logChangeAndUpdate("granularity", $scope.active.granularity, "button");
     };
 
-    var onChangeBrush = function() {
-        if($scope.brush.length) {
-            if($scope.brush[0].getTime() === $scope.brush[1].getTime() && $scope.bucketizer.getStartDate() !== undefined && $scope.bucketizer.getEndDate() !== undefined) {
-                $scope.clearBrush();
+    var onChangeFilter = function() {
+        if($scope.extent.length) {
+            if($scope.extent[0].getTime() === $scope.extent[1].getTime() && $scope.bucketizer.getStartDate() !== undefined && $scope.bucketizer.getEndDate() !== undefined) {
+                $scope.removeFilter();
                 return;
             }
-            if(datesEqual($scope.brush[0], $scope.bucketizer.getStartDate()) && datesEqual($scope.brush[1], $scope.bucketizer.getEndDate())) {
-                $scope.clearBrush();
+            if(datesEqual($scope.extent[0], $scope.bucketizer.getStartDate()) && datesEqual($scope.extent[1], $scope.bucketizer.getEndDate())) {
+                $scope.removeFilter();
                 return;
             }
         }
 
-        if(!$scope.brush.length) {
+        if(!$scope.extent.length) {
             $scope.chart.clearBrush();
         }
 
-        setDateTimePickerStart($scope.brush.length ? $scope.brush[0] : $scope.bucketizer.getStartDate());
-        setDateTimePickerEnd($scope.brush.length ? $scope.brush[1] : $scope.bucketizer.getEndDate());
+        setDateTimePickerStart($scope.extent.length ? $scope.extent[0] : $scope.bucketizer.getStartDate());
+        setDateTimePickerEnd($scope.extent.length ? $scope.extent[1] : $scope.bucketizer.getEndDate());
 
-        $scope.chart.renderExtent($scope.brush);
+        $scope.chart.renderExtent($scope.extent);
 
         updateChartTimesAndTotal();
 
-        if($scope.brush.length) {
+        if($scope.extent.length) {
             $scope.functions.updateNeonFilter();
         }
 
         if($scope.showFocus === "on_filter") {
-            $scope.chart.toggleFocus($scope.brush.length);
+            $scope.chart.toggleFocus($scope.extent.length);
         }
     };
 
@@ -521,7 +524,7 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
             $scope.chart.toggleFocus(true);
         } else if($scope.active.showFocus === 'never') {
             $scope.chart.toggleFocus(false);
-        } else if($scope.active.showFocus === 'on_filter' && $scope.brush.length > 0) {
+        } else if($scope.active.showFocus === 'on_filter' && $scope.extent.length > 0) {
             $scope.chart.toggleFocus(true);
         }
     };
@@ -535,8 +538,8 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
      * @method sendInvalidDates
      */
     $scope.handleToggleInvalidDatesFilter = function() {
-        $scope.brush = [];
-        onChangeBrush();
+        $scope.extent = [];
+        onChangeFilter();
         if($scope.bucketizer.getStartDate() && $scope.bucketizer.getEndDate()) {
             setDateTimePickerStart($scope.bucketizer.getStartDate());
             setDateTimePickerEnd($scope.bucketizer.getEndDate());
@@ -562,17 +565,17 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
     };
 
     var getFilterStartDate = function() {
-        var startDate = $scope.brush.length < 2 ? $scope.bucketizer.getStartDate() : $scope.brush[0];
+        var startDate = $scope.extent.length < 2 ? $scope.bucketizer.getStartDate() : $scope.extent[0];
         return $scope.bucketizer.zeroOutDate(startDate);
     };
 
     var getFilterEndDate = function() {
-        var endDate = $scope.brush.length < 2 ? $scope.bucketizer.getEndDate() : $scope.brush[1];
+        var endDate = $scope.extent.length < 2 ? $scope.bucketizer.getEndDate() : $scope.extent[1];
         return $scope.bucketizer.roundUpBucket(endDate);
     };
 
     $scope.functions.isFilterSet = function() {
-        return $scope.brush.length === 2;
+        return $scope.extent.length === 2;
     };
 
     $scope.functions.areDataFieldsValid = function() {
@@ -585,18 +588,18 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
 
     $scope.functions.updateFilterValues = function(neonFilter) {
         if($scope.functions.getNumberOfFilterClauses(neonFilter) === 2) {
-            $scope.brush = [
+            $scope.extent = [
                 new Date(neonFilter.filter.whereClause.whereClauses[0].rhs),
                 new Date(neonFilter.filter.whereClause.whereClauses[1].rhs)
             ];
-            setDateTimePickerStart($scope.brush[0]);
-            setDateTimePickerEnd($scope.brush[1]);
+            setDateTimePickerStart($scope.extent[0]);
+            setDateTimePickerEnd($scope.extent[1]);
         }
     };
 
     $scope.functions.removeFilterValues = function() {
-        $scope.brush = [];
-        onChangeBrush();
+        $scope.extent = [];
+        onChangeFilter();
         $scope.active.showInvalidDatesFilter = false;
     };
 
@@ -708,15 +711,15 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
         $scope.primarySeries = $scope.data[primaryIndex];
         $scope.chart.updatePrimarySeries($scope.primarySeries);
         $scope.chart.render($scope.data);
-        $scope.chart.renderExtent($scope.brush);
+        $scope.chart.renderExtent($scope.extent);
 
         // Handle bound conditions.
 
         var extentStartDate;
         var extentEndDate;
-        if($scope.brush.length === 2) {
-            extentStartDate = $scope.brush[0];
-            extentEndDate = $scope.brush[1];
+        if($scope.extent.length === 2) {
+            extentStartDate = $scope.extent[0];
+            extentEndDate = $scope.extent[1];
         } else {
             extentStartDate = $scope.bucketizer.getStartDate();
             extentEndDate = $scope.bucketizer.getEndDate();
@@ -784,7 +787,7 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
                 addTimeSeriesAnalysis($scope.data[0].data, timelineData);
                 $scope.chart.updateGranularity($scope.active.granularity);
                 $scope.chart.render($scope.data);
-                $scope.chart.renderExtent($scope.brush);
+                $scope.chart.renderExtent($scope.extent);
             };
 
             // on the initial query, setup the start/end bounds
@@ -809,13 +812,13 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
             updateChartTimesAndTotal();
             $scope.chart.updateGranularity($scope.active.granularity);
             $scope.chart.render($scope.data);
-            $scope.chart.renderExtent($scope.brush);
+            $scope.chart.renderExtent($scope.extent);
         }
     };
 
     var queryForMinDate = function(callback) {
-        if($scope.overrideStartDate) {
-            $scope.referenceStartDate = new Date($scope.overrideStartDate);
+        if($scope.bindings.overrideStartDate) {
+            $scope.referenceStartDate = new Date($scope.bindings.overrideStartDate);
             queryForMaxDate(callback);
         } else {
             // TODO: neon doesn't yet support a more efficient way to just get the min/max fields without aggregating
@@ -839,8 +842,8 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
     };
 
     var queryForMaxDate = function(callback) {
-        if($scope.overrideEndDate) {
-            $scope.referenceEndDate = new Date($scope.overrideEndDate);
+        if($scope.bindings.overrideEndDate) {
+            $scope.referenceEndDate = new Date($scope.bindings.overrideEndDate);
             callback();
         } else {
             $scope.functions.queryAndUpdate({
@@ -987,7 +990,7 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
             });
             $scope.chart.updateGranularity($scope.active.granularity);
             $scope.chart.render($scope.data);
-            $scope.chart.renderExtent($scope.brush);
+            $scope.chart.renderExtent($scope.extent);
         }).fail(function() {
             // If the request fails, then just update.
             $scope.$apply();
@@ -1135,10 +1138,10 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
     };
 
     /**
-     * Clears the timeline brush and filter.
-     * @method clearBrush
+     * Removes the timeline extent and filter.
+     * @method removeFilter
      */
-    $scope.clearBrush = function() {
+    $scope.removeFilter = function() {
         if($scope.bucketizer.getStartDate() && $scope.bucketizer.getEndDate()) {
             setDateTimePickerStart($scope.bucketizer.getStartDate());
             setDateTimePickerEnd($scope.bucketizer.getEndDate());
@@ -1168,14 +1171,16 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
         // of that to add the pretty names of the clauses in the same order for as many as were added.
         var counter = 0;
         var prettyNames = ["Year", "Month", "Day", "Hour"];
+        // TODO NEON-1973
+        /*
         query.groupByClauses.forEach(function(field) {
-                finalObject.data[0].fields.push({
-                    query: field.name,
-                    pretty: prettyNames[counter]
-                });
-                counter++;
-            }
-        );
+            finalObject.data[0].fields.push({
+                query: field.name,
+                pretty: prettyNames[counter]
+            });
+            counter++;
+        });
+        */
         finalObject.data[0].fields.push({
             query: "count",
             pretty: "Count"
@@ -1201,7 +1206,7 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
         return false;
     };
 
-    $scope.getLinksPopupKey = function() {
+    $scope.getLinksPopupDateKey = function() {
         if($scope.active.startDateForDisplay && $scope.active.endDateForDisplay) {
             return $scope.functions.getLinksPopupService().generateDateRangeKey($scope.active.startDateForDisplay, $scope.active.endDateForDisplay);
         }
@@ -1209,7 +1214,7 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
     };
 
     $scope.getFilterData = function() {
-        return $scope.showInvalidDatesFilter ? ["All Invalid Dates"] : ($scope.brush.length ? ["Date Filter"] : []);
+        return $scope.showInvalidDatesFilter ? ["All Invalid Dates"] : ($scope.extent.length ? ["Date Filter"] : []);
     };
 
     $scope.getFilterDesc = function() {

@@ -62,7 +62,7 @@ function($timeout, external, datasetService, filterService, linksPopupService, p
                 $scope.updateFilterTray(filterService.getAllFilters());
             };
 
-            $scope.handleFilterRemove = function(filterIds) {
+            $scope.removeFilter = function(filterIds) {
                 filterService.removeFiltersForKeys(filterIds);
             };
 

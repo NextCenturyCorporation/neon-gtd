@@ -115,6 +115,7 @@ neonMappings.MIN_LON = "minLon";
 neonMappings.MAX_LAT = "maxLat";
 neonMappings.MAX_LON = "maxLon";
 neonMappings.BOUNDS = "bounds";
+neonMappings.POINT = "point";
 
 var neonWizard = neonWizard || {};
 

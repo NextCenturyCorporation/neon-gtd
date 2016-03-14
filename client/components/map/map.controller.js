@@ -16,7 +16,13 @@
  *
  */
 
-angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$filter', 'external', function($scope, $filter, external) {
+/**
+ * This visualization shows geographic data in a map.
+ * @namespace neonDemo.controllers
+ * @class mapController
+ * @constructor
+ */
+angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$filter', function($scope, $filter) {
     $scope.POINT_LAYER = coreMap.Map.POINTS_LAYER;
     $scope.CLUSTER_LAYER = coreMap.Map.CLUSTER_LAYER;
     $scope.HEATMAP_LAYER = coreMap.Map.HEATMAP_LAYER;
@@ -90,7 +96,7 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
             $scope.map.resizeToElement(elementHeight - headersHeight, elementWidth);
         }
 
-        var height = elementHeight - titleHeight - $scope.functions.getElement(".legend>.divider").outerHeight(true) - $scope.functions.getElement(".legend>.header-text").outerHeight(true) - 10;
+        var height = elementHeight - titleHeight - $scope.functions.getElement(".legend>.divider").outerHeight(true) - $scope.functions.getElement(".legend>.text").outerHeight(true) - 10;
         var width = elementWidth - $scope.functions.getElement(".filter-reset").outerWidth(true) - $scope.functions.getElement(".olControlZoom").outerWidth(true) - 20;
         var legendDetails = $scope.functions.getElement(".legend>.legend-details");
         legendDetails.css("max-height", height + "px");
@@ -168,16 +174,13 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
     };
 
     var updateLinksAndBoundsBox = function() {
-        if(external.services.bounds) {
-            var linkData = {};
-            linkData[neonMappings.BOUNDS] = {};
-            linkData[neonMappings.BOUNDS][neonMappings.MIN_LAT] = $scope.extent.minimumLatitude;
-            linkData[neonMappings.BOUNDS][neonMappings.MIN_LON] = $scope.extent.minimumLongitude;
-            linkData[neonMappings.BOUNDS][neonMappings.MAX_LAT] = $scope.extent.maximumLatitude;
-            linkData[neonMappings.BOUNDS][neonMappings.MAX_LON] = $scope.extent.maximumLongitude;
-            var links = $scope.functions.createLinksForData("bounds", $scope.getBoundsKeyForLinksPopupButton(), linkData);
-            $scope.showLinksPopupButton = !!links.length;
-        }
+        var linkData = {};
+        linkData[neonMappings.BOUNDS] = {};
+        linkData[neonMappings.BOUNDS][neonMappings.MIN_LAT] = $scope.extent.minimumLatitude;
+        linkData[neonMappings.BOUNDS][neonMappings.MIN_LON] = $scope.extent.minimumLongitude;
+        linkData[neonMappings.BOUNDS][neonMappings.MAX_LAT] = $scope.extent.maximumLatitude;
+        linkData[neonMappings.BOUNDS][neonMappings.MAX_LON] = $scope.extent.maximumLongitude;
+        $scope.showLinksPopupButton = $scope.functions.createLinksForData(neonMappings.BOUNDS, $scope.getLinksPopupBoundsKey(), linkData);
 
         removeZoomRect();
         $scope.zoomRectId = $scope.map.drawBox({
@@ -188,7 +191,7 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
         });
     };
 
-    $scope.getBoundsKeyForLinksPopupButton = function() {
+    $scope.getLinksPopupBoundsKey = function() {
         return $scope.extent ? $scope.functions.getLinksPopupService().generateBoundsKey($scope.extent.minimumLatitude, $scope.extent.minimumLongitude, $scope.extent.maximumLatitude, $scope.extent.maximumLongitude) : "";
     };
 
@@ -492,10 +495,9 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
                         }
                     }
 
-                    if(external.services.point && layer.type !== $scope.NODE_AND_ARROW_LAYER) {
-                        var linksSource = generatePointLinksSource(layer.database.name, layer.table.name);
-                        createExternalLinks(layerData, linksSource, layer.latitudeField.columnName, layer.longitudeField.columnName);
-                        layer.olLayer.linksSource = linksSource;
+                    if(layer.type !== $scope.NODE_AND_ARROW_LAYER) {
+                        layer.olLayer.linksSource = generatePointLinksSource(layer.database.name, layer.table.name);
+                        createExternalLinks(layerData, layer.olLayer.linksSource, layer.latitudeField.columnName, layer.longitudeField.columnName);
                     }
                 } else if(layerData.length) {
                     layer.error = "Error - cannot create layer due to missing fields in data";
@@ -622,26 +624,18 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
      * @private
      */
     var createExternalLinks = function(data, source, latitudeField, longitudeField) {
-        var mapLinks = {};
+        data.forEach(function(row) {
+            var latitudeValue = neon.helpers.getNestedValue(row, latitudeField);
+            var longitudeValue = neon.helpers.getNestedValue(row, longitudeField);
+            var key = $scope.functions.getLinksPopupService().generatePointKey(latitudeValue, longitudeValue);
 
-        if(external.services.point) {
-            data.forEach(function(row) {
-                var latitudeValue = neon.helpers.getNestedValue(row, latitudeField);
-                var longitudeValue = neon.helpers.getNestedValue(row, longitudeField);
-                var key = $scope.functions.getLinksPopupService().generatePointKey(latitudeValue, longitudeValue);
+            var linkData = {};
+            linkData[neonMappings.POINT] = {};
+            linkData[neonMappings.POINT][neonMappings.LATITUDE] = latitudeValue;
+            linkData[neonMappings.POINT][neonMappings.LONGITUDE] = longitudeValue;
 
-                var linkData = {};
-                linkData[neonMappings.POINT] = {};
-                linkData[neonMappings.POINT][neonMappings.LATITUDE] = latitudeValue;
-                linkData[neonMappings.POINT][neonMappings.LONGITUDE] = longitudeValue;
-
-                mapLinks[key] = createLinksForData("point", key, linkData);
-            });
-        }
-
-        // TODO
-        // Set the link data for the links popup for this visualization.
-        $scope.functions.getLinksPopupService().setLinks(source, mapLinks);
+            $scope.functions.createLinksForData(neonMappings.POINT, linkData, key, source);
+        });
     };
 
     $scope.functions.addToQuery = function(query, layers) {

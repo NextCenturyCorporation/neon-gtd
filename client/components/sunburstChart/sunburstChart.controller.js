@@ -16,6 +16,12 @@
  *
  */
 
+/**
+ * This visualization shows selected data in a sunburst chart.
+ * @namespace neonDemo.controllers
+ * @class sunburstChartController
+ * @constructor
+ */
 angular.module('neonDemo.controllers').controller('sunburstChartController', ['$scope', function($scope) {
     $scope.active.addField = {};
     $scope.active.arcValue = "count";

@@ -16,7 +16,13 @@
  *
  */
 
-angular.module('neonDemo.controllers').controller('dataTableController', ['$scope', 'external', 'linkify', '$sce', '$timeout', function($scope, external, linkify, $sce, $timeout) {
+/**
+ * This visualization shows all data in a table.
+ * @namespace neonDemo.controllers
+ * @class dataTableController
+ * @constructor
+ */
+angular.module('neonDemo.controllers').controller('dataTableController', ['$scope', 'linkify', '$sce', '$timeout', function($scope, linkify, $sce, $timeout) {
     // Unique field name used for the SlickGrid column containing the URLs for the external apps.
     // This name should be one that is highly unlikely to be a column name in a real database.
     var EXTERNAL_APP_FIELD_NAME = "neonExternalApps";
@@ -119,7 +125,7 @@ angular.module('neonDemo.controllers').controller('dataTableController', ['$scop
             return config;
         });
 
-        if(external.active) {
+        if($scope.functions.areExternalServicesActive()) {
             var externalAppColumn = {
                 headerName: "",
                 field: EXTERNAL_APP_FIELD_NAME,
@@ -212,7 +218,7 @@ angular.module('neonDemo.controllers').controller('dataTableController', ['$scop
     $scope.functions.updateData = function(data) {
         var tableData = escapeDataRecursively(data || []);
 
-        if(external.active) {
+        if($scope.functions.areExternalServicesActive()) {
             tableData = addExternalLinksToColumnData(tableData);
         }
 
@@ -252,7 +258,7 @@ angular.module('neonDemo.controllers').controller('dataTableController', ['$scop
         });
 
         if(idField) {
-            var links = $scope.functions.createLinkButtons(idField, data);
+            var buttons = $scope.functions.createLinkButtons(idField, data);
             data.forEach(function(row, index) {
                 row[EXTERNAL_APP_FIELD_NAME] = buttons[index];
             });
@@ -289,9 +295,9 @@ angular.module('neonDemo.controllers').controller('dataTableController', ['$scop
 
     /**
      * Opens or closes the ag-grid tool panel to allow for modifying table columns
-     * @method handleToggleToolPanel
+     * @method toggleToolPanel
      */
-    $scope.handleToggleToolPanel = function() {
+    $scope.toggleToolPanel = function() {
         // TODO Logging
         $scope.active.gridOptions.api.showToolPanel($scope.active.gridOptions.showToolPanel);
     };
@@ -318,7 +324,7 @@ angular.module('neonDemo.controllers').controller('dataTableController', ['$scop
         return finalObject;
     };
 
-    var handleChangeSort = function() {
+    var updateSort = function() {
         var sort = {
             colId: $scope.active.sortByField.columnName,
             sort: $scope.active.sortDirection === $scope.active.ASCENDING ? "asc" : "desc"
@@ -328,12 +334,12 @@ angular.module('neonDemo.controllers').controller('dataTableController', ['$scop
     };
 
     $scope.handleChangeSortField = function() {
-        handleChangeSort();
+        updateSort();
         $scope.functions.logChangeAndUpdate("sortField", $scope.active.sortByField.name);
     };
 
     $scope.handleChangeSortDirection = function() {
-        handleChangeSort();
+        updateSort();
         $scope.functions.logChangeAndUpdate("sortDirection", $scope.active.sortDirection, "button");
     };
 

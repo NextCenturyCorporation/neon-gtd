@@ -16,6 +16,12 @@
  *
  */
 
+/**
+ * This visualization shows time data in a gantt chart.
+ * @namespace neonDemo.controllers
+ * @class ganttChartController
+ * @constructor
+ */
 angular.module('neonDemo.controllers').controller('ganttChartController', ['$scope', function($scope) {
     $scope.active.legend = [];
     $scope.active.startField = {};

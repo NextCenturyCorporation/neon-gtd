@@ -16,6 +16,13 @@
  *
  */
 
+/**
+ * This controller manages the common behavior for all multiple layer Neon dashboard visualizations.
+ * @namespace neonDemo.controllers
+ * @class multipleLayerController
+ * @extends visualizationSuperclass
+ * @constructor
+ */
 angular.module('neonDemo.controllers').controller('multipleLayerController', ['$scope', function($scope) {
     // Use the default implementation of the visualization superclass.
 }]);

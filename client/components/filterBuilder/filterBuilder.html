@@ -1,5 +1,5 @@
-<div class="header-container header-container-large">
-    <span class="header-text title pull-left">Filter Builder</span>
+<div class="text-container">
+    <span class="header text pull-left">Filter Builder</span>
 
     <div class="pull-right">
       <div class="btn-group" >
@@ -88,22 +88,22 @@
         </select>
       </div>
       <div class="form-group">
-        <select id="filter-field-selection" class="form-control" ng-model="selectedField" ng-disabled="(fields.length == 0)" ng-options="field.prettyName for field in fields" ng-change="onSelectedFieldChange()">
+        <select id="filter-field-selection" class="form-control" ng-model="selectedField" ng-disabled="(fields.length == 0)" ng-options="field.prettyName for field in fields" ng-change="handleChangeSelectedField()">
         </select>
       </div>
       <div class="form-group">
-        <select id="filter-operator-selection" class="form-control"  ng-model="selectedOperator" ng-options="operator for operator in filterTable.operatorOptions" ng-disabled="(fields.length == 0)" ng-change="onSelectedOperatorChange()">
+        <select id="filter-operator-selection" class="form-control"  ng-model="selectedOperator" ng-options="operator for operator in filterTable.operatorOptions" ng-disabled="(fields.length == 0)" ng-change="handleChangeSelectedOperator()">
         </select>
       </div>
       <div class="form-group">
-        <input type="text" class="form-control" id="filter-value" size="42" placeholder="Value" ng-keyup="$event.keyCode == 13 && addFilterRow()" ng-model="selectedValue" ng-disabled="(fields.length == 0)" ng-required="true" ng-show="!(selectedFieldIsDate)" ng-change="onSelectedValueChange()">
+        <input type="text" class="form-control" id="filter-value" size="42" placeholder="Value" ng-keyup="$event.keyCode == 13 && addFilterRow()" ng-model="selectedValue" ng-disabled="(fields.length == 0)" ng-required="true" ng-show="!(selectedFieldIsDate)" ng-change="handleChangeSelectedValue()">
         <div class="neon-datetimepicker dropdown" ng-show="(selectedFieldIsDate)">
             <button class="btn btn-default dropdown-toggle" id="date-dropdown" role="button" data-toggle="dropdown" data-target="#" href="#" title="{{selectedValue ? selectedValue.toUTCString() : 'Choose Date'}}">
                 <span class="glyphicon glyphicon-calendar"></span>
                 <span ng-bind="(selectedValue ? selectedValue.toUTCString() : 'Choose Date')"></span>
             </button>
             <ul class="dropdown-menu" role="menu">
-                <datetimepicker data-ng-model="selectedValue" data-on-set-time="onSelectedValueChange()" data-datetimepicker-config="{ dropdownSelector: '#date-dropdown', startView: 'year', minView: 'hour' }"/>
+                <datetimepicker data-ng-model="selectedValue" data-on-set-time="handleChangeSelectedValue()" data-datetimepicker-config="{ dropdownSelector: '#date-dropdown', startView: 'year', minView: 'hour' }"/>
             </ul>
         </div>
       </div>

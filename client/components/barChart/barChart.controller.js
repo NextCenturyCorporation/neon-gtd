@@ -16,12 +16,18 @@
  *
  */
 
+/**
+ * This visualization shows aggregated data in a bar chart.
+ * @namespace neonDemo.controllers
+ * @class barChartController
+ * @constructor
+ */
 angular.module('neonDemo.controllers').controller('barChartController', ['$scope', function($scope) {
     var COUNT_FIELD_NAME = 'Count';
 
     $scope.chart = undefined;
 
-    $scope.active.aggregation = $scope.bindings.aggregation || "count";
+    $scope.active.aggregation = $scope.bindings.aggregationType || "count";
     $scope.active.aggregationField = {};
     $scope.active.groupField = {};
     $scope.active.limit = $scope.bindings.limit || 100;
@@ -71,8 +77,7 @@ angular.module('neonDemo.controllers').controller('barChartController', ['$scope
     };
 
     var updateLinks = function() {
-        var links = $scope.functions.createLinks($scope.active.groupField, $scope.filter);
-        $scope.showLinksPopupButton = !!links.length;
+        $scope.showLinksPopupButton = !!($scope.functions.createLinks($scope.active.groupField, $scope.filter).length);
     };
 
     $scope.functions.removeFilterValues = function() {
@@ -243,8 +248,8 @@ angular.module('neonDemo.controllers').controller('barChartController', ['$scope
     };
 
     $scope.functions.addToBindings = function(bindings) {
-        bindings.aggregation = $scope.active.aggregation || undefined;
-        bindings.groupField = $scope.functions.isFieldValid($scope.options.groupField) ? $scope.options.groupField.columnName : undefined;
+        bindings.aggregationType = $scope.active.aggregation || undefined;
+        bindings.groupField = $scope.functions.isFieldValid($scope.active.groupField) ? $scope.active.groupField.columnName : undefined;
         var hasAggField = $scope.active.aggregation && $scope.active.aggregation !== 'count' && $scope.functions.isFieldValid($scope.active.aggregationField);
         bindings.aggregationField = hasAggField ? $scope.active.aggregationField.columnName : undefined;
         bindings.limit = $scope.active.limit;
@@ -253,10 +258,10 @@ angular.module('neonDemo.controllers').controller('barChartController', ['$scope
 
     /**
      * Generates and returns the links popup key for this visualization.
-     * @method generateLinksPopupKey
+     * @method getLinksPopupKey
      * @return {String}
      */
-    $scope.generateLinksPopupKey = function(value) {
+    $scope.getLinksPopupKey = function(value) {
         return $scope.functions.getLinksPopupService().generateKey($scope.active.groupField, value);
     };
 }]);

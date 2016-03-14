@@ -16,12 +16,18 @@
  *
  */
 
-angular.module('neonDemo.controllers').controller('lineChartController', ['$scope', '$filter', 'external', function($scope, $filter, external) {
+/**
+ * This visualization shows aggregated data in a line chart.
+ * @namespace neonDemo.controllers
+ * @class lineChartController
+ * @constructor
+ */
+angular.module('neonDemo.controllers').controller('lineChartController', ['$scope', '$filter', function($scope, $filter) {
     var COUNT_FIELD_NAME = 'value';
     $scope.active.HOUR = "hour";
     $scope.active.DAY = "day";
 
-    $scope.brushExtent = [];
+    $scope.extent = [];
     $scope.colorMappings = [];
     $scope.dateStringToDataIndex = {};
     $scope.seriesLimit = 10;
@@ -47,7 +53,7 @@ angular.module('neonDemo.controllers').controller('lineChartController', ['$scop
     };
 
     $scope.functions.onResize = function(elementHeight, elementWidth, titleHeight) {
-        var height = elementHeight - titleHeight - $scope.functions.getElement(".legend>.divider").outerHeight(true) - $scope.functions.getElement(".legend>.header-text").outerHeight(true);
+        var height = elementHeight - titleHeight - $scope.functions.getElement(".legend>.divider").outerHeight(true) - $scope.functions.getElement(".legend>.text").outerHeight(true);
         var width = elementWidth - $scope.functions.getElement(".filter-reset").outerWidth(true) - $scope.functions.getElement(".olControlZoom").outerWidth(true) - 25;
         var legendDetails = $scope.functions.getElement(".legend>.legend-details");
         legendDetails.css("max-height", height + "px");
@@ -111,12 +117,12 @@ angular.module('neonDemo.controllers').controller('lineChartController', ['$scop
     };
 
     /**
-     * Returns the external services date key for the brush extent.
+     * Returns the external services date key for the chart brush extent.
      * @return {String}
-     * @method getDateKeyForLinksPopupButton
+     * @method getLinksPopupDateKey
      */
-    $scope.getDateKeyForLinksPopupButton = function() {
-        return $scope.brushExtent.length >= 2 ? $scope.functions.getLinksPopupService().generateDateRangeKey($scope.brushExtent[0].toUTCString(), $scope.brushExtent[1].toUTCString()) : "";
+    $scope.getLinksPopupDateKey = function() {
+        return $scope.extent.length >= 2 ? $scope.functions.getLinksPopupService().generateDateRangeKey($scope.extent[0].toUTCString(), $scope.extent[1].toUTCString()) : "";
     };
 
     $scope.functions.areDataFieldsValid = function(layers) {
@@ -145,9 +151,9 @@ angular.module('neonDemo.controllers').controller('lineChartController', ['$scop
         var dayGroupClause = new neon.query.GroupByFunctionClause(neon.query.DAY, layer.dateField.columnName, 'day');
         var groupByClause = [yearGroupClause, monthGroupClause, dayGroupClause];
 
-        if($scope.brushExtent.length >= 2) {
+        if($scope.extent.length >= 2) {
             var dayMillis = (1000 * 60 * 60 * 24);
-            var diff = $scope.brushExtent[1] - $scope.brushExtent[0];
+            var diff = $scope.extent[1] - $scope.extent[0];
 
             if($scope.active.granularity === $scope.active.DAY && (diff / dayMillis) <= 1) {
                 $scope.automaticHourSet = true;
@@ -203,26 +209,23 @@ angular.module('neonDemo.controllers').controller('lineChartController', ['$scop
     };
 
     $scope.functions.removeFilterValues = function() {
-        $scope.brushExtent = [];
+        $scope.extent = [];
         $scope.functions.removeLinks($scope.visualizationId);
     };
 
     $scope.functions.updateFilterValues = function(neonFilter) {
         if($scope.functions.getNumberOfFilterClauses(neonFilter) === 2) {
-            $scope.brushExtent = [new Date(neonFilter.filter.whereClause.whereClauses[0].rhs), new Date(neonFilter.filter.whereClause.whereClauses[1].rhs)];
+            $scope.extent = [new Date(neonFilter.filter.whereClause.whereClauses[0].rhs), new Date(neonFilter.filter.whereClause.whereClauses[1].rhs)];
             updateLinks();
         }
     };
 
     var updateLinks = function() {
-        if(external.services[neonMappings.DATE]) {
-            var linkData = {};
-            linkData[neonMappings.DATE] = {};
-            linkData[neonMappings.DATE][neonMappings.START_DATE] = $scope.brushExtent[0].toISOString();
-            linkData[neonMappings.DATE][neonMappings.END_DATE] = $scope.brushExtent[1].toISOString();
-            var links = $scope.functions.createLinksForData("date", $scope.getDateKeyForLinksPopupButton(), linkData);
-            $scope.showLinksPopupButton = !!links.length;
-        }
+        var linkData = {};
+        linkData[neonMappings.DATE] = {};
+        linkData[neonMappings.DATE][neonMappings.START_DATE] = $scope.extent[0].toISOString();
+        linkData[neonMappings.DATE][neonMappings.END_DATE] = $scope.extent[1].toISOString();
+        $scope.showLinksPopupButton = $scope.functions.createLinksForData(neonMappings.DATE, linkData, $scope.getLinksPopupDateKey());
     };
 
     $scope.functions.needToUpdateFilter = function(neonFilters) {
@@ -235,7 +238,7 @@ angular.module('neonDemo.controllers').controller('lineChartController', ['$scop
         var end = neonFilters[0].filter.whereClause.whereClauses[1].rhs;
 
         // If the dates in the neon filter are the same as the extent then we don't need to update the extent.
-        var same = $scope.brushExtent.length ? $scope.brushExtent[0].getTime() === start.getTime() && $scope.brushExtent[1].getTime() === end.getTime() : false;
+        var same = $scope.extent.length ? $scope.extent[0].getTime() === start.getTime() && $scope.extent[1].getTime() === end.getTime() : false;
         var answer = !same;
 
         neonFilters.forEach(function(neonFilter) {
@@ -251,15 +254,15 @@ angular.module('neonDemo.controllers').controller('lineChartController', ['$scop
     };
 
     var updateFields = function(layer, config) {
-        layer.dateField = $scope.functions.findFieldObject(config.date, neonMappings.DATE, layer);
-        layer.aggregationField = $scope.functions.findFieldObject(config.aggregation, neonMappings.Y_AXIS, layer);
-        layer.groupField = $scope.functions.findFieldObject(config.group, neonMappings.LINE_GROUPS, layer);
+        layer.dateField = $scope.functions.findFieldObject(config.dateField, neonMappings.DATE, layer);
+        layer.aggregationField = $scope.functions.findFieldObject(config.aggregationField, neonMappings.Y_AXIS, layer);
+        layer.groupField = $scope.functions.findFieldObject(config.groupField, neonMappings.LINE_GROUPS, layer);
         $scope.validateLayerFields(layer);
     };
 
     $scope.functions.addToNewLayer = function(layer, config) {
         layer.id = uuid();
-        layer.aggregationType = config.type || "count";
+        layer.aggregationType = config.aggregationType || "count";
         updateFields(layer, config);
         return layer;
     };
@@ -621,7 +624,7 @@ angular.module('neonDemo.controllers').controller('lineChartController', ['$scop
                     resultData[series].max = _.isUndefined(resultData[series].max) ? data[i].value : Math.max(resultData[series].max, data[i].value);
                 }
 
-                // Save the mapping from date string to data index so we can find the data index using the brush extent while calculating aggregations for brushed line charts.
+                // Save the mapping from date string to data index so we can find the data index using the chart brush extent while calculating aggregations for brushed line charts.
                 $scope.dateStringToDataIndex[indexDate.toDateString()] = Math.floor(Math.abs(indexDate - start) / millis);
             }
         }
@@ -687,9 +690,9 @@ angular.module('neonDemo.controllers').controller('lineChartController', ['$scop
             }
             delete item.hidden;
         });
-        $scope.chart.setBrushHandler(function(brushExtent) {
+        $scope.chart.setBrushHandler(function(extent) {
             $scope.$apply(function() {
-                $scope.brushExtent = brushExtent;
+                $scope.extent = extent;
                 updateLinks();
                 $scope.functions.updateNeonFilter();
             });
@@ -723,19 +726,19 @@ angular.module('neonDemo.controllers').controller('lineChartController', ['$scop
     };
 
     /**
-     * Uses the given function to calculate the aggregated value of the given data between the start and end extent of the brush.
+     * Uses the given function to calculate the aggregated value of the given data between the start and end extent of the chart brush.
      * @param {Array} data
      * @param {Function} calculationFunction
      * @method calculateBrushedAggregationValue
      * @return {Number}
      */
     var calculateBrushedAggregationValue = function(data, calculationFunction) {
-        if($scope.brushExtent.length < 2) {
+        if($scope.extent.length < 2) {
             return 0;
         }
 
-        var start = $scope.dateStringToDataIndex[$scope.brushExtent[0].toDateString()] || 0;
-        var end = $scope.dateStringToDataIndex[$scope.brushExtent[1].toDateString()] || data.length;
+        var start = $scope.dateStringToDataIndex[$scope.extent[0].toDateString()] || 0;
+        var end = $scope.dateStringToDataIndex[$scope.extent[1].toDateString()] || data.length;
         var value = 0;
         for(var i = start; i < end; ++i) {
             if(!_.isUndefined(data[i].value)) {
@@ -761,7 +764,7 @@ angular.module('neonDemo.controllers').controller('lineChartController', ['$scop
         var text = colorMappingObject.series.split(":").slice(1).join(":");
         if((aggregationType === "count" || aggregationType === "sum") && !_.isUndefined(colorMappingObject.total)) {
             total = colorMappingObject.total;
-            if($scope.brushExtent.length >= 2) {
+            if($scope.extent.length >= 2) {
                 total = calculateBrushedAggregationValue(colorMappingObject.data, function(indexValue, aggregationValue) {
                     return indexValue + aggregationValue;
                 });
@@ -770,7 +773,7 @@ angular.module('neonDemo.controllers').controller('lineChartController', ['$scop
         }
         if(aggregationType === "min" && !_.isUndefined(colorMappingObject.min)) {
             var min = colorMappingObject.min;
-            if($scope.brushExtent.length >= 2) {
+            if($scope.extent.length >= 2) {
                 total = calculateBrushedAggregationValue(colorMappingObject.data, function(indexValue, aggregationValue) {
                     return Math.min(indexValue, aggregationValue);
                 });
@@ -779,7 +782,7 @@ angular.module('neonDemo.controllers').controller('lineChartController', ['$scop
         }
         if(aggregationType === "max" && !_.isUndefined(colorMappingObject.max)) {
             var max = colorMappingObject.max;
-            if($scope.brushExtent.length >= 2) {
+            if($scope.extent.length >= 2) {
                 total = calculateBrushedAggregationValue(colorMappingObject.data, function(indexValue, aggregationValue) {
                     return Math.max(indexValue, aggregationValue);
                 });
@@ -802,11 +805,11 @@ angular.module('neonDemo.controllers').controller('lineChartController', ['$scop
     };
 
     $scope.functions.isFilterSet = function() {
-        return $scope.brushExtent.length;
+        return $scope.extent.length;
     };
 
     $scope.functions.createFilterTrayText = function(databaseName, tableName, fieldNames) {
-        databaseName + " - " + tableName + " - " + fieldNames[0] + " = " + getDateString($scope.brushExtent[0]) + " to " + getDateString($scope.brushExtent[1]);
+        databaseName + " - " + tableName + " - " + fieldNames[0] + " = " + getDateString($scope.extent[0]) + " to " + getDateString($scope.extent[1]);
     };
 
     /**
@@ -842,21 +845,21 @@ angular.module('neonDemo.controllers').controller('lineChartController', ['$scop
         });
 
         if(doneQuerying) {
-            updateLineChartForBrushExtent();
+            updateLineChartForFilter();
         }
     };
 
     /**
-     * Redraws all visible line charts using the data from the previous queries within the current brush extent.
-     * @method updateLineChartForBrushExtent
+     * Redraws all visible line charts using the data from the previous queries within the current chart brush extent.
+     * @method updateLineChartForFilter
      * @private
      */
-    var updateLineChartForBrushExtent = function() {
+    var updateLineChartForFilter = function() {
         var dateRange = getDateRange();
         var fullDateRange = getDateRange(true);
 
-        // If the brush extent does not overlap with the date range of the data, just draw an empty chart.
-        if(!_.keys($scope.data).length || $scope.brushExtent[1] < fullDateRange.minDate || $scope.brushExtent[0] > fullDateRange.maxDate) {
+        // If the chart brush extent does not overlap with the date range of the data, just draw an empty chart.
+        if(!_.keys($scope.data).length || $scope.extent[1] < fullDateRange.minDate || $scope.extent[0] > fullDateRange.maxDate) {
             drawLineChart([], {});
             return;
         }
@@ -868,9 +871,9 @@ angular.module('neonDemo.controllers').controller('lineChartController', ['$scop
         $scope.active.layers.forEach(function(layer) {
             var updatedData = $scope.data[layer.id];
 
-            // Get only the data within the brush extent if filter is enabled.
-            if(layer.filter && $scope.brushExtent.length >= 2) {
-                var indices = getIndicesForData($scope.data[layer.id], $scope.brushExtent[0], $scope.brushExtent[1]);
+            // Get only the data within the chart brush extent if filter is enabled.
+            if(layer.filter && $scope.extent.length >= 2) {
+                var indices = getIndicesForData($scope.data[layer.id], $scope.extent[0], $scope.extent[1]);
                 updatedData = $scope.data[layer.id].slice(indices.startIndex, indices.endIndex);
             }
             seriesData = seriesData.concat(createLineSeriesData(layer, updatedData, dateRange.minDate, dateRange.maxDate));
@@ -890,7 +893,7 @@ angular.module('neonDemo.controllers').controller('lineChartController', ['$scop
 
     /*
      * Finds the indices in the data that give the first and last data that will be shown
-     * on the graph using any brush extents set.
+     * on the graph using any chart brush extents set.
      * @param {Object} data
      * @return {Object} Returns an object containing startIndex and endIndex.
      * @method getIndicesForData
@@ -917,18 +920,18 @@ angular.module('neonDemo.controllers').controller('lineChartController', ['$scop
     };
 
     /*
-     * Finds the min and max dates within the brush extent for all charts.
-     * @param {Boolean} ignoreBrushExtent Set to true to find the min and max dates disregarding
-     * any brush extents.
+     * Finds the min and max dates within the chart brush extent for all charts.
+     * @param {Boolean} ignoreFilter Set to true to find the min and max dates disregarding
+     * any chart brush extents.
      * @return {Object} Returns an object contain minDate and maxDate.
      * @method getDateRange
      * @private
      */
-    var getDateRange = function(ignoreBrushExtent) {
+    var getDateRange = function(ignoreFilter) {
         var minDate;
         var maxDate;
 
-        if($scope.brushExtent.length < 2 || ignoreBrushExtent) {
+        if($scope.extent.length < 2 || ignoreFilter) {
             $scope.active.layers.forEach(function(layer) {
                 var min;
                 var max;
@@ -947,8 +950,8 @@ angular.module('neonDemo.controllers').controller('lineChartController', ['$scop
                 }
             });
         } else {
-            minDate = $scope.brushExtent[0];
-            maxDate = $scope.brushExtent[1];
+            minDate = $scope.extent[0];
+            maxDate = $scope.extent[1];
         }
 
         return {
@@ -958,15 +961,15 @@ angular.module('neonDemo.controllers').controller('lineChartController', ['$scop
     };
 
     /**
-     * Removes the brush extent from this visualization and the dataset service.
-     * @method removeBrush
+     * Removes the chart brush extent from this visualization and the dataset service.
+     * @method removeFilter
      */
-    $scope.removeBrush = function() {
+    $scope.removeFilter = function() {
         $scope.functions.removeNeonFilter();
     };
 
     /**
-     * Creates and returns a filter on the given date field using the brush extent set by this visualization.
+     * Creates and returns a filter on the given date field using the chart brush extent set by this visualization.
      * @param {Object} databaseAndTableName Contains the database and table name
      * @param {String} dateFieldName The name of the date field on which to filter
      * @method createFilterClauseForDate
@@ -977,8 +980,8 @@ angular.module('neonDemo.controllers').controller('lineChartController', ['$scop
             return undefined;
         }
 
-        var startFilterClause = neon.query.where(dateFieldName, ">=", $scope.brushExtent[0]);
-        var endFilterClause = neon.query.where(dateFieldName, "<", $scope.brushExtent[1]);
+        var startFilterClause = neon.query.where(dateFieldName, ">=", $scope.extent[0]);
+        var endFilterClause = neon.query.where(dateFieldName, "<", $scope.extent[1]);
         return neon.query.and.apply(this, [startFilterClause, endFilterClause]);
     };
 
@@ -987,7 +990,7 @@ angular.module('neonDemo.controllers').controller('lineChartController', ['$scop
     };
 
     $scope.createFilterDesc = function() {
-        return "Date from " + $scope.brushExtent[0].toUTCString() + " to " + $scope.brushExtent[1].toUTCString();
+        return "Date from " + $scope.extent[0].toUTCString() + " to " + $scope.extent[1].toUTCString();
     };
 
     $scope.functions.createExportDataObject = function(exportId, queryData) {
@@ -999,7 +1002,7 @@ angular.module('neonDemo.controllers').controller('lineChartController', ['$scop
         queryData.forEach(function(item) {
             if(item.layer.show) {
                 var tempObject = {
-                    query: query,
+                    query: item.query,
                     name: "linechart-" + item.layer.name + "-" + exportId,
                     fields: [],
                     ignoreFilters: item.query.ignoreFilters_,
@@ -1066,9 +1069,9 @@ angular.module('neonDemo.controllers').controller('lineChartController', ['$scop
     };
 
     $scope.functions.addToLayerBindings = function(bindings, layer) {
-        bindings.type = layer.aggregationType;
-        bindings.date = $scope.functions.isFieldValid(layer.dateField) ? layer.dateField.columnName : "";
-        bindings.aggregation = $scope.functions.isFieldValid(layer.aggregationField) ? layer.aggregationField.columnName : "";
+        bindings.aggregationType = layer.aggregationType;
+        bindings.dateField = $scope.functions.isFieldValid(layer.dateField) ? layer.dateField.columnName : "";
+        bindings.aggregationField = $scope.functions.isFieldValid(layer.aggregationField) ? layer.aggregationField.columnName : "";
         bindings.group = $scope.functions.isFieldValid(layer.groupField) ? layer.groupField.columnName : "";
         return bindings;
     };

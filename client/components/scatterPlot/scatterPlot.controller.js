@@ -16,6 +16,12 @@
  *
  */
 
+/**
+ * This visualization shows grouped or numerical data in a scatter plot.
+ * @namespace neonDemo.controllers
+ * @class scatterPlotController
+ * @constructor
+ */
 angular.module('neonDemo.controllers').controller('scatterPlotController', ['$scope', function($scope) {
     $scope.backgroundColor = "#fff";
     $scope.textColor = "#777";

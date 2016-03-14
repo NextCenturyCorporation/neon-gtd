@@ -16,6 +16,12 @@
  *
  */
 
+/**
+ * This visualization shows summarized data in a scrollable news feed.
+ * @namespace neonDemo.controllers
+ * @class newsFeedController
+ * @constructor
+ */
 angular.module('neonDemo.controllers').controller('newsFeedController', ['$scope', '$timeout', function($scope, $timeout) {
     $scope.active.ASCENDING = neon.query.ASCENDING;
     $scope.active.DESCENDING = neon.query.DESCENDING;
