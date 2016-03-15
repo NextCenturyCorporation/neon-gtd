@@ -16,6 +16,12 @@
  *
  */
 
+/**
+ * This visualization shows aggregated string or string list data in a text cloud.
+ * @namespace neonDemo.controllers
+ * @class textCloudController
+ * @constructor
+ */
 angular.module('neonDemo.controllers').controller('textCloudController', ['$scope', '$timeout', function($scope, $timeout) {
     $scope.active.dataField = {};
     $scope.active.andFilters = true;
@@ -65,8 +71,10 @@ angular.module('neonDemo.controllers').controller('textCloudController', ['$scop
     };
 
     $scope.functions.updateData = function(data) {
+        var cloudData = data || [];
+
         if($scope.functions.isFilterSet() && $scope.active.andFilters) {
-            data = data.filter(function(item) {
+            cloudData = cloudData.filter(function(item) {
                 var index = _.findIndex($scope.filters, {
                     value: item.key
                 });
@@ -74,7 +82,7 @@ angular.module('neonDemo.controllers').controller('textCloudController', ['$scop
             });
         }
 
-        $scope.active.data = data.map(function(item) {
+        $scope.active.data = cloudData.map(function(item) {
             item.keyTranslated = item.key;
             return item;
         });
@@ -143,8 +151,7 @@ angular.module('neonDemo.controllers').controller('textCloudController', ['$scop
             translated: translated || value,
             value: value
         });
-        var links = $scope.functions.createLinks($scope.active.dataField, value);
-        $scope.showLinksPopupButton = !!links.length;
+        $scope.showLinksPopupButton = !!($scope.functions.createLinks($scope.active.dataField, value).length);
     };
 
     $scope.functions.removeFilterValues = function() {
@@ -280,10 +287,10 @@ angular.module('neonDemo.controllers').controller('textCloudController', ['$scop
 
     /**
      * Generates and returns the links popup key for this visualization.
-     * @method generateLinksPopupKey
+     * @method getLinksPopupKey
      * @return {String}
      */
-    $scope.generateLinksPopupKey = function(value) {
+    $scope.getLinksPopupKey = function(value) {
         return $scope.functions.getLinksPopupService().generateKey($scope.active.dataField, value);
     };
 

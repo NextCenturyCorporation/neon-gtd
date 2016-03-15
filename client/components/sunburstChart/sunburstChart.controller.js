@@ -16,6 +16,12 @@
  *
  */
 
+/**
+ * This visualization shows selected data in a sunburst chart.
+ * @namespace neonDemo.controllers
+ * @class sunburstChartController
+ * @constructor
+ */
 angular.module('neonDemo.controllers').controller('sunburstChartController', ['$scope', function($scope) {
     $scope.active.addField = {};
     $scope.active.arcValue = "count";
@@ -111,7 +117,7 @@ angular.module('neonDemo.controllers').controller('sunburstChartController', ['$
     };
 
     $scope.functions.updateData = function(data) {
-        var tree = buildDataTree(data);
+        var tree = buildDataTree(data || []);
         $scope.chart.clearData();
         $scope.active.hasData = $scope.chart.drawData(tree);
     };

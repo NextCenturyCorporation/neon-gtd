@@ -7,9 +7,9 @@
             </div>
             <div class="modal-body">
                 <div ng-repeat="key in linkKeys">
-                    <label class="label-small" ng-bind-html="getLinkHeader(key)"></label>
-                    <label class="text-primary label-block label-small" ng-if="links[key].length > 0">Applications Available</label>
-                    <label class="text-danger label-block label-small" ng-if="links[key].length == 0">No Applications Available</label>
+                    <label class="label-small label-tab" ng-bind-html="getLinkHeader(key)"></label>
+                    <label class="text-primary label-block label-small label-tab" ng-if="links[key].length > 0">Applications Available</label>
+                    <label class="text-danger label-block label-small label-tab" ng-if="links[key].length == 0">No Applications Available</label>
                     <ul>
                         <li ng-repeat="link in links[key]">
                             <a ng-href="{{link.url}}" target="{{link.tab}}" title="Open {{link.name}} in a new tab" ng-click="logLinkEvent(link.name)">

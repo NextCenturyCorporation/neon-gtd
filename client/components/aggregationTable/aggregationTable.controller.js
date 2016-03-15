@@ -16,12 +16,18 @@
  *
  */
 
-angular.module('neonDemo.controllers').controller('aggregationTableController', ['$scope', '$timeout', 'external', function($scope, $timeout, external) {
+/**
+ * This visualization shows aggregated data in a table.
+ * @namespace neonDemo.controllers
+ * @class aggregationTableController
+ * @constructor
+ */
+angular.module('neonDemo.controllers').controller('aggregationTableController', ['$scope', '$timeout', function($scope, $timeout) {
     // Unique field name used for the SlickGrid column containing the URLs for the external apps.
     // This name should be one that is highly unlikely to be a column name in a real database.
     var EXTERNAL_APP_FIELD_NAME = "neonExternalApps";
 
-    $scope.active.aggregation = $scope.bindings.aggregation || "count";
+    $scope.active.aggregation = $scope.bindings.aggregationType || "count";
     $scope.active.aggregationField = {};
     $scope.active.groupField = {};
     $scope.active.limit = $scope.bindings.limit || 100;
@@ -61,7 +67,7 @@ angular.module('neonDemo.controllers').controller('aggregationTableController', 
     var updateColumns = function() {
         var columnDefinitions = [];
 
-        if(external.active) {
+        if($scope.functions.areExternalServicesActive()) {
             var externalAppColumn = {
                 field: EXTERNAL_APP_FIELD_NAME,
                 headerName: "",
@@ -136,21 +142,23 @@ angular.module('neonDemo.controllers').controller('aggregationTableController', 
     };
 
     $scope.functions.updateData = function(data) {
-        if(external.active) {
-            data = addExternalLinksToColumnData(data);
+        var tableData = data || [];
+
+        if($scope.functions.areExternalServicesActive()) {
+            tableData = addExternalLinksToColumnData(tableData);
         }
 
-        data = _.map(data, function(row) {
+        tableData = _.map(tableData, function(row) {
             delete row._id;
             return row;
         });
 
         $scope.active.showTooMuchDataError = false;
-        $scope.active.dataLength = data.length;
+        $scope.active.dataLength = tableData.length;
         $scope.active.queryLimit = $scope.active.limit;
-        $scope.active.gridOptions.api.setRowData(data);
+        $scope.active.gridOptions.api.setRowData(tableData);
 
-        if($scope.functions.isFilterSet() && data.length) {
+        if($scope.functions.isFilterSet() && tableData.length) {
             selectRow($scope.filter);
         }
     };
@@ -305,11 +313,18 @@ angular.module('neonDemo.controllers').controller('aggregationTableController', 
     };
 
     $scope.functions.addToBindings = function(bindings) {
-        bindings.aggregation = $scope.active.aggregation || undefined;
+        bindings.aggregationType = $scope.active.aggregation || undefined;
         var hasAggField = $scope.active.aggregation && $scope.active.aggregation !== 'count' && $scope.functions.isFieldValid($scope.active.aggregationField);
         bindings.aggregationField = hasAggField ? $scope.active.aggregationField.columnName : undefined;
         bindings.groupField = $scope.functions.isFieldValid($scope.active.groupField) ? $scope.active.groupField.columnName : undefined;
         bindings.limit = $scope.active.limit;
         return bindings;
+    };
+
+    $scope.functions.onResize = function() {
+        // Force the grid to update its size so that when we tell it to calculate the column
+        // widths it is using an up-to-date width.
+        $scope.active.gridOptions.api.doLayout();
+        $scope.active.gridOptions.api.sizeColumnsToFit();
     };
 }]);

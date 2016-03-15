@@ -1,6 +1,7 @@
 'use strict';
+
 /*
- * Copyright 2014 Next Century Corporation
+ * Copyright 2016 Next Century Corporation
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -56,6 +57,26 @@ neon.helpers = {
             }
         });
         return dataValue;
+    },
+    /**
+     * Escapes all values in the given data, recursively.
+     * @param {Object|Array} data
+     * @method escapeDataRecursively
+     */
+    escapeDataRecursively: function(data) {
+        if(_.isArray(data)) {
+            for(var i = 0; i < data.length; i++) {
+                data[i] = neon.helpers.escapeDataRecursively(data[i]);
+            }
+        } else if(_.keys(data).length) {
+            var keys = _.keys(data);
+            for(var i = 0; i < keys.length; i++) {
+                data[keys[i]] = neon.helpers.escapeDataRecursively(data[keys[i]]);
+            }
+        } else if(_.isString(data)) {
+            data = _.escape(data);
+        }
+        return data;
     }
 };
 
@@ -172,6 +193,7 @@ var saveDashboards = function(config) {
         webVideo: undefined,
         localVideo: undefined
     });
+
     var dashboardConfig = config.dashboard || {
         hideNavbarItems: false,
         hideAddVisualizationsButton: false,
@@ -181,13 +203,10 @@ var saveDashboards = function(config) {
         showImport: false,
         showExport: true
     };
+
     dashboardConfig.theme = config.theme;
-    dashboardConfig.gridsterColumns = dashboardConfig.gridsterColumns || 8;
+    dashboardConfig.gridsterColumns = dashboardConfig.gridsterColumns || 24;
     dashboardConfig.gridsterMargins = dashboardConfig.gridsterMargins || 10;
-    // Most visualizations should have a minimum size of about 300px square to have space for their UI elements.
-    // TODO Use the browser width to determine the minimum size for visualizations and update it on browser resize.
-    dashboardConfig.gridsterDefaultMinSizeX = Math.floor(dashboardConfig.gridsterColumns / 4);
-    dashboardConfig.gridsterDefaultMinSizeY = Math.floor(dashboardConfig.gridsterColumns / 6);
     dashboardConfig.help = helpConfig;
     dashboardConfig.showExport = (dashboardConfig.showExport === undefined || dashboardConfig.showExport) ? true : false;
     neonDemo.constant('config', dashboardConfig);
@@ -199,10 +218,30 @@ var saveDashboards = function(config) {
             $("#helpVideo").attr("autoplay", "");
         });
     }
-};
 
-var saveVisualizations = function(config) {
-    var visualizations = (config.visualizations || []);
+    var visualizations = neonVisualizations || [];
+    (config.visualizations || []).forEach(function(visualization) {
+        var index = _.findIndex(visualizations, {
+            type: visualization.type
+        });
+        if(index < 0) {
+            visualizations.push(visualization);
+        } else if(visualization.exclude) {
+            visualizations.splice(index, 1);
+        } else {
+            visualizations[index] = visualization;
+        }
+    });
+
+    // Most visualizations should have a minimum size of about 300px square to have space for their UI elements.
+    // TODO Use the browser width to determine the minimum size for visualizations and update it on browser resize.
+    visualizations.forEach(function(visualization) {
+        visualization.sizeX = visualization.sizeX || Math.floor(dashboardConfig.gridsterColumns * visualization.minSizePercentageX);
+        visualization.sizeY = visualization.sizeY || Math.floor(dashboardConfig.gridsterColumns * visualization.minSizePercentageY);
+        visualization.minSizeX = Math.floor(dashboardConfig.gridsterColumns * visualization.minSizePercentageX);
+        visualization.minSizeY = Math.floor(dashboardConfig.gridsterColumns * visualization.minSizePercentageY);
+    });
+
     neonDemo.constant('visualizations', visualizations);
 };
 
@@ -437,7 +476,6 @@ var saveNeonConfig = function($http, config) {
     saveUserAle(config);
     saveOpenCpu(config);
     saveDashboards(config);
-    saveVisualizations(config);
 
     var files = (config.files || []);
     var layouts = (config.layouts || {});

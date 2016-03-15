@@ -1,6 +1,7 @@
 'use strict';
+
 /*
- * Copyright 2014 Next Century Corporation
+ * Copyright 2016 Next Century Corporation
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -14,6 +15,7 @@
  * limitations under the License.
  *
  */
+
 /**
  * This directive will add a button suitable for application nav bars that
  * will open a visualization selector dialog when pressed.  The dialog allows a user
@@ -25,8 +27,7 @@
  * @class addVisualization
  * @constructor
  */
-angular.module('neonDemo.directives')
-.directive('addVisualization', ['$timeout', 'config', 'visualizations', function($timeout, config, visualizations) {
+angular.module('neonDemo.directives').directive('addVisualization', ['$timeout', 'visualizations', function($timeout, visualizations) {
     return {
         templateUrl: 'components/addVisualization/addVisualization.html',
         restrict: 'EA',
@@ -38,22 +39,6 @@ angular.module('neonDemo.directives')
 
             $scope.dialogDisplayed = false;
             $scope.visualizations = visualizations;
-
-            for(var i = 0; i < $scope.visualizations.length; ++i) {
-                if(!($scope.visualizations[i].minSizeX)) {
-                    $scope.visualizations[i].minSizeX = config.gridsterDefaultMinSizeX;
-                }
-                if(!($scope.visualizations[i].minSizeY)) {
-                    $scope.visualizations[i].minSizeY = config.gridsterDefaultMinSizeY;
-                }
-                if($scope.visualizations[i].sizeX < config.gridsterDefaultMinSizeX) {
-                    $scope.visualizations[i].sizeX = config.gridsterDefaultMinSizeX;
-                }
-                if($scope.visualizations[i].sizeY < config.gridsterDefaultMinSizeY) {
-                    $scope.visualizations[i].sizeY = config.gridsterDefaultMinSizeY;
-                }
-            }
-
             $scope.alertMessage = "";
             $scope.alertTimer = null;
             $scope.alertDelay = 4000;

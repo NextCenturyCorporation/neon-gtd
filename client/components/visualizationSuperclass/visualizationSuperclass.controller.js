@@ -16,6 +16,12 @@
  *
  */
 
+/**
+ * This controller manages the common behavior for all Neon dashboard visualizations.
+ * @namespace neonDemo.controllers
+ * @class visualizationSuperclass
+ * @constructor
+ */
 angular.module('neonDemo.controllers').controller('visualizationSuperclassController',
 ['$scope', 'external', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', 'LinksPopupService', 'ThemeService', 'TranslationService', 'VisualizationService',
 function($scope, external, connectionService, datasetService, errorNotificationService, filterService, exportService, linksPopupService, themeService, translationService, visualizationService) {
@@ -23,15 +29,47 @@ function($scope, external, connectionService, datasetService, errorNotificationS
     $scope.SINGLE_LAYER = "singleLayer";
     $scope.MULTIPLE_LAYER = "multipleLayer";
 
+    // Used by the logger.
     $scope.logElementGroup = $scope.logElementGroup || "chart_group";
     $scope.logElementType = $scope.logElementType || "canvas";
 
-    $scope.active = {
-        layers: [],
-        allowsTranslations: false,
-        displayOverlapsHeaders: false,
-        queryByTable: false,
-    };
+    /**
+     * The active properties for this visualization.
+     * @property $scope.active
+     * @type Object
+     */
+    $scope.active = {};
+
+    /**
+     * The list of data layers in this visualization.
+     * @property $scope.active.layers
+     * @type Array
+     */
+    $scope.active.layers = [];
+
+    /**
+     * Whether this visualization allows translations of its text.
+     * @property $scope.active.allowsTranslations
+     * @type Boolean
+     * @default false
+     */
+    $scope.active.allowsTranslations = false;
+
+    /**
+     * Whether the display of this visualization overlaps its headers.
+     * @property $scope.active.displayOverlapsHeaders
+     * @type Boolean
+     * @default false
+     */
+    $scope.active.displayOverlapsHeaders = false;
+
+    /**
+     * Whether this visualization should query for data in all data layers with the same database and table with a single query instead of querying for data in each data layer with an individual query.
+     * @property $scope.active.queryByTable
+     * @type Boolean
+     * @default false
+     */
+    $scope.active.queryByTable = false;
 
     $scope.functions = {};
 
@@ -51,11 +89,11 @@ function($scope, external, connectionService, datasetService, errorNotificationS
 
     var resizeListeners = [];
 
-    /*************** SUBCLASS ABSTRACT FUNCTIONS ***************/
+    /******************** SUBCLASS ABSTRACT FUNCTIONS ********************/
 
     /**
      * Adds properties to the given collection of bindings and returns the updated collection for this visualization.
-     * @method addToBindings
+     * @method $scope.functions.addToBindings
      * @param {Object} bindings
      * @return {Object}
      */
@@ -65,7 +103,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
 
     /**
      * Adds properties to the given collection of layer bindings using the given layer and returns the updated collection for this visualization.
-     * @method addToLayerBindings
+     * @method $scope.functions.addToLayerBindings
      * @param {Object} bindings
      * @param {Object} layer
      * @return {Object}
@@ -77,7 +115,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
 
     /**
      * Adds properties to the given layer object specific to this visualization and returns the updated layer.
-     * @method addToNewLayer
+     * @method $scope.functions.addToNewLayer
      * @param {Object} layer
      * @return {Object}
      */
@@ -87,7 +125,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
 
     /**
      * Adds properties to the given Neon query and returns the updated query for the given layers.
-     * @method addToQuery
+     * @method $scope.functions.addToQuery
      * @param {neon.query.Query} query
      * @param {Array} layers
      * @return {neon.query.Query}
@@ -98,7 +136,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
 
     /**
      * Returns whether the data fields in the given layers are valid in order to execute a query.
-     * @method areDataFieldsValid
+     * @method $scope.functions.areDataFieldsValid
      * @param {Array} layers
      * @return {Boolean}
      */
@@ -108,7 +146,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
 
     /**
      * Creates and returns an object containing the data needed to export this visualization.
-     * @method createExportDataObject
+     * @method $scope.functions.createExportDataObject
      * @param {String} exportId
      * @param {Array} queryData A list of objects containing {String} database, {String} table, and {neon.query.Query} query
      * @return {Object}
@@ -119,7 +157,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
 
     /**
      * Returns the description text for the global filter data object to show in the filter tray (usually containing the database, table, fields and filter value).
-     * @method createFilterTrayText
+     * @method $scope.functions.createFilterTrayText
      * @param {String} databaseName
      * @param {String} tableName
      * @param {Array} fieldNames
@@ -132,7 +170,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
     /**
      * Creates and returns the text for the options menu button.
      * Called by the options-menu directive.
-     * @method createMenuText
+     * @method $scope.functions.createMenuText
      * @return {String}
      */
     $scope.functions.createMenuText = function() {
@@ -142,7 +180,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
     /**
      * Creates and returns the Neon where clause for a Neon filter on the given database, table, and fields using the filters set in this visualization.
      * Called by the Filter Service.
-     * @method createNeonFilterClause
+     * @method $scope.functions.createNeonFilterClause
      * @param {Object} databaseAndTableName Contains {String} database and {String} table
      * @param {String} fieldName or {Array} fieldNames The name (or list of names) of the filter fields
      * @return {neon.query.WhereClause}
@@ -153,7 +191,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
 
     /**
      * Creates and returns the Neon where clause for queries for the given layers (or returns undefined).
-     * @method createNeonQueryWhereClause
+     * @method $scope.functions.createNeonQueryWhereClause
      * @param {Array} layers
      * @return {neon.query.WhereClause}
      */
@@ -163,7 +201,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
 
     /**
      * Executes the given query using the given connection.
-     * @method executeQuery
+     * @method $scope.functions.executeQuery
      * @param {Object} connection
      * @param {neon.query.Query} query
      */
@@ -173,7 +211,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
 
     /**
      * Returns the list of field objects on which filters for given layer are set.
-     * @method getFilterFields
+     * @method $scope.functions.getFilterFields
      * @param {Object} layer
      * @return {Array}
      */
@@ -183,7 +221,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
 
     /**
      * Returns whether a filter is set in this visualization.
-     * @method isFilterSet
+     * @method $scope.functions.isFilterSet
      * @return {Boolean}
      */
     $scope.functions.isFilterSet = function() {
@@ -192,7 +230,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
 
     /**
      * Returns whether to hide the headers in the filter header container for this visualization.  The default implementation hides the headers if a filter is not set.
-     * @method hideHeaders
+     * @method $scope.functions.hideHeaders
      * @return {Boolean}
      */
     $scope.functions.hideHeaders = function() {
@@ -201,7 +239,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
 
     /**
      * Returns whether the filter displayed by this visualization needs to be updated based on the given list of Neon filters set in the dashboard.
-     * @method needToUpdateFilter
+     * @method $scope.functions.needToUpdateFilter
      * @param {Array} of {neon.query.Filter} neonFilters
      * @return {Boolean}
      */
@@ -211,7 +249,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
 
     /**
      * Handles any additional behavior for changing an option in this visualization.
-     * @method onChangeOption
+     * @method $scope.functions.onChangeOption
      */
     $scope.functions.onChangeOption = function() {
         // Do nothing by default.
@@ -219,7 +257,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
 
     /**
      * Handles any additional behavior for deleting the given layer from this visualization.
-     * @method onDeleteLayer
+     * @method $scope.functions.onDeleteLayer
      * @param {Object} layer
      */
     $scope.functions.onDeleteLayer = function(layer) {
@@ -228,7 +266,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
 
     /**
      * Handles any additional behavior for destroying this visualization.
-     * @method onDestroy
+     * @method $scope.functions.onDestroy
      */
     $scope.functions.onDestroy = function() {
         // Do nothing by default.
@@ -236,7 +274,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
 
     /**
      * Handles any additional behavior for responding to a query error.
-     * @method onError
+     * @method $scope.functions.onError
      * @param {Object} response The query response
      * @param {Object} errorCodes An object containing the error codes important to the Neon Dashboard
      */
@@ -246,7 +284,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
 
     /**
      * Handles any additional behavior for initializing this visualization.
-     * @method onInit
+     * @method $scope.functions.onInit
      */
     $scope.functions.onInit = function() {
         // Do nothing by default.
@@ -254,7 +292,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
 
     /**
      * Handles any additional behavior for reordering the layers in this visualization.
-     * @method onReorderLayers
+     * @method $scope.functions.onReorderLayers
      */
     $scope.functions.onReorderLayers = function() {
         // Do nothing by default.
@@ -262,11 +300,11 @@ function($scope, external, connectionService, datasetService, errorNotificationS
 
     /**
      * Handles any additional behavior for resizing this visualization.
-     * @method onResize
-     * @param {Number} elementHeight
-     * @param {Number} elementWidth
-     * @param {Number} titleHeight
-     * @param {Number} headersHeight
+     * @method $scope.functions.onResize
+     * @param {Number} elementHeight The height of the visualization element
+     * @param {Number} elementWidth The width of the visualization element
+     * @param {Number} titleHeight The height of the text container for the title
+     * @param {Number} containersHeight The height of all text containers in the visualization
      */
     $scope.functions.onResize = function() {
         // Do nothing by default.
@@ -274,7 +312,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
 
     /**
      * Handles any behavior for changing the theme of elements in this visualization to the given theme.
-     * @method onThemeChanged
+     * @method $scope.functions.onThemeChanged
      * @param {Object} theme
      * @return {Boolean} Whether them theme of any elements in this visualization needed to be changed
      */
@@ -284,7 +322,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
 
     /**
      * Handles any additional behavior for toggling the show setting for the given layer.
-     * @method onToggleShowLayer
+     * @method $scope.functions.onToggleShowLayer
      * @param {Object} layer
      */
     $scope.functions.onToggleShowLayer = function(layer) {
@@ -293,7 +331,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
 
     /**
      * Handles any additional behavior for updating the fields for the given layer.
-     * @method onUpdateFields
+     * @method $scope.functions.onUpdateFields
      * @param {Object} layer
      */
     $scope.functions.onUpdateFields = function() {
@@ -302,7 +340,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
 
     /**
      * Removes the filter displayed by this visualization.
-     * @method removeFilterValues
+     * @method $scope.functions.removeFilterValues
      */
     $scope.functions.removeFilterValues = function() {
         // Do nothing by default.
@@ -310,7 +348,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
 
     /**
      * Removes all translations from this visualization.
-     * @method removeTranslations
+     * @method $scope.functions.removeTranslations
      */
     $scope.functions.removeTranslations = function() {
         // Do nothing by default.
@@ -318,7 +356,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
 
     /**
      * Returns whether this visualization should query for new data and update its display after changing its filter.
-     * @method shouldQueryAfterFilter
+     * @method $scope.functions.shouldQueryAfterFilter
      * @return {Boolean}
      */
     $scope.functions.shouldQueryAfterFilter = function() {
@@ -328,7 +366,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
     /**
      * Returns whether to show the text for the options menu button.
      * Called by the options-menu directive.
-     * @method showMenuText
+     * @method $scope.functions.showMenuText
      * @return {Boolean}
      */
     $scope.functions.showMenuText = function() {
@@ -336,11 +374,10 @@ function($scope, external, connectionService, datasetService, errorNotificationS
     };
 
     /**
-     * Updates the data and display in this visualization for the given layers.  Clears the display if the data array is empty or reset is true.
-     * @method updateData
+     * Updates the data and display in this visualization using the given data for the given layers.  Removes all data from the display instead if the arguments are undefined.
+     * @method $scope.functions.updateData
      * @param {Array} data
      * @param {Array} layers
-     * @param {Boolean} reset
      */
     $scope.functions.updateData = function() {
         // Do nothing by default.
@@ -348,7 +385,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
 
     /**
      * Updates the display in this visualization for the given layer after its options have been changed.
-     * @method updateLayerDisplay
+     * @method $scope.functions.updateLayerDisplay
      * @param {Object} layer
      */
     $scope.functions.updateLayerDisplay = function(layer) {
@@ -357,7 +394,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
 
     /**
      * Updates the filter displayed by this visualization on the fields with the given names using the where clause in the given Neon filter.
-     * @method updateFilterValues
+     * @method $scope.functions.updateFilterValues
      * @param {neon.query.Filter} neonFilter
      * @param {Array} fieldNames
      */
@@ -367,28 +404,17 @@ function($scope, external, connectionService, datasetService, errorNotificationS
 
     /**
      * Updates all translations in this visualization.
-     * @method updateTranslations
+     * @method $scope.functions.updateTranslations
      */
     $scope.functions.updateTranslations = function() {
         // Do nothing by default.
     };
 
-    /*************** SUBCLASS UTILITY FUNCTIONS ***************/
+    /******************** SUBCLASS UTILITY FUNCTIONS ********************/
 
     /**
-     * Adds or replaces the Neon filter in the dashboard on all filterable layers based on the filter values set in this visualization.
-     * @method updateNeonFilter
-     * @param {Boolean} [queryAfterFilter] (Optional)
-     */
-    $scope.functions.updateNeonFilter = function(queryAfterFilter) {
-        updateNeonFilter({
-            queryAfterFilter: queryAfterFilter
-        });
-    };
-
-    /**
-     * Adds a resize listener to the given element in this visualization.
-     * @method addResizeListener
+     * Adds a resize listener defined by the superclass to the given jQuery element in this visualization.
+     * @method $scope.functions.addResizeListener
      * @param {String} element
      */
     $scope.functions.addResizeListener = function(element) {
@@ -397,8 +423,17 @@ function($scope, external, connectionService, datasetService, errorNotificationS
     };
 
     /**
+     * Returns whether any of the external application services are active.
+     * @method $scope.functions.areExternalServicesActive
+     * @return {Boolean}
+     */
+    $scope.functions.areExternalServicesActive = function() {
+        return external.active;
+    };
+
+    /**
      * Creates a new data layer for this visualization using the dataset defaults and set in new & edit mode.
-     * @method createLayer
+     * @method $scope.functions.createLayer
      */
     $scope.functions.createLayer = function() {
         // TODO Logging
@@ -408,30 +443,35 @@ function($scope, external, connectionService, datasetService, errorNotificationS
     };
 
     /**
-     * Creates and returns the links for the given field object and item object.
-     * @method createLinks
-     * @param {Object} field Containing {String} columnName
-     * @param {String} value
-     * @return {Object} links
+     * Creates and returns the links for the given field object and item object in the database and table with the given names.
+     * @method $scope.functions.createLinks
+     * @param {String} databaseName
+     * @param {String} tableName
+     * @param {Object} field The field object on which to create the links containing {String} columnName
+     * @param {String} value The value on which to create the links
+     * @return {Boolean} Whether any links were created
      */
     $scope.functions.createLinks = function(databaseName, tableName, field, value) {
         var mappings = datasetService.getMappings(databaseName, tableName);
         var links = linksPopupService.createAllServiceLinkObjects(external.services, mappings, field.columnName, value);
         var key = linksPopupService.generateKey(field, value);
         linksPopupService.addLinks($scope.visualizationId, linksPopupService.generateKey(field, value), links);
-        return links;
+        return !!(links.length);
     };
 
     /**
-     * Creates and returns the link buttons for the given field object and data array.
-     * @method createLinkButtons
-     * @param {Object} field Containing {String} columnName
+     * Creates and returns the link buttons for the given field object and data array in the database and table with the given names.
+     * @method $scope.functions.createLinkButtons
+     * @param {String} databaseName
+     * @param {String} tableName
+     * @param {Object} field The field object on which to create the link containing {String} columnName
      * @param {Array} array A list of objects each containing a property matching the field name
-     * @return {Array} buttons
+     * @return {Array} The list of link buttons as HTML strings
      */
-    $scope.functions.createLinkButtons = function(field, array) {
-        var links = {};
+    $scope.functions.createLinkButtons = function(databaseName, tableName, field, array) {
         var buttons = [];
+        var links = {};
+        var mappings = datasetService.getMappings(databaseName, tableName);
 
         array.forEach(function(element) {
             var value = element[field.columnName];
@@ -447,25 +487,28 @@ function($scope, external, connectionService, datasetService, errorNotificationS
     };
 
     /**
-     * Creates and returns the links for the given external service type, link key, and link data.
-     * @method createLinksForData
-     * @param {String} type
-     * @param {String} key
-     * @param {Object} data
-     * @return {Object} links
+     * Creates and returns the links for the given external service type, link data, link key, and link source.
+     * @method $scope.functions.createLinksForData
+     * @param {String} type The type of external application
+     * @param {Object} data The data on which to create the links
+     * @param {String} key The unique key to save the new links in the links popup service
+     * @param {String} [source=$scope.visualizationId] (Optional) The unique source to save the new links in links popup service
+     * @return {Boolean} Whether any links were created
      */
-    $scope.functions.createLinksForData = function(type, key, data) {
+    $scope.functions.createLinksForData = function(type, data, key, source) {
         var links = [];
-        Object.keys(external.services[type].apps).forEach(function(app) {
-            links.push(linksPopupService.createServiceLinkObjectWithData(external.services[type], app, data));
-        });
-        linksPopupService.addLinks($scope.visualizationId, key, links);
-        return links;
+        if(external.services[type]) {
+            Object.keys(external.services[type].apps).forEach(function(app) {
+                links.push(linksPopupService.createServiceLinkObjectWithData(external.services[type], app, data));
+            });
+            linksPopupService.addLinks(source || $scope.visualizationId, key, links);
+        }
+        return !!(links.length);
     };
 
     /**
      * Deletes the given layer, removing its filter and updating this visualization.
-     * @method deleteLayer
+     * @method $scope.functions.deleteLayer
      * @param {Object} layer
      * @param {Number} indexReversed The index of the layer in the list of layers (reversed).
      */
@@ -491,9 +534,9 @@ function($scope, external, connectionService, datasetService, errorNotificationS
     /**
      * Finds and returns the field object in the fields in the given layer that matches the given field name or mapping with the given key.
      * Returns a blank field object if no such field exists.
-     * @method findFieldObject
-     * @param {String} fieldName
-     * @param {String} mappingKey
+     * @method $scope.functions.findFieldObject
+     * @param {String} fieldName A field name to find in the list of fields in the given layer
+     * @param {String} mappingKey The name of a Neon mapping that may contain a field name
      * @param {Object} layer
      * @return {Object}
      */
@@ -518,7 +561,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
 
     /**
      * Returns the color maps for the database and table in the given layer and the field with the given names.
-     * @method getColorMaps
+     * @method $scope.functions.getColorMaps
      * @param {Object} layer
      * @param {String} tableName
      * @param {String} fieldName
@@ -530,7 +573,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
 
     /**
      * Returns the options for the active dataset.
-     * @method getDatasetOptions
+     * @method $scope.functions.getDatasetOptions
      * @return {Object}
      */
     $scope.functions.getDatasetOptions = function() {
@@ -539,7 +582,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
 
     /**
      * Returns the jQuery element in this visualization matching the given string, or the element for this visualization itself if no string is given.
-     * @method getElement
+     * @method $scope.functions.getElement
      * @param {String} element
      * @return {Object}
      */
@@ -548,8 +591,8 @@ function($scope, external, connectionService, datasetService, errorNotificationS
     };
 
     /**
-     * Returns the filter key for the database and table in the given layer and the given filter clause.
-     * @method getFilterKey
+     * Returns the filter key for the database and table in the given layer and the given Neon filter clause.
+     * @method $scope.functions.getFilterKey
      * @param {Object} layer
      * @param {Object} filterClause
      * @return {String}
@@ -560,7 +603,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
 
     /**
      * Returns the config for the linky library.
-     * @method getLinkyConfig
+     * @method $scope.functions.getLinkyConfig
      * @return {Object}
      */
     $scope.functions.getLinkyConfig = function() {
@@ -569,7 +612,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
 
     /**
      * Returns the links popup service object.
-     * @method getLinksPopupService
+     * @method $scope.functions.getLinksPopupService
      * @return {Object}
      */
     $scope.functions.getLinksPopupService = function() {
@@ -578,7 +621,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
 
     /**
      * Returns the mapping for the database, table, and key with the given names or any empty string if no mapping exists.
-     * @method getMapping
+     * @method $scope.functions.getMapping
      * @param {String} databaseName
      * @param {String} tableName
      * @param {String} key
@@ -590,7 +633,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
 
     /**
      * Returns whether the given Neon filter object is a single clause filter.
-     * @method isSingleClauseFilter
+     * @method $scope.functions.getNumberOfFilterClauses
      * @param {neon.query.Filter} filter
      * @return {Boolean}
      */
@@ -600,7 +643,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
 
     /**
      * Returns the list of unsorted fields for the database and table in the given layer (in the order they are defined in the dashboard config).
-     * @method getUnsortedFields
+     * @method $scope.functions.getUnsortedFields
      * @param {Object} layer
      * @return {Array}
      */
@@ -610,7 +653,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
 
     /**
      * Returns whether the given field object is valid.
-     * @method isFieldValid
+     * @method $scope.functions.isFieldValid
      * @param {Object} fieldObject
      * @return {Boolean}
      */
@@ -620,22 +663,24 @@ function($scope, external, connectionService, datasetService, errorNotificationS
 
     /**
      * Logs a change of the given option to the given value using an element of the given type, runs a new query and updates the data in this visualization.
-     * @method logChangeAndUpdate
-     * @param {String} option
-     * @param {String} value
-     * @param {String} [type] (Optional)
+     * @method $scope.functions.logChangeAndUpdate
+     * @param {String} option The name of the changed visualization option for the log message
+     * @param {String} value The new value of the changed visualization option for the log message
+     * @param {String} [type=combobox] (Optional) The type of HTML element that was used to trigger the change
      */
     $scope.functions.logChangeAndUpdate = function(option, value, type) {
         $scope.logChange(option, value, type);
         if(!$scope.initializing) {
             $scope.functions.onChangeOption();
-            runDefaultQueryAndUpdate();
+            checkNeonDashboardFilters({
+                queryAndUpdate: true
+            });
         }
     };
 
     /**
      * Publishes an event with the given type and data using the messenger for this visualization.
-     * @method publish
+     * @method $scope.functions.publish
      * @param {String} type
      * @param {Object} data
      */
@@ -645,15 +690,16 @@ function($scope, external, connectionService, datasetService, errorNotificationS
 
     /**
      * Builds and executes a query and updates the data for this visualization using the given options.
-     * @method queryAndUpdate
-     * @param {Object} options The collection of function arguments.
+     * @method $scope.functions.queryAndUpdate
+     * @param {Object} [options] The collection of function arguments.
      * @param {String} [options.databaseName] (Optional) The name of a databse.  If not given, queries and updates all layers.
      * @param {String} [options.tableName] (Optional) The name of a table.  If not given, queries and updates all layers.
-     * @param {Function} [options.addToQuery] (Optional) The function to help build the Neon query.  If not given, it uses $scope.functions.addToQuery.
-     * @param {Function} [options.executeQuery] (Optional) The function to execute the Neon query.  If not given, it uses $scope.functions.executeQuery.
-     * @param {Function} [options.updateData] (Optional) The function to update the data in this visualization.  If not given, it uses $scope.functions.updateData.
+     * @param {Function} [options.addToQuery=$scope.functions.addToQuery] (Optional) The function to help build the Neon query.  If not given, it uses $scope.functions.addToQuery.
+     * @param {Function} [options.executeQuery=$scope.functions.executeQuery] (Optional) The function to execute the Neon query.  If not given, it uses $scope.functions.executeQuery.
+     * @param {Function} [options.updateData=$scope.functions.updateData] (Optional) The function to update the data in this visualization.  If not given, it uses $scope.functions.updateData.
      */
-    $scope.functions.queryAndUpdate = function(options) {
+    $scope.functions.queryAndUpdate = function(inputOptions) {
+        var options = inputOptions || {};
         findQueryAndUpdateData(options.database, options.table).forEach(function(item) {
             queryAndUpdate(item.layers, item.database, item.table, options.addToQuery || $scope.functions.addToQuery, options.executeQuery || $scope.functions.executeQuery,
                 options.updateData || $scope.functions.updateData);
@@ -662,7 +708,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
 
     /**
      * Removes the links for the given field object and value, or all links for this visualization if no field or value are given.
-     * @method removeLinks
+     * @method $scope.functions.removeLinks
      * @param {Object} [field] (Optional)
      * @param {String} [value] (Optional)
      */
@@ -676,8 +722,8 @@ function($scope, external, connectionService, datasetService, errorNotificationS
 
     /**
      * Removes the Neon filter from the dashboard on all filterable layers in this visualization.
-     * @method removeNeonFilter
-     * @param {Boolean} [queryAfterFilter] (Optional)
+     * @method $scope.functions.removeNeonFilter
+     * @param {Boolean} [queryAfterFilter=false] (Optional)
      */
     $scope.functions.removeNeonFilter = function(queryAfterFilter) {
         removeNeonFilter({
@@ -687,7 +733,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
 
     /**
      * Moves the given layer to the given new index and reorders the other layers as needed.
-     * @method reorderLayer
+     * @method $scope.functions.reorderLayer
      * @param {Object} layer
      * @param {Number} newIndexReversed The new index of the layer in the list of layers (reversed).
      */
@@ -701,7 +747,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
 
     /**
      * Translates the given data for this visualization using the global to/from languages and the given success/failure callbacks.
-     * @method runTranslation
+     * @method $scope.functions.runTranslation
      * @param {Array} data
      * @param {Function} [translationSuccessCallback] (Optional)
      * @param {Function} [translationFailureCallback] (Optional)
@@ -731,7 +777,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
 
     /**
      * Subscribes the messenger for this visualization to events with the given type using the given listener.
-     * @method subscribe
+     * @method $scope.functions.subscribe
      * @param {String} type
      * @param {Function} listener
      */
@@ -741,7 +787,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
 
     /**
      * Toggles editing on the given layer.
-     * @method toggleEditLayer
+     * @method $scope.functions.toggleEditLayer
      * @param {Object} layer
      */
     $scope.functions.toggleEditLayer = function(layer) {
@@ -751,7 +797,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
 
     /**
      * Toggles filtering on the given layer.
-     * @method toggleFilterLayer
+     * @method $scope.functions.toggleFilterLayer
      * @param {Object} layer
      */
     $scope.functions.toggleFilterLayer = function(layer) {
@@ -775,7 +821,8 @@ function($scope, external, connectionService, datasetService, errorNotificationS
                 }
             } else {
                 checkNeonDashboardFilters({
-                    doNotAutoQuery: true
+                    databaseName: layer.database.name,
+                    tableName: layer.table.name
                 });
             }
         }
@@ -783,7 +830,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
 
     /**
      * Toggles showing the given layer.
-     * @method toggleShowLayer
+     * @method $scope.functions.toggleShowLayer
      * @param {Object} layer
      */
     $scope.functions.toggleShowLayer = function(layer) {
@@ -793,7 +840,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
 
     /**
      * Gets the list of fields from the dataset service and sets the active fields for the given layer.
-     * @method updateFields
+     * @method $scope.functions.updateFields
      * @param {Object} layer
      * @private
      */
@@ -817,7 +864,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
 
     /**
      * Updates the properties for the given layer, removes it from new & edit mode, updates its filter, queries for new data and updates this visualization.
-     * @method updateLayer
+     * @method $scope.functions.updateLayer
      * @param {Object} layer
      */
     $scope.functions.updateLayer = function(layer) {
@@ -838,7 +885,9 @@ function($scope, external, connectionService, datasetService, errorNotificationS
                     queryAfterFilter: true
                 });
             } else {
-                checkNeonDashboardFilters({});
+                checkNeonDashboardFilters({
+                    queryAndUpdate: true
+                });
             }
         } else {
             runDefaultQueryAndUpdate(layer.database.name, layer.table.name);
@@ -846,8 +895,19 @@ function($scope, external, connectionService, datasetService, errorNotificationS
     };
 
     /**
+     * Adds or replaces the Neon filter in the dashboard on all filterable layers based on the filter values set in this visualization.
+     * @method $scope.functions.updateNeonFilter
+     * @param {Boolean} [queryAfterFilter=false] (Optional)
+     */
+    $scope.functions.updateNeonFilter = function(queryAfterFilter) {
+        updateNeonFilter({
+            queryAfterFilter: queryAfterFilter
+        });
+    };
+
+    /**
      * Gets the list of tables from the dataset service and sets the active table and fields for the given layer.
-     * @method updateTables
+     * @method $scope.functions.updateTables
      * @param {Object} layer
      */
     $scope.functions.updateTables = function(layer) {
@@ -858,7 +918,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
 
     /**
      * Validates the name of the given layer, setting its error property if the name is not unique.
-     * @method validateLayerName
+     * @method $scope.functions.validateLayerName
      * @param {Object} layer
      * @param {Number} indexReversed The index of the layer in the list of layers (reversed).
      */
@@ -866,11 +926,11 @@ function($scope, external, connectionService, datasetService, errorNotificationS
         validateLayerName(layer, $scope.active.layers.length - 1 - indexReversed);
     };
 
-    /******************** SUPERCLASS FUNCTIONS ********************/
+    /************************* SUPERCLASS FUNCTIONS *************************/
 
     /**
      * Initializes this visualization.
-     * @method init
+     * @method $scope.init
      */
     $scope.init = function() {
         // Stop extra data queries that may be caused by event handlers triggered by setting the active fields.
@@ -882,7 +942,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
             filtersChanged: handleFiltersChangedEvent
         });
 
-        $scope.exportId = exportService.register($scope.makeExportObject);
+        $scope.exportId = exportService.register($scope.getExportData);
         themeService.registerListener($scope.visualizationId, handleThemeChangedEvent);
         visualizationService.register($scope.stateId, getBindings);
 
@@ -913,8 +973,8 @@ function($scope, external, connectionService, datasetService, errorNotificationS
             });
 
             $scope.element.off("resize", resize);
-            $scope.element.find(".filter-container").off("resize", resizeDisplay);
-            $scope.element.find(".chart-options-button").off("resize", resizeTitle);
+            $scope.element.find(".headers-container").off("resize", resizeDisplay);
+            $scope.element.find(".options-menu-button").off("resize", resizeTitle);
             $scope.messenger.unsubscribeAll();
 
             if($scope.functions.isFilterSet()) {
@@ -925,7 +985,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
 
             exportService.unregister($scope.exportId);
             linksPopupService.deleteLinks($scope.visualizationId);
-            $scope.active.layers.forEach(function(layer) {
+            $scope.getDataLayers().forEach(function(layer) {
                 linksPopupService.deleteLinks(createLayerLinksSource(layer));
             });
             themeService.unregisterListener($scope.visualizationId);
@@ -939,8 +999,8 @@ function($scope, external, connectionService, datasetService, errorNotificationS
         });
 
         $scope.element.resize(resize);
-        $scope.element.find(".filter-container").resize(resizeDisplay);
-        $scope.element.find(".chart-options-button").resize(resizeTitle);
+        $scope.element.find(".headers-container").resize(resizeDisplay);
+        $scope.element.find(".options-menu-button").resize(resizeTitle);
         resize();
 
         $scope.outstandingDataQuery = {};
@@ -952,7 +1012,9 @@ function($scope, external, connectionService, datasetService, errorNotificationS
         $scope.initData();
 
         if($scope.getDataLayers().length) {
-            checkNeonDashboardFilters({});
+            checkNeonDashboardFilters({
+                queryAndUpdate: true
+            });
         }
 
         $scope.initializing = false;
@@ -975,8 +1037,8 @@ function($scope, external, connectionService, datasetService, errorNotificationS
      */
     var resizeTitle = function() {
         // Set the width of the title to the width of this visualization minus the width of the options button/text and margin/padding.
-        var titleWidth = $scope.element.width() - $scope.element.find(".chart-options").outerWidth(true) - 20;
-        $scope.element.find(".title").css("maxWidth", Math.max(0, titleWidth));
+        var titleWidth = $scope.element.width() - $scope.element.find(".options-menu").outerWidth(true) - 20;
+        $scope.element.find(".header").css("maxWidth", Math.max(0, titleWidth));
     };
 
     /**
@@ -986,10 +1048,15 @@ function($scope, external, connectionService, datasetService, errorNotificationS
      */
     var resizeDisplay = function() {
         var titleHeight = $scope.element.find(".options-container").outerHeight(true);
-        var headersHeight = $scope.active.displayOverlapsHeaders ? titleHeight : titleHeight + $scope.element.find(".filter-container").outerHeight(true);
-        $("#" + $scope.visualizationId).height($scope.element.height() - headersHeight);
+        var containersHeight = 0;
+        $scope.element.find(".text-container").each(function() {
+            if(!($(this).hasClass("headers-container")) || !($scope.active.displayOverlapsHeaders)) {
+                containersHeight += $(this).outerHeight(true);
+            }
+        });
+        $("#" + $scope.visualizationId).height($scope.element.height() - containersHeight);
         $("#" + $scope.visualizationId).width($scope.element.width());
-        $scope.functions.onResize($scope.element.height(), $scope.element.width(), titleHeight, headersHeight);
+        $scope.functions.onResize($scope.element.height(), $scope.element.width(), titleHeight, containersHeight);
     };
 
     /**
@@ -997,6 +1064,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
      * @method createLayerLinksSource
      * @param {Object} layer
      * @return {String}
+     * @private
      */
     var createLayerLinksSource = function(layer) {
         return $scope.visualizationId + "-" + layer.database.name + "-" + layer.table.name;
@@ -1004,7 +1072,8 @@ function($scope, external, connectionService, datasetService, errorNotificationS
 
     /**
      * Initializes the data in this visualization.
-     * @method initData
+     * @method $scope.initData
+     * @protected
      */
     $scope.initData = function() {
         ($scope.bindings.config || []).forEach(function(item) {
@@ -1059,8 +1128,9 @@ function($scope, external, connectionService, datasetService, errorNotificationS
 
     /**
      * Returns the data layers in this visualization.
-     * @method getDataLayers
+     * @method $scope.getDataLayers
      * @return {Array}
+     * @protected
      */
     $scope.getDataLayers = function() {
         return $scope.active.layers;
@@ -1073,7 +1143,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
      * @param {Object} options The collection of function arguments.
      * @param {String} [options.databaseName] (Optional)
      * @param {String} [options.tableName] (Optional)
-     * @param {Boolean} [options.doNotAutoQuery] (Optional) If true, will only query for new data and update this visualization if a filter was changed
+     * @param {Boolean} [options.queryAndUpdate] (Optional) If true, will query and update even if shouldQueryAfterFilter is false
      * @private
      */
     var checkNeonDashboardFilters = function(options) {
@@ -1107,7 +1177,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
             return;
         }
 
-        if(!options.doNotAutoQuery) {
+        if(options.queryAndUpdate) {
             runDefaultQueryAndUpdate(options.databaseName, options.tableName);
         }
     };
@@ -1158,6 +1228,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
      * @method getFilterFieldNames
      * @param {Object} layer
      * @return {Array}
+     * @private
      */
     var getFilterFieldNames = function(layer) {
         return $scope.functions.getFilterFields(layer).map(function(field) {
@@ -1246,8 +1317,8 @@ function($scope, external, connectionService, datasetService, errorNotificationS
             layer.querying = true;
         });
 
-        // Clear the display.
-        updateDataFunction([], layers, true);
+        // Remove all data from the display.
+        updateDataFunction();
 
         var finishQueryingLayers = function() {
             // Reset the querying status of each layer.
@@ -1304,7 +1375,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
 
             $scope.$apply(function() {
                 // The response for an array-counts query is an array and the response for other queries is an object containing a data array.
-                updateDataFunction(response.data || response, layers);
+                updateDataFunction(neon.helpers.escapeDataRecursively(response.data || response), layers);
             });
 
             XDATA.userALE.log({
@@ -1346,7 +1417,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
                 });
 
                 $scope.$apply(function() {
-                    updateDataFunction([], layers, true);
+                    updateDataFunction([], layers);
                 });
 
                 // See if the error response contains a Neon notification to show through the Error Notification Service.
@@ -1354,10 +1425,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
                     $scope.errorMessage = errorNotificationService.showErrorMessage($scope.element, response.responseJSON.error, response.responseJSON.stackTrace);
                 }
 
-                // TODO Create an ERROR_CODES object in the Error Notification Service
-                $scope.functions.onError(response, {
-                    TOO_MUCH_DATA_ERROR: errorNotificationService.TOO_MUCH_DATA_ERROR
-                });
+                $scope.functions.onError(response, errorNotificationService.ERROR_CODES);
             }
         });
     };
@@ -1446,7 +1514,8 @@ function($scope, external, connectionService, datasetService, errorNotificationS
 
             checkNeonDashboardFilters({
                 databaseName: message.addedFilter.databaseName,
-                tableName: message.addedFilter.tableName
+                tableName: message.addedFilter.tableName,
+                queryAndUpdate: true
             });
         } else if(message.type === 'CLEAR') {
             XDATA.userALE.log({
@@ -1483,9 +1552,10 @@ function($scope, external, connectionService, datasetService, errorNotificationS
 
     /**
      * Adds properties to the given collection of bindings using the data in the active layers and returns the updated collection for this visualization.
+     * @method $scope.addLayerConfigToBindings
      * @param {Object} bindings
-     * @method addLayerConfigToBindings
      * @return {Object}
+     * @protected
      */
     $scope.addLayerConfigToBindings = function(bindings) {
         bindings.config = [];
@@ -1496,9 +1566,11 @@ function($scope, external, connectionService, datasetService, errorNotificationS
 
                 var layerBindings = {
                     database: (layer.database && layer.database.name) ? layer.database.name : undefined,
-                    unsharedFilterField: hasUnsharedFilter ? layer.unsharedFilterField.columnName : undefined,
-                    unsharedFilterValue: hasUnsharedFilter ? layer.unsharedFilterValue : undefined,
+                    filterable: layer.filterable || true,
+                    show: layer.show || true,
                     table: (layer.table && layer.table.name) ? layer.table.name : undefined,
+                    unsharedFilterField: hasUnsharedFilter ? layer.unsharedFilterField.columnName : undefined,
+                    unsharedFilterValue: hasUnsharedFilter ? layer.unsharedFilterValue : undefined
                 };
 
                 bindings.config.push($scope.functions.addToLayerBindings(layerBindings, layer));
@@ -1508,7 +1580,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
         return bindings;
     };
 
-    /******************** FILTERING FUNCTIONS ********************/
+    /************************* FILTERING FUNCTIONS *************************/
 
     /**
      * Adds or replaces the Neon filter in the dashboard on filterable layers based on the filter values set in this visualization.
@@ -1622,13 +1694,14 @@ function($scope, external, connectionService, datasetService, errorNotificationS
         });
     };
 
-    /******************** ANGULAR FUNCTIONS ********************/
+    /************************* ANGULAR FUNCTIONS *************************/
 
     /**
      * Generates and returns the title for this visualization.
-     * @method createTitle
+     * @method $scope.createTitle
      * @param {Boolean} resetQueryTitle
      * @return {String}
+     * @protected
      */
     $scope.createTitle = function(resetQueryTitle) {
         if(resetQueryTitle) {
@@ -1642,9 +1715,10 @@ function($scope, external, connectionService, datasetService, errorNotificationS
 
     /**
      * Creates and returns the object containing the export data for this visualization.
-     * Called by the options-menu directive.
-     * @method getExportData
+     * Called by the export service and the options-menu directive.
+     * @method $scope.getExportData
      * @return {Object}
+     * @protected
      */
     $scope.getExportData = function() {
         XDATA.userALE.log({
@@ -1664,10 +1738,11 @@ function($scope, external, connectionService, datasetService, errorNotificationS
 
     /**
      * Creates and returns the object containing the export data for this visualization using the given buildQuery function.
-     * @method createExportData
+     * @method $scope.createExportData
      * @param {Function} buildQueryFunction
      * @param {Object} exportService
      * @return {Object}
+     * @protected
      */
     $scope.createExportData = function(buildQueryFunction) {
         var queryData = [];
@@ -1692,9 +1767,10 @@ function($scope, external, connectionService, datasetService, errorNotificationS
 
     /**
      * Adds properties for exporting data to the given query and returns the updated query.
-     * @method addToExportQuery
+     * @method $scope.addToExportQuery
      * @param {neon.query.Query} query
      * @return {neon.query.Query}
+     * @protected
      */
     $scope.addToExportQuery = function(query) {
         query.limitClause = exportService.getLimitClause();
@@ -1706,7 +1782,8 @@ function($scope, external, connectionService, datasetService, errorNotificationS
     /**
      * Resizes the options menu for this visualization.
      * Called by the options-menu directive.
-     * @method resizeOptionsMenu
+     * @method $scope.resizeOptionsMenu
+     * @protected
      */
     $scope.resizeOptionsMenu = function() {
         var container = $scope.element.find(".options-container");
@@ -1743,8 +1820,9 @@ function($scope, external, connectionService, datasetService, errorNotificationS
 
     /**
      * Updates the 'from' language on translation and translates if 'Show Translation' is checked
-     * @method handleChangeFromLanguage
+     * @method $scope.handleChangeFromLanguage
      * @param {String} language The 'from' translation language to change to
+     * @protected
      */
     $scope.handleChangeFromLanguage = function(language) {
         $scope.logChange("sourceLanguage", language);
@@ -1757,8 +1835,9 @@ function($scope, external, connectionService, datasetService, errorNotificationS
 
     /**
      * Updates the 'to' language on translation and translates if 'Show Translation' is checked
-     * @method handleChangeToLanguage
+     * @method $scope.handleChangeToLanguage
      * @param {String} language The 'to' translation language to change to
+     * @protected
      */
     $scope.handleChangeToLanguage = function(language) {
         $scope.logChange("targetLanguage", language);
@@ -1771,10 +1850,11 @@ function($scope, external, connectionService, datasetService, errorNotificationS
 
     /**
      * Translates all text back to its original form if checked is false, or to the specified 'to' language if checked is true.
-     * @method handleToggleTranslation
+     * @method $scope.handleToggleTranslation
      * @param {Boolean} checked Whether 'Show Translation' is checked or unchecked
      * @param {String} fromLang The 'from' language to use for translation
      * @param {String} toLang The 'to' language to use for translation
+     * @protected
      */
     $scope.handleToggleTranslations = function(checked, fromLang, toLang) {
         $scope.logChange("showTranslations", checked);
@@ -1791,7 +1871,8 @@ function($scope, external, connectionService, datasetService, errorNotificationS
 
     /**
      * Handles changing the database for a visualization with a single data layer.
-     * @method handleChangeDatabase
+     * @method $scope.handleChangeDatabase
+     * @protected
      */
     $scope.handleChangeDatabase = function() {
         // Behavior is defined in the single layer controller.
@@ -1799,7 +1880,8 @@ function($scope, external, connectionService, datasetService, errorNotificationS
 
     /**
      * Handles changing the table for a visualization with a single data layer.
-     * @method handleChangeTable
+     * @method $scope.handleChangeTable
+     * @protected
      */
     $scope.handleChangeTable = function() {
         // Behavior is defined in the single layer controller.
@@ -1807,7 +1889,8 @@ function($scope, external, connectionService, datasetService, errorNotificationS
 
     /**
      * Handles changing the unshared filter field for a visualization with a single data layer.
-     * @method handleChangeUnsharedFilterField
+     * @method $scope.handleChangeUnsharedFilterField
+     * @protected
      */
     $scope.handleChangeUnsharedFilterField = function() {
         // Behavior is defined in the single layer controller.
@@ -1815,7 +1898,8 @@ function($scope, external, connectionService, datasetService, errorNotificationS
 
     /**
      * Handles changing the unshared filter value for a visualization with a single data layer.
-     * @method handleChangeUnsharedFilterValue
+     * @method $scope.handleChangeUnsharedFilterValue
+     * @protected
      */
     $scope.handleChangeUnsharedFilterValue = function() {
         // Behavior is defined in the single layer controller.
@@ -1823,7 +1907,8 @@ function($scope, external, connectionService, datasetService, errorNotificationS
 
     /**
      * Handles removing the unshared filter for a visualization with a single data layer.
-     * @method handleRemoveUnsharedFilter
+     * @method $scope.handleRemoveUnsharedFilter
+     * @protected
      */
     $scope.handleRemoveUnsharedFilter = function() {
         // Behavior is defined in the single layer controller.

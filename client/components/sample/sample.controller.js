@@ -101,7 +101,7 @@ angular.module('neonDemo.controllers').controller('sampleController', ['$scope',
     // Update the display for this visualization with the given query response data or reset the visualization if the data is empty.
     $scope.functions.updateData = function(data) {
         // TODO Display the rows returned by the query (results.data) in the visualization.
-        $scope.active.data = data;
+        $scope.active.data = data || [];
     };
 
     $scope.addFilter = function(value) {

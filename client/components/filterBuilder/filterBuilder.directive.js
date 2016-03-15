@@ -72,7 +72,6 @@ angular.module('neonDemo.directives')
              * @private
              */
             var initialize = function() {
-                $scope.instanceId = neon.widget.getInstanceId("filterBuilder");
 
                 $element.resize(resizeDateTimePickerDropdowns);
 
@@ -238,7 +237,7 @@ angular.module('neonDemo.directives')
                 $scope.selectedField = findDefaultField($scope.fields);
             };
 
-            $scope.onSelectedFieldChange = function() {
+            $scope.handleChangeSelectedField = function() {
                 XDATA.userALE.log({
                     activity: "select",
                     action: "click",
@@ -252,7 +251,7 @@ angular.module('neonDemo.directives')
                 $scope.selectedFieldIsDate = datasetService.hasDataset() && $scope.selectedField.columnName === datasetService.getMapping($scope.selectedDatabase.name, $scope.selectedTable.name, neonMappings.DATE);
             };
 
-            $scope.onSelectedOperatorChange = function() {
+            $scope.handleChangeSelectedOperator = function() {
                 XDATA.userALE.log({
                     activity: "select",
                     action: "click",
@@ -264,7 +263,7 @@ angular.module('neonDemo.directives')
                 });
             };
 
-            $scope.onSelectedValueChange = function() {
+            $scope.handleChangeSelectedValue = function() {
                 XDATA.userALE.log({
                     activity: "enter",
                     action: "keydown",
@@ -641,8 +640,11 @@ angular.module('neonDemo.directives')
 
             // Wait for neon to be ready, the create our messenger and intialize the view and data.
             neon.ready(function() {
-                initialize();
-                displayActiveDataset();
+                neon.widget.getInstanceId("filterBuilder", function(instanceId) {
+                    $scope.instanceId = instanceId;
+                    initialize();
+                    displayActiveDataset();
+                });
             });
         }
     };

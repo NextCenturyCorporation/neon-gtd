@@ -16,6 +16,12 @@
  *
  */
 
+/**
+ * This visualization shows aggregated time data in an ops clock.
+ * @namespace neonDemo.controllers
+ * @class opsClockController
+ * @constructor
+ */
 angular.module('neonDemo.controllers').controller('opsClockController', ['$scope', function($scope) {
     $scope.active.dateField = {};
     $scope.active.maxDay = "";
@@ -76,7 +82,6 @@ angular.module('neonDemo.controllers').controller('opsClockController', ['$scope
     };
 
     $scope.functions.onInit = function() {
-        // TODO The circular heat chart should be able to initialize itself without the visualization element.
         $scope.chart = new CircularHeatChart($scope.functions.getElement(".circular-heat-chart")[0])
             // TODO Move these settings to the circular heat chart.
             .segmentHeight(20)
@@ -124,7 +129,7 @@ angular.module('neonDemo.controllers').controller('opsClockController', ['$scope
         var days = createDaysList();
         var times = createTimesList();
 
-        data.forEach(function(item) {
+        (data || []).forEach(function(item) {
             hours[(item.day - 1) * HOURS_IN_DAY + item.hour] = item.count;
 
             // Add count to total for this day of the week.

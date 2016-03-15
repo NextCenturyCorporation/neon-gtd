@@ -16,7 +16,13 @@
  *
  */
 
-angular.module('neonDemo.controllers').controller('dataTableController', ['$scope', 'external', 'linkify', '$sce', '$timeout', function($scope, external, linkify, $sce, $timeout) {
+/**
+ * This visualization shows all data in a table.
+ * @namespace neonDemo.controllers
+ * @class dataTableController
+ * @constructor
+ */
+angular.module('neonDemo.controllers').controller('dataTableController', ['$scope', 'linkify', '$sce', '$timeout', function($scope, linkify, $sce, $timeout) {
     // Unique field name used for the SlickGrid column containing the URLs for the external apps.
     // This name should be one that is highly unlikely to be a column name in a real database.
     var EXTERNAL_APP_FIELD_NAME = "neonExternalApps";
@@ -119,7 +125,7 @@ angular.module('neonDemo.controllers').controller('dataTableController', ['$scop
             return config;
         });
 
-        if(external.active) {
+        if($scope.functions.areExternalServicesActive()) {
             var externalAppColumn = {
                 headerName: "",
                 field: EXTERNAL_APP_FIELD_NAME,
@@ -188,38 +194,18 @@ angular.module('neonDemo.controllers').controller('dataTableController', ['$scop
         return query;
     };
 
-    /**
-     * Escapes all values in the given data, recursively.
-     * @method escapeDataRecursively
-     * @private
-     */
-    var escapeDataRecursively = function(data) {
-        if(_.isArray(data)) {
-            for(var i = 0; i < data.length; i++) {
-                data[i] = escapeDataRecursively(data[i]);
-            }
-        } else if(_.keys(data).length) {
-            var keys = _.keys(data);
-            for(var i = 0; i < keys.length; i++) {
-                data[keys[i]] = escapeDataRecursively(data[keys[i]]);
-            }
-        } else {
-            data = _.escape(data);
-        }
-        return data;
-    };
-
     $scope.functions.updateData = function(data) {
-        data = escapeDataRecursively(data);
+        var tableData = data || [];
 
-        if(external.active) {
-            data = addExternalLinksToColumnData(data);
+        if($scope.functions.areExternalServicesActive()) {
+            tableData = addExternalLinksToColumnData(tableData);
         }
 
-        $scope.active.count = data.length;
-        $scope.active.gridOptions.api.setRowData(data);
+        $scope.active.count = tableData.length;
+        $scope.active.total = tableData.length;
+        $scope.active.gridOptions.api.setRowData(tableData);
 
-        if(data.length) {
+        if(tableData.length) {
             // Query for the total number of rows in the data.
             $scope.functions.queryAndUpdate({
                 addToQuery: function(query) {
@@ -227,12 +213,12 @@ angular.module('neonDemo.controllers').controller('dataTableController', ['$scop
                     return query;
                 },
                 updateData: function(data) {
-                    $scope.active.total = data.length ? data[0].count : 0
+                    $scope.active.total = data && data.length ? data[0].count : 0
                 }
             });
 
             $timeout(function() {
-                linkifyRows(data);
+                linkifyRows(tableData);
             });
         }
     };
@@ -251,7 +237,7 @@ angular.module('neonDemo.controllers').controller('dataTableController', ['$scop
         });
 
         if(idField) {
-            var links = $scope.functions.createLinkButtons(idField, data);
+            var buttons = $scope.functions.createLinkButtons(idField, data);
             data.forEach(function(row, index) {
                 row[EXTERNAL_APP_FIELD_NAME] = buttons[index];
             });
@@ -288,9 +274,9 @@ angular.module('neonDemo.controllers').controller('dataTableController', ['$scop
 
     /**
      * Opens or closes the ag-grid tool panel to allow for modifying table columns
-     * @method handleToggleToolPanel
+     * @method toggleToolPanel
      */
-    $scope.handleToggleToolPanel = function() {
+    $scope.toggleToolPanel = function() {
         // TODO Logging
         $scope.active.gridOptions.api.showToolPanel($scope.active.gridOptions.showToolPanel);
     };
@@ -317,7 +303,7 @@ angular.module('neonDemo.controllers').controller('dataTableController', ['$scop
         return finalObject;
     };
 
-    var handleChangeSort = function() {
+    var updateSort = function() {
         var sort = {
             colId: $scope.active.sortByField.columnName,
             sort: $scope.active.sortDirection === $scope.active.ASCENDING ? "asc" : "desc"
@@ -327,12 +313,12 @@ angular.module('neonDemo.controllers').controller('dataTableController', ['$scop
     };
 
     $scope.handleChangeSortField = function() {
-        handleChangeSort();
+        updateSort();
         $scope.functions.logChangeAndUpdate("sortField", $scope.active.sortByField.name);
     };
 
     $scope.handleChangeSortDirection = function() {
-        handleChangeSort();
+        updateSort();
         $scope.functions.logChangeAndUpdate("sortDirection", $scope.active.sortDirection, "button");
     };
 
@@ -346,6 +332,13 @@ angular.module('neonDemo.controllers').controller('dataTableController', ['$scop
         bindings.sortDirection = $scope.active.sortDirection;
         bindings.limit = $scope.active.limit;
         return bindings;
+    };
+
+    $scope.functions.onResize = function() {
+        // Force the grid to update its size so that when we tell it to calculate the column
+        // widths it is using an up-to-date width.
+        $scope.active.gridOptions.api.doLayout();
+        $scope.active.gridOptions.api.sizeColumnsToFit();
     };
 
     //TODO text selection on cells -- https://github.com/ceolter/ag-grid/issues/87

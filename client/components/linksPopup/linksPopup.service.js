@@ -325,7 +325,7 @@ angular.module('neonDemo.services')
     var generateKeyFromKeyMap = function(keyMap) {
         var key = "";
         Object.keys(keyMap).forEach(function(mapping) {
-            if(!key) {
+            if(key) {
                 key += ",";
             }
             key += mapping + "=" + keyMap[mapping];

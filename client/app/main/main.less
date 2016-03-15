@@ -135,19 +135,19 @@ html {
     text-align: center;
 }
 
-.chart-options {
+.options-menu {
     > a {
         background-color: transparent;
         border: none;
         font-size: 16px;
         padding: 0;
 
-        .header-text, .glyphicon, .caret {
+        .text, .glyphicon, .caret {
             color: @accent-bright;
         }
 
         &.collapsed {
-            .header-text, .glyphicon, .caret {
+            .text, .glyphicon, .caret {
                 color: @main-text-color;
             }
         }
@@ -157,12 +157,12 @@ html {
             border: none;
             box-shadow: none;
 
-            .header-text, .glyphicon, .caret {
+            .text, .glyphicon, .caret {
                 color: @accent-bright;
             }
         }
 
-        .header-text {
+        .text {
             overflow: hidden;
             text-overflow: ellipsis;
         }
@@ -190,7 +190,8 @@ html {
         right: -10px;
         top: 25px;
         margin-top: 0;
-        min-width: 320px;
+        /* Set the width so that the timeline date granularity buttons fit on one row. */
+        min-width: 325px;
 
         background: none;
         padding: 10px;
@@ -269,17 +270,13 @@ html {
     }
 }
 
-.header-container {
+.text-container {
     min-height: 20px;
     margin-bottom: 5px;
 
-    &.filter-container {
-        min-height: 35px;
-
-        &.shrink {
-            height: 0px;
-            min-height: 0px;
-        }
+    &.shrink {
+        height: 0px;
+        min-height: 0px;
     }
 
     h4 {
@@ -287,20 +284,24 @@ html {
         margin-bottom: 5px;
     }
 
-    .title {
+    .header {
         display: inline-block;
         overflow: hidden;
         white-space: nowrap;
         text-overflow: ellipsis;
     }
 
-    .header-text {
+    .text {
         color: @main-text-color;
         font-size: 16px;
         font-weight: bold;
         line-height: 1.33;
         text-transform: uppercase;
     }
+}
+
+.headers-container {
+    min-height: 35px;
 
     .filter-reset {
         border: @main-border;
@@ -320,6 +321,94 @@ html {
 
             &:hover {
                 cursor: pointer;
+            }
+        }
+    }
+
+    /* Overwrite default legend styling. */
+    .dropdown-legend {
+        background-color: @visualization-box-background;
+        border: @main-border;
+        border-radius: 4px;
+        position: absolute;
+
+        &.open {
+            min-width: 175px;
+        }
+
+        .divider {
+            height: 1px;
+            margin: 0 0 9px 0;
+            overflow: hidden;
+            background-color: @border-color;
+        }
+
+        .legend-toggle {
+            padding: 5px;
+        }
+
+        .legend-details {
+            overflow: auto;
+
+            .legend-layer {
+                margin-bottom: 10px;
+
+                .legend-title {
+                    cursor: pointer;
+                    position: relative;
+                    padding: 5px;
+
+                    .text {
+                        margin-right: 25px;
+                        font-size: 14px;
+                    }
+
+                    .glyphicon {
+                        color: @main-text-color;
+                        position: absolute;
+                        right: 5px;
+                        top: 50%;
+                        transform: translate(0, -50%);
+                    }
+                }
+
+                .node-title {
+                    color: @main-text-color;
+                    font-size: 14px;
+                    font-weight: bold;
+                    line-height: 1.33;
+                    text-transform: uppercase;
+                    margin-left: 20px;
+                }
+
+                .legend-item {
+                    border: @main-border;
+                    border-radius: 5px;
+                    cursor: pointer;
+                    display: block;
+                    font-size: 12px;
+                    margin-left: 20px;
+                    margin-right: 5px;
+                    margin-top: 0px;
+                    opacity: .8;
+                    padding: 3px;
+
+                    &.legend-hidden{
+                        color: @main-text-color;
+
+                        .legend-icon{
+                            background: #e1e1e1 !important;
+                        }
+                    }
+                }
+            }
+        }
+
+        .text {
+            cursor: pointer;
+
+            .glyphicon {
+                line-height: normal;
             }
         }
     }
@@ -523,6 +612,7 @@ html {
 .legend {
     .legend-item {
         display: inline-block;
+        margin-top: 5px;
         padding-right: 5px;
 
         .legend-icon {
@@ -630,7 +720,7 @@ html {
     }
 
     .navbar-option-menu {
-        .chart-options {
+        .options-menu {
             .popover {
                 min-width: 200px;
             }

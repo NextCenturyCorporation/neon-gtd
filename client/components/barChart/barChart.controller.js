@@ -16,12 +16,18 @@
  *
  */
 
+/**
+ * This visualization shows aggregated data in a bar chart.
+ * @namespace neonDemo.controllers
+ * @class barChartController
+ * @constructor
+ */
 angular.module('neonDemo.controllers').controller('barChartController', ['$scope', function($scope) {
     var COUNT_FIELD_NAME = 'Count';
 
     $scope.chart = undefined;
 
-    $scope.active.aggregation = $scope.bindings.aggregation || "count";
+    $scope.active.aggregation = $scope.bindings.aggregationType || "count";
     $scope.active.aggregationField = {};
     $scope.active.groupField = {};
     $scope.active.limit = $scope.bindings.limit || 100;
@@ -71,8 +77,7 @@ angular.module('neonDemo.controllers').controller('barChartController', ['$scope
     };
 
     var updateLinks = function() {
-        var links = $scope.functions.createLinks($scope.active.groupField, $scope.filter);
-        $scope.showLinksPopupButton = !!links.length;
+        $scope.showLinksPopupButton = !!($scope.functions.createLinks($scope.active.groupField, $scope.filter).length);
     };
 
     $scope.functions.removeFilterValues = function() {
@@ -102,10 +107,13 @@ angular.module('neonDemo.controllers').controller('barChartController', ['$scope
         }
 
         if($scope.active.aggregation === 'count') {
+            COUNT_FIELD_NAME = "Count";
             query.aggregate(neon.query.COUNT, '*', COUNT_FIELD_NAME);
         } else if($scope.active.aggregation === 'sum') {
+            COUNT_FIELD_NAME = "Sum";
             query.aggregate(neon.query.SUM, $scope.active.aggregationField.columnName, COUNT_FIELD_NAME);
         } else if($scope.active.aggregation === 'average') {
+            COUNT_FIELD_NAME = "Average";
             query.aggregate(neon.query.AVG, $scope.active.aggregationField.columnName, COUNT_FIELD_NAME);
         }
 
@@ -128,7 +136,7 @@ angular.module('neonDemo.controllers').controller('barChartController', ['$scope
 
     $scope.functions.updateData = function(data) {
         var opts = {
-            data: data,
+            data: data || [],
             x: $scope.active.groupField.columnName,
             y: COUNT_FIELD_NAME,
             responsive: false,
@@ -149,7 +157,7 @@ angular.module('neonDemo.controllers').controller('barChartController', ['$scope
 
         // Save the limit for the most recent query to show in the options menu button text.
         // Don't use the current limit because that may be changed to a different number.
-        $scope.queryLimit = data.length >= $scope.active.limit ? $scope.active.limit : 0;
+        $scope.queryLimit = data && data.length >= $scope.active.limit ? $scope.active.limit : 0;
     };
 
     /**
@@ -243,8 +251,8 @@ angular.module('neonDemo.controllers').controller('barChartController', ['$scope
     };
 
     $scope.functions.addToBindings = function(bindings) {
-        bindings.aggregation = $scope.active.aggregation || undefined;
-        bindings.groupField = $scope.functions.isFieldValid($scope.options.groupField) ? $scope.options.groupField.columnName : undefined;
+        bindings.aggregationType = $scope.active.aggregation || undefined;
+        bindings.groupField = $scope.functions.isFieldValid($scope.active.groupField) ? $scope.active.groupField.columnName : undefined;
         var hasAggField = $scope.active.aggregation && $scope.active.aggregation !== 'count' && $scope.functions.isFieldValid($scope.active.aggregationField);
         bindings.aggregationField = hasAggField ? $scope.active.aggregationField.columnName : undefined;
         bindings.limit = $scope.active.limit;
@@ -253,10 +261,10 @@ angular.module('neonDemo.controllers').controller('barChartController', ['$scope
 
     /**
      * Generates and returns the links popup key for this visualization.
-     * @method generateLinksPopupKey
+     * @method getLinksPopupKey
      * @return {String}
      */
-    $scope.generateLinksPopupKey = function(value) {
+    $scope.getLinksPopupKey = function(value) {
         return $scope.functions.getLinksPopupService().generateKey($scope.active.groupField, value);
     };
 }]);

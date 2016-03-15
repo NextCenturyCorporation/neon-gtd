@@ -18,10 +18,12 @@
 angular.module("neonDemo.services")
 .factory("ErrorNotificationService", ["config",
     function(config) {
-        var service = {};
-
-        // TODO The errors from the neon-server should contain error codes and we should use those codes instead of the error text itself.
-        service.TOO_MUCH_DATA_ERROR = "Query execution failed because there was too much data.";
+        var service = {
+            ERROR_CODES: {
+                // TODO The errors from the neon-server should contain error codes and we should use those codes instead of the error text itself.
+                TOO_MUCH_DATA_ERROR: "Query execution failed because there was too much data."
+            }
+        };
 
         // In Bootstrap Notify, {0} = settings.type, {1} = options.title, {2} = options.message, {3} = options.url, {4} = options.target
         var ERROR_AND_PROGRESS_BAR_TEMPLATE =

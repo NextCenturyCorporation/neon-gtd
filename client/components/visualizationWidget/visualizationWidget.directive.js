@@ -24,7 +24,7 @@
  *    &lt;div visualization-widget gridster-configs="items" gridster-config-index="0"&gt;&lt;/div&gt;
  *
  * @namespace neonDemo.directives
- * @class visulizationWidget
+ * @class visualizationWidget
  * @constructor
  */
 angular.module('neonDemo.directives').directive('visualizationWidget', ["config", "$compile", function(config, $compile) {

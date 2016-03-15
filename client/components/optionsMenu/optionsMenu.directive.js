@@ -35,8 +35,8 @@ angular.module('neonDemo.directives')
             $scope.showExport = config.showExport;
             $scope.optionsDisplayed = false;
 
-            $scope.uniqueVisualizationOptions = 'chart-options-' + uuid();
-            $element.find('.chart-options').addClass($scope.uniqueVisualizationOptions);
+            $scope.uniqueVisualizationOptions = 'options-menu-' + uuid();
+            $element.find('.options-menu').addClass($scope.uniqueVisualizationOptions);
 
             $scope.toggleOptionsDisplay = function() {
                 $scope.optionsDisplayed = !$scope.optionsDisplayed;
@@ -60,16 +60,16 @@ angular.module('neonDemo.directives')
             };
 
             var resizeButton = function() {
-                var optionsButtonElement = $element.find(".chart-options .chart-options-button");
+                var optionsButtonElement = $element.find(".options-menu .options-menu-button");
                 // Subtract the width of the options menu icon and caret.
                 var width = $scope.parentElement.width() - optionsButtonElement.find(".glyphicon").outerWidth(true) - optionsButtonElement.find(".caret").outerWidth(true) - 4;
-                optionsButtonElement.find(".header-text").css("max-width", width + "px");
+                optionsButtonElement.find(".text").css("max-width", width + "px");
             };
 
             var resizeMenu = $scope.resizeMenu || function() {
                 // Subtract the height of the options menu container and popover arrow.
                 var height = $scope.parentElement.height() - $scope.parentElement.find(".options-container").outerHeight(true) - 10;
-                $element.find(".chart-options .popover .popover-content").css("max-height", height + "px");
+                $element.find(".options-menu .popover .popover-content").css("max-height", height + "px");
             };
 
             var resizeButtonAndMenu = function() {
@@ -78,7 +78,7 @@ angular.module('neonDemo.directives')
             };
 
             $scope.parentElement.resize(resizeButtonAndMenu);
-            $element.find(".chart-options").resize(resizeButton);
+            $element.find(".options-menu").resize(resizeButton);
 
             // Resize the options button and menu to reflect the initial size of the parent element.
             resizeButtonAndMenu();

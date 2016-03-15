@@ -16,6 +16,13 @@
  *
  */
 
+/**
+ * This controller manages the common behavior for all single layer Neon dashboard visualizations.
+ * @namespace neonDemo.controllers
+ * @class singleLayerController
+ * @extends visualizationSuperclass
+ * @constructor
+ */
 angular.module('neonDemo.controllers').controller('singleLayerController', ['$scope', '$controller', 'DatasetService', function($scope, $controller, datasetService) {
     $controller('visualizationSuperclassController', { $scope: $scope });
 
@@ -35,6 +42,7 @@ angular.module('neonDemo.controllers').controller('singleLayerController', ['$sc
 
     // Save the original functions to call in their overwritten versions.
     var createLinks = $scope.functions.createLinks;
+    var createLinkButtons = $scope.functions.createLinkButtons;
     var getColorMaps = $scope.functions.getColorMaps;
     var getFilterKey = $scope.functions.getFilterKey;
     var getMapping = $scope.functions.getMapping;
@@ -44,7 +52,7 @@ angular.module('neonDemo.controllers').controller('singleLayerController', ['$sc
 
     /**
      * Creates and returns an object containing the data needed to export this visualization.
-     * @method createExportDataObject
+     * @method $scope.functions.createExportDataObject
      * @param {String} exportId
      * @param {neon.query.Query} query
      * @return {Object}
@@ -55,16 +63,34 @@ angular.module('neonDemo.controllers').controller('singleLayerController', ['$sc
 
     /******************** SUBCLASS UTILITY FUNCTIONS ********************/
 
+    /**
+     * Creates and returns the links for the given field object and item object.
+     * @method $scope.functions.createLinks
+     * @param {Object} field The field object on which to create the links containing {String} columnName
+     * @param {String} value The value on which to create the links
+     * @return {Boolean} Whether any links were created
+     */
     $scope.functions.createLinks = function(field, value) {
         return createLinks($scope.active.database.name, $scope.active.table.name, field, value);
     };
 
     /**
+     * Creates and returns the link buttons for the given field object and data array.
+     * @method $scope.functions.createLinkButtons
+     * @param {Object} field The field object on which to create the link containing {String} columnName
+     * @param {Array} array A list of objects each containing a property matching the field name
+     * @return {Array} The list of link buttons as HTML strings
+     */
+    $scope.functions.createLinkButtons = function(field, array) {
+        return createLinkButtons($scope.active.database.name, $scope.active.table.name, field, array);
+    };
+
+    /**
      * Finds and returns the field object in the global list of fields that matches the binding or mapping with the given key.
      * Returns a blank field object if no such field exists.
-     * @method findFieldObject
-     * @param {String} bindingKey
-     * @param {String} mappingKey
+     * @method $scope.functions.findFieldObject
+     * @param {String} bindingKey The name of a visualization binding that may contain a field name
+     * @param {String} mappingKey The name of a Neon mapping that may contain a field name
      * @return {Object}
      */
     $scope.functions.findFieldObject = function(bindingKey, mappingKey) {
@@ -88,7 +114,7 @@ angular.module('neonDemo.controllers').controller('singleLayerController', ['$sc
 
     /**
      * Returns the color maps for the field with the given name.
-     * @method getColorMaps
+     * @method $scope.functions.getColorMaps
      * @param {String} fieldName
      * @return {Object}
      */
@@ -97,8 +123,8 @@ angular.module('neonDemo.controllers').controller('singleLayerController', ['$sc
     };
 
     /**
-     * Returns the filter key for the given filter clause.
-     * @method getFilterKey
+     * Returns the filter key for the given Neon filter clause.
+     * @method $scope.functions.getFilterKey
      * @param {Object} filterClause
      * @return {String}
      */
@@ -108,7 +134,7 @@ angular.module('neonDemo.controllers').controller('singleLayerController', ['$sc
 
     /**
      * Returns the mapping for the given key or any empty string if no mapping exists.
-     * @method getMapping
+     * @method $scope.functions.getMapping
      * @param {String} key
      * @return {String}
      */
@@ -118,7 +144,7 @@ angular.module('neonDemo.controllers').controller('singleLayerController', ['$sc
 
     /**
      * Returns the list of unsorted fields (in the order they are defined in the dashboard configuration).
-     * @method getUnsortedFields
+     * @method $scope.functions.getUnsortedFields
      * @return {Array}
      */
     $scope.functions.getUnsortedFields = function() {
@@ -127,6 +153,7 @@ angular.module('neonDemo.controllers').controller('singleLayerController', ['$sc
 
     /************************* SUPERCLASS FUNCTIONS *************************/
 
+    // Overwrite to initialize the data for a single layer (on $scope.active instead of as an element in the $scope.active.layers array).
     $scope.initData = function() {
         updateDatabases();
     };
@@ -217,7 +244,7 @@ angular.module('neonDemo.controllers').controller('singleLayerController', ['$sc
             return title + $scope.bindings.title;
         }
         if(_.keys($scope.active).length) {
-            return title + $scope.active.table.prettyName;
+            return title + ($scope.active.table ? $scope.active.table.prettyName : "");
         }
         return title;
     };

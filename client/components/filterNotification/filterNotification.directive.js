@@ -32,6 +32,8 @@ angular.module('neonDemo.directives').directive('filterNotification', function()
             visualizationId: '='
         },
         link: function($scope) {
+            $scope.isLinksPopupButtonDisabled = true;
+
             $scope.getDesc = $scope.getDesc || function(value) {
                 return value;
             };
@@ -43,6 +45,11 @@ angular.module('neonDemo.directives').directive('filterNotification', function()
             $scope.getText = $scope.getText || function(value) {
                 return value;
             };
+
+            // TODO Is there a way to use just an angular data binding and not have to use a watch?
+            $scope.$watch("showLinksPopupButton", function(newValue) {
+                $scope.isLinksPopupButtonDisabled = !newValue;
+            });
         }
     };
 });
