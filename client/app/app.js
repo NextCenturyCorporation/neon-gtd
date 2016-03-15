@@ -220,16 +220,16 @@ var saveDashboards = function(config) {
     }
 
     var visualizations = neonVisualizations || [];
-    var overrides = config.visualizations || [];
-
-    overrides.forEach(function(override) {
+    (config.visualizations || []).forEach(function(visualization) {
         var index = _.findIndex(visualizations, {
-            type: override.type
+            type: visualization.type
         });
         if(index < 0) {
-            visualizations.push(override);
+            visualizations.push(visualization);
+        } else if(visualization.exclude) {
+            visualizations.splice(index, 1);
         } else {
-            visualizations[index] = override;
+            visualizations[index] = visualization;
         }
     });
 
