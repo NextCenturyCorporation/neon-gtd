@@ -243,7 +243,6 @@
                     "database": "test",
                     "table": "earthquakes",
                     "type": "points",
-                    "active": true,
                     "limit": 5000,
                     "latitudeField": "latitude",
                     "longitudeMapping": "longitude",
@@ -255,7 +254,6 @@
                     "database": "test",
                     "table": "earthquakes",
                     "type": "heatmap",
-                    "active": true,
                     "limit": 5000,
                     "latitudeField": "latitude",
                     "longitudeField": "longitude"
@@ -264,7 +262,6 @@
                     "database": "test",
                     "table": "earthquakes",
                     "type": "cluster",
-                    "active": true,
                     "limit": 5000,
                     "latitudeField": "latitude",
                     "longitudeMapping": "longitude",
@@ -286,14 +283,12 @@
                     "name": "myLayer",
                     "database": "test",
                     "table": "earthquakes",
-                    "active": true,
                     "dateField": "time",
                     "aggregationType": "count"
                 }, {
                     "name": "myLayer",
                     "database": "test",
                     "table": "earthquakes",
-                    "active": true,
                     "dateField": "time",
                     "aggregationType": "average",
                     "aggregationField": "mag",

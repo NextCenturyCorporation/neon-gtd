@@ -1566,9 +1566,11 @@ function($scope, external, connectionService, datasetService, errorNotificationS
 
                 var layerBindings = {
                     database: (layer.database && layer.database.name) ? layer.database.name : undefined,
-                    unsharedFilterField: hasUnsharedFilter ? layer.unsharedFilterField.columnName : undefined,
-                    unsharedFilterValue: hasUnsharedFilter ? layer.unsharedFilterValue : undefined,
+                    filterable: layer.filterable || true,
+                    show: layer.show || true,
                     table: (layer.table && layer.table.name) ? layer.table.name : undefined,
+                    unsharedFilterField: hasUnsharedFilter ? layer.unsharedFilterField.columnName : undefined,
+                    unsharedFilterValue: hasUnsharedFilter ? layer.unsharedFilterValue : undefined
                 };
 
                 bindings.config.push($scope.functions.addToLayerBindings(layerBindings, layer));
