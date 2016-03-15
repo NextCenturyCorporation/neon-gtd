@@ -1375,7 +1375,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
 
             $scope.$apply(function() {
                 // The response for an array-counts query is an array and the response for other queries is an object containing a data array.
-                updateDataFunction(response.data || response, layers);
+                updateDataFunction(neon.helpers.escapeDataRecursively(response.data || response), layers);
             });
 
             XDATA.userALE.log({

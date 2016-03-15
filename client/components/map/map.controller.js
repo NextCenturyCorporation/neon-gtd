@@ -687,7 +687,38 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
     };
 
     $scope.functions.createNeonQueryClause = function(layers) {
-        if($scope.functions.getDatasetOptions().checkForNullCoordinates) {
+        var validation = $scope.functions.getDatasetOptions().checkForCoordinateValidation;
+
+        if(validation === "valid_numbers") {
+            var whereClauses = [];
+            layers.forEach(function(layer) {
+                if(layer.type === coreMap.Map.NODE_AND_ARROW_LAYER) {
+                    whereClauses.push(neon.query.and(
+                        neon.query.where(layer.sourceLatitudeField.columnName, ">=", -180),
+                        neon.query.where(layer.sourceLatitudeField.columnName, "<=", 180),
+                        neon.query.where(layer.sourceLongitudeField.columnName, ">=", -90),
+                        neon.query.where(layer.sourceLongitudeField.columnName, "<=", 90)
+                    ));
+                    whereClauses.push(neon.query.and(
+                        neon.query.where(layer.targetLatitudeField.columnName, ">=", -180),
+                        neon.query.where(layer.targetLatitudeField.columnName, "<=", 180),
+                        neon.query.where(layer.targetLongitudeField.columnName, ">=", -90),
+                        neon.query.where(layer.targetLongitudeField.columnName, "<=", 90)
+                    ));
+                } else {
+                    whereClauses.push(neon.query.and(
+                        neon.query.where(layer.latitudeField.columnName, ">=", -180),
+                        neon.query.where(layer.latitudeField.columnName, "<=", 180),
+                        neon.query.where(layer.longitudeField.columnName, ">=", -90),
+                        neon.query.where(layer.longitudeField.columnName, "<=", 90)
+                    ));
+                }
+            });
+
+            return neon.query.or.apply(neon.query, whereClauses);
+        }
+
+        if(validation === "null_values") {
             var whereClauses = [];
             layers.forEach(function(layer) {
                 if(layer.type === coreMap.Map.NODE_AND_ARROW_LAYER) {

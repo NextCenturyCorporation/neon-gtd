@@ -387,6 +387,8 @@ coreMap.Map.prototype.createSelectControl =  function(layer) {
                 return;
             }
 
+            data = neon.helpers.escapeDataRecursively(data);
+
             var text;
 
             // If we're on a cluster layer, show specific fields, if defined

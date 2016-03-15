@@ -107,10 +107,13 @@ angular.module('neonDemo.controllers').controller('barChartController', ['$scope
         }
 
         if($scope.active.aggregation === 'count') {
+            COUNT_FIELD_NAME = "Count";
             query.aggregate(neon.query.COUNT, '*', COUNT_FIELD_NAME);
         } else if($scope.active.aggregation === 'sum') {
+            COUNT_FIELD_NAME = "Sum";
             query.aggregate(neon.query.SUM, $scope.active.aggregationField.columnName, COUNT_FIELD_NAME);
         } else if($scope.active.aggregation === 'average') {
+            COUNT_FIELD_NAME = "Average";
             query.aggregate(neon.query.AVG, $scope.active.aggregationField.columnName, COUNT_FIELD_NAME);
         }
 

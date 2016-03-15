@@ -194,29 +194,8 @@ angular.module('neonDemo.controllers').controller('dataTableController', ['$scop
         return query;
     };
 
-    /**
-     * Escapes all values in the given data, recursively.
-     * @method escapeDataRecursively
-     * @private
-     */
-    var escapeDataRecursively = function(data) {
-        if(_.isArray(data)) {
-            for(var i = 0; i < data.length; i++) {
-                data[i] = escapeDataRecursively(data[i]);
-            }
-        } else if(_.keys(data).length) {
-            var keys = _.keys(data);
-            for(var i = 0; i < keys.length; i++) {
-                data[keys[i]] = escapeDataRecursively(data[keys[i]]);
-            }
-        } else {
-            data = _.escape(data);
-        }
-        return data;
-    };
-
     $scope.functions.updateData = function(data) {
-        var tableData = escapeDataRecursively(data || []);
+        var tableData = data || [];
 
         if($scope.functions.areExternalServicesActive()) {
             tableData = addExternalLinksToColumnData(tableData);
@@ -353,6 +332,13 @@ angular.module('neonDemo.controllers').controller('dataTableController', ['$scop
         bindings.sortDirection = $scope.active.sortDirection;
         bindings.limit = $scope.active.limit;
         return bindings;
+    };
+
+    $scope.functions.onResize = function() {
+        // Force the grid to update its size so that when we tell it to calculate the column
+        // widths it is using an up-to-date width.
+        $scope.active.gridOptions.api.doLayout();
+        $scope.active.gridOptions.api.sizeColumnsToFit();
     };
 
     //TODO text selection on cells -- https://github.com/ceolter/ag-grid/issues/87

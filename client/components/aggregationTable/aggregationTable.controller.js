@@ -320,4 +320,11 @@ angular.module('neonDemo.controllers').controller('aggregationTableController', 
         bindings.limit = $scope.active.limit;
         return bindings;
     };
+
+    $scope.functions.onResize = function() {
+        // Force the grid to update its size so that when we tell it to calculate the column
+        // widths it is using an up-to-date width.
+        $scope.active.gridOptions.api.doLayout();
+        $scope.active.gridOptions.api.sizeColumnsToFit();
+    };
 }]);
