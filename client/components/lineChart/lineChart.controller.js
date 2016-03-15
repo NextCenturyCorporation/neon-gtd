@@ -1072,7 +1072,7 @@ angular.module('neonDemo.controllers').controller('lineChartController', ['$scop
         bindings.aggregationType = layer.aggregationType;
         bindings.dateField = $scope.functions.isFieldValid(layer.dateField) ? layer.dateField.columnName : "";
         bindings.aggregationField = $scope.functions.isFieldValid(layer.aggregationField) ? layer.aggregationField.columnName : "";
-        bindings.group = $scope.functions.isFieldValid(layer.groupField) ? layer.groupField.columnName : "";
+        bindings.groupField = $scope.functions.isFieldValid(layer.groupField) ? layer.groupField.columnName : "";
         return bindings;
     };
 
