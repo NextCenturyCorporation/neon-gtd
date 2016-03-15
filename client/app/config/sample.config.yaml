@@ -1,7 +1,7 @@
 user_ale:
   loggingUrl: http://192.168.1.100
   toolName: Neon Dashboard
-  toolVersion: 1.1.0
+  toolVersion: 1.2.0
   elementGroups:
     - top
     - map_group
@@ -12,6 +12,7 @@ user_ale:
   workerUrl: bower_components/user-ale/js/userale-worker.js
   debug: false
   sendLogs: false
+
 dashboard:
   gridsterColumns: 24
   gridsterMargins: 10
@@ -26,10 +27,12 @@ dashboard:
   showExport: true
   translationKeys:
     google: API_KEY
+
 help:
   guide: ./app/help/Neon-Dashboard-User-Guide-1.1.5.pdf
   webVideo:
   localVideo:
+
 opencpu:
   enableOpenCpu: false
   enableLogging: false
@@ -38,6 +41,7 @@ opencpu:
   enableStl2: false
   enableMmpp: false
   url: http://neon-opencpu/ocpu/library/NeonAngularDemo/R
+
 externalServices:
   jsonConfigFile:
   appImagePath:
@@ -56,101 +60,7 @@ externalServices:
       serviceName2:
         propertyName1: neonMapping3
         propertyName2: neonMapping4
-visualizations:
-  -
-    name: Aggregation Table
-    sizeX: 6
-    sizeY: 4
-    type: count-by
-    icon: Count64
-  -
-    name: Bar Chart
-    sizeX: 6
-    sizeY: 4
-    type: barchart
-    icon: BarChart64
-  -
-    name: Data Table
-    sizeX: 6
-    sizeY: 4
-    type: query-results-table
-    icon: ViewData64
-  -
-    name: Filter Builder
-    sizeX: 12
-    minSizeX: 12
-    sizeY: 4
-    minSizeY: 4
-    type: filter-builder
-    icon: CreateFilter64
-  -
-    name: Gantt Chart
-    sizeX: 6
-    sizeY: 4
-    type: gantt-chart
-    icon: Gantt64
-  -
-    name: Line Chart
-    sizeX: 6
-    sizeY: 4
-    type: linechart
-    icon: LineChart64
-  -
-    name: Map
-    sizeX: 12
-    sizeY: 6
-    type: map
-    icon: Map64
-  -
-    name: Network Graph
-    sizeX: 12
-    sizeY: 6
-    type: directed-graph
-    icon: Graph64
-  -
-    name: Newsfeed
-    sizeX: 6
-    sizeY: 4
-    type: newsfeed
-    icon: News64
-  -
-    name: Ops Clock
-    sizeX: 6
-    sizeY: 4
-    type: circular-heat-form
-    icon: OpsClock64
-  -
-    name: Scatter Plot
-    sizeX: 6
-    sizeY: 4
-    type: plotly-graph
-    icon: ScatterPlot64
-  -
-    name: Sunburst Chart
-    sizeX: 6
-    sizeY: 4
-    type: sunburst
-    icon: Sunburst64
-  -
-    name: Text Cloud
-    sizeX: 6
-    sizeY: 4
-    type: tag-cloud
-    icon: TagCloud64
-  -
-    name: Timeline
-    sizeX: 12
-    minSizeX: 12
-    sizeY: 4
-    minSizeY: 4
-    type: timeline-selector
-    icon: Timeline64
-  -
-    name: Sample
-    sizeX: 6
-    sizeY: 4
-    type: sample
-    icon: Neon_60x34
+
 datasets:
   -
     name: Earthquakes
@@ -220,7 +130,7 @@ datasets:
               line_category: type
               bar_x_axis: net
               y_axis: mag
-              color_by: magType
+              color_by: type
               size_by: mag
               sort_by: time
               count_by: net
@@ -231,63 +141,6 @@ datasets:
           bottom: -90
           right: 180
           top: 90
-    mapLayers:
-      myMap1:
-        -
-          database: test
-          table: earthquakes
-          type: heatmap
-          latitudeMapping: latitude
-          longitudeMapping: longitude
-          limit: 5000
-          sizeBy: mag
-        -
-          database: test
-          table: earthquakes
-          active: true
-          type: cluster
-          latitudeMapping: latitude
-          longitudeMapping: longitude
-          limit: 5000
-          colorBy: magType
-          sizeBy: mag
-        -
-          database: test
-          table: earthquakes
-          active: true
-          type: points
-          latitudeMapping: latitude
-          longitudeMapping: longitude
-          limit: 5000
-          colorBy: magType
-          sizeBy: mag
-    lineCharts:
-        lineChart1:
-          -
-            database: test
-            table: earthquakes
-            active:  true
-            name: Quakes
-            xAxis: time
-            aggregation: sum
-            yAxis: mag
-            category: magType
-          -
-            database: test
-            table: earthquakes
-            active:  true
-            name: Quakes2
-            xAxis: time
-            aggregation: count
-        lineChart2:
-          -
-            database: test
-            table: earthquakes
-            active:  true
-            name: Quakes
-            xAxis: time
-            aggregation: max
-            yAxis: mag
     linkyConfig:
       mentions: false
       hashtags: false
@@ -303,135 +156,197 @@ datasets:
       mapBaseLayer:
         color: dark
         protocol: https
+
 layouts:
   default:
     -
-      sizeX: 18
-      minSizeX: 12
-      sizeY: 4
-      minSizeY: 4
-      type: timeline-selector
+      sizeX: 12
+      type: timeline
     -
-      sizeX: 18
-      sizeY: 4
+      sizeX: 12
       type: map
       bindings:
-        bind-config: "'myMap1'"
+        config:
+          -
+            database: test
+            table: earthquakes
     -
-      sizeX: 18
-      sizeY: 4
-      type: query-results-table
-    -
-      sizeX: 18
-      sizeY: 4
-      type: filter-builder
-    -
-      sizeX: 6
-      sizeY: 4
-      type: circular-heat-form
-    -
-      sizeX: 6
-      sizeY: 4
-      type: linechart
+      sizeX: 12
+      type: lineChart
       bindings:
-        bind-config: "'lineChart1'"
+        config:
+          -
+            database: test
+            table: earthquakes
     -
-      sizeX: 6
-      sizeY: 4
-      type: barchart
+      type: aggregationTable
     -
-      sizeX: 6
-      sizeY: 4
-      type: count-by
+      type: barChart
+    -
+      type: opsClock
+    -
+      type: dataTable
+    -
+      type: filterBuilder
+
   example-with-bindings:
     -
       sizeX: 12
-      sizeY: 4
-      type: timeline-selector
+      type: timeline
       bindings:
-        bind-title: "'myTitle'"
-        bind-database: "'myDatabase'"
-        bind-table: "'myTable'"
-        bind-date-field: "'date'"
-        override-start-date: "'1/1/2013'"
-        override-end-date: "1388534399000"
+        title: myTitle
+        database: test
+        table: earthquakes
+        dateField: time
+        granularity: month
+        overrideStartDate: 1/1/2013
+        overrideEndDate: "1388534399000"
     -
       sizeX: 12
-      sizeY: 4
       type: map
       bindings:
-        bind-config: "'myMap1'"
-        bind-title: "'myTitle'"
-        bind-database: "'myDatabase'"
-        bind-table: "'myTable'"
-        bind-latitude-field: "'latitude'"
-        bind-longitude-field: "'longitude'"
-        bind-color-field: "'type'"
-        bind-size-field: "'type'"
-    -
-      sizeX: 6
-      sizeY: 4
-      type: circular-heat-form
-      bindings:
-        bind-title: "'myTitle'"
-        bind-database: "'myDatabase'"
-        bind-table: "'myTable'"
-        bind-date-field: "'date'"
-    -
-      sizeX: 6
-      sizeY: 4
-      type: linechart
-      bindings:
-        bind-config: "'myLineChart'"
-        bind-granularity: "'day'"
-    -
-      sizeX: 6
-      sizeY: 4
-      type: barchart
-      bindings:
-        bind-title: "'myTitle'"
-        bind-database: "'myDatabase'"
-        bind-table: "'myTable'"
-        bind-x-axis-field: "'type'"
-        bind-y-axis-field: "'type'"
-        bind-aggregation-field: "'count'"
-    -
-      sizeX: 6
-      sizeY: 4
-      type: count-by
-      bindings:
-        bind-title: "'myTitle'"
-        bind-database: "'myDatabase'"
-        bind-table: "'myTable'"
-        bind-count-field: "'type'"
-    -
-      sizeX: 6
-      sizeY: 4
-      type: tag-cloud
-      bindings:
-        bind-title: "'myTitle'"
-        bind-database: "'myDatabase'"
-        bind-table: "'myTable'"
-        bind-tag-field: "'hashtags'"
-    -
-      sizeX: 6
-      sizeY: 4
-      type: sunburst
-      bindings:
-        bind-title: "'myTitle'"
-        bind-database: "'myDatabase'"
-        bind-table: "'myTable'"
-        bind-group-fields: "'type1,type2,type3'"
-        bind-value-field: "'type'"
-        bind-arc-value: "'count'"
+        title: myTitle
+        config:
+          -
+            name: myLayer
+            database: test
+            table: earthquakes
+            type: points
+            active: true
+            limit: 5000
+            latitudeField: latitude
+            longitudeMapping: longitude
+            dateField: time
+            sizeField: mag
+            colorField: type
+          -
+            name: myLayer
+            database: test
+            table: earthquakes
+            type: heatmap
+            active: true
+            limit: 5000
+            latitudeField: latitude
+            longitudeField: longitude
+          -
+            name: myLayer
+            database: test
+            table: earthquakes
+            type: cluster
+            active: true
+            limit: 5000
+            latitudeField: latitude
+            longitudeMapping: longitude
+            dateField: time
+            sizeField: mag
+            colorCode: "#39b54a"
+            popupFields:
+              -
+                net
     -
       sizeX: 12
-      sizeY: 4
-      type: query-results-table
+      type: lineChart
       bindings:
-        bind-title: "'myTitle'"
-        bind-database: "'myDatabase'"
-        bind-table: "'myTable'"
+        title: myTitle
+        granularity: day
+        config:
+          -
+            name: myLayer
+            database: test
+            table: earthquakes
+            active:  true
+            dateField: time
+            aggregationType: count
+          -
+            name: myLayer
+            database: test
+            table: earthquakes
+            active:  true
+            dateField: time
+            aggregationType: average
+            aggregationField: mag
+            groupField: type
+    -
+      sizeX: 12
+      type: dataTable
+      bindings:
+        title: myTitle
+        database: test
+        table: earthquakes
+        idField: _id
+        sortDirection: 1
+        limit: 500
+    -
+      sizeX: 6
+      type: aggregationTable
+      bindings:
+        title: myTitle
+        database: test
+        table: earthquakes
+        groupField: net
+        aggregationType: max
+        aggregationField: mag
+        limit: 100
+    -
+      sizeX: 6
+      type: barChart
+      bindings:
+        title: myTitle
+        database: test
+        table: earthquakes
+        groupField: net
+        aggregationType: average
+        aggregationField: mag
+        limit: 50
+    -
+      sizeX: 6
+      type: newsFeed
+      bindings:
+        title: myTitle
+        database: test
+        table: earthquakes
+        primaryTitleField: type
+        secondaryTitleField: net
+        dateField: time
+        contentField: mag
+    -
+      sizeX: 6
+      type: opsClock
+      bindings:
+        title: myTitle
+        database: test
+        table: earthquakes
+        dateField: time
+    -
+      sizeX: 6
+      type: scatterPlot
+      bindings:
+        title: myTitle
+        database: test
+        table: earthquakes
+        type: scatter
+        xAxisField: depth
+        yAxisField: mag
+        limit: time
+    -
+      sizeX: 6
+      type: sunburstChart
+      bindings:
+        title: myTitle
+        database: test
+        table: earthquakes
+        groupFields: type1,type2,type3
+        valueField: type
+        arcValue: count
+    -
+      sizeX: 6
+      type: textCloud
+      bindings:
+        title: myTitle
+        database: test
+        table: earthquakes
+        dataField: net
+
 files:
   datasets:
     - ./app/config/sample.dataset.config.json

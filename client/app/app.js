@@ -1,6 +1,7 @@
 'use strict';
+
 /*
- * Copyright 2014 Next Century Corporation
+ * Copyright 2016 Next Century Corporation
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -172,6 +173,7 @@ var saveDashboards = function(config) {
         webVideo: undefined,
         localVideo: undefined
     });
+
     var dashboardConfig = config.dashboard || {
         hideNavbarItems: false,
         hideAddVisualizationsButton: false,
@@ -181,13 +183,10 @@ var saveDashboards = function(config) {
         showImport: false,
         showExport: true
     };
+
     dashboardConfig.theme = config.theme;
-    dashboardConfig.gridsterColumns = dashboardConfig.gridsterColumns || 8;
+    dashboardConfig.gridsterColumns = dashboardConfig.gridsterColumns || 24;
     dashboardConfig.gridsterMargins = dashboardConfig.gridsterMargins || 10;
-    // Most visualizations should have a minimum size of about 300px square to have space for their UI elements.
-    // TODO Use the browser width to determine the minimum size for visualizations and update it on browser resize.
-    dashboardConfig.gridsterDefaultMinSizeX = Math.floor(dashboardConfig.gridsterColumns / 4);
-    dashboardConfig.gridsterDefaultMinSizeY = Math.floor(dashboardConfig.gridsterColumns / 6);
     dashboardConfig.help = helpConfig;
     dashboardConfig.showExport = (dashboardConfig.showExport === undefined || dashboardConfig.showExport) ? true : false;
     neonDemo.constant('config', dashboardConfig);
@@ -199,10 +198,30 @@ var saveDashboards = function(config) {
             $("#helpVideo").attr("autoplay", "");
         });
     }
-};
 
-var saveVisualizations = function(config) {
-    var visualizations = (config.visualizations || []);
+    var visualizations = neonVisualizations || [];
+    var overrides = config.visualizations || [];
+
+    overrides.forEach(function(override) {
+        var index = _.findIndex(visualizations, {
+            type: override.type
+        });
+        if(index < 0) {
+            visualizations.push(override);
+        } else {
+            visualizations[index] = override;
+        }
+    });
+
+    // Most visualizations should have a minimum size of about 300px square to have space for their UI elements.
+    // TODO Use the browser width to determine the minimum size for visualizations and update it on browser resize.
+    visualizations.forEach(function(visualization) {
+        visualization.sizeX = visualization.sizeX || Math.floor(dashboardConfig.gridsterColumns * visualization.minSizePercentageX);
+        visualization.sizeY = visualization.sizeY || Math.floor(dashboardConfig.gridsterColumns * visualization.minSizePercentageY);
+        visualization.minSizeX = Math.floor(dashboardConfig.gridsterColumns * visualization.minSizePercentageX);
+        visualization.minSizeY = Math.floor(dashboardConfig.gridsterColumns * visualization.minSizePercentageY);
+    });
+
     neonDemo.constant('visualizations', visualizations);
 };
 
@@ -437,7 +456,6 @@ var saveNeonConfig = function($http, config) {
     saveUserAle(config);
     saveOpenCpu(config);
     saveDashboards(config);
-    saveVisualizations(config);
 
     var files = (config.files || []);
     var layouts = (config.layouts || {});

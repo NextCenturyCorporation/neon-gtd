@@ -1,6 +1,7 @@
 'use strict';
+
 /*
- * Copyright 2014 Next Century Corporation
+ * Copyright 2016 Next Century Corporation
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -14,9 +15,10 @@
  * limitations under the License.
  *
  */
+
 angular.module('neonDemo.directives')
-.directive('databaseConfig', ['$location', 'config', 'layouts', 'visualizations', 'ConnectionService', 'DatasetService', 'ParameterService',
-    function($location, config, layouts, visualizations, connectionService, datasetService, parameterService) {
+.directive('databaseConfig', ['$location', 'layouts', 'visualizations', 'ConnectionService', 'DatasetService', 'ParameterService',
+    function($location, layouts, visualizations, connectionService, datasetService, parameterService) {
     return {
         templateUrl: 'components/databaseConfig/databaseConfig.html',
         restrict: 'E',
@@ -210,21 +212,18 @@ angular.module('neonDemo.directives')
                 // Recreate the layout each time to ensure all visualizations are using the new dataset.
                 $scope.gridsterConfigs = layouts[layoutName] ? angular.copy(layouts[layoutName]) : [];
 
-                for(var i = 0; i < $scope.gridsterConfigs.length; ++i) {
-                    $scope.gridsterConfigs[i].id = uuid();
-                    if(!($scope.gridsterConfigs[i].minSizeX)) {
-                        $scope.gridsterConfigs[i].minSizeX = config.gridsterDefaultMinSizeX;
-                    }
-                    if(!($scope.gridsterConfigs[i].minSizeY)) {
-                        $scope.gridsterConfigs[i].minSizeY = config.gridsterDefaultMinSizeY;
-                    }
-                    if($scope.gridsterConfigs[i].sizeX < config.gridsterDefaultMinSizeX) {
-                        $scope.gridsterConfigs[i].sizeX = config.gridsterDefaultMinSizeX;
-                    }
-                    if($scope.gridsterConfigs[i].sizeY < config.gridsterDefaultMinSizeY) {
-                        $scope.gridsterConfigs[i].sizeY = config.gridsterDefaultMinSizeY;
-                    }
-                }
+                $scope.gridsterConfigs.forEach(function(config) {
+                    var index = _.findIndex(visualizations, {
+                        type: config.type
+                    });
+
+                    config.name = index >= 0 ? visualizations[index].name : "Unknown";
+                    config.sizeX = config.sizeX || (index >= 0 ? visualizations[index].sizeX : 1);
+                    config.sizeY = config.sizeY || (index >= 0 ? visualizations[index].sizeY : 1);
+                    config.minSizeX = index >= 0 ? visualizations[index].minSizeX : 1;
+                    config.minSizeY = index >= 0 ? visualizations[index].minSizeY : 1;
+                    config.id = uuid();
+                });
 
                 parameterService.addFiltersFromUrl(!loadDashboardState);
             };
