@@ -29,7 +29,7 @@ dashboard:
     google: API_KEY
 
 help:
-  guide: ./app/help/Neon-Dashboard-User-Guide-1.1.5.pdf
+  guide: ./app/help/Neon-Dashboard-User-Guide.pdf
   webVideo:
   localVideo:
 
