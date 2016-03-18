@@ -463,17 +463,17 @@ layouts:
         database: uscontracts
         table: testcontracts
         dataField: desc_array
-#    -
-#      type: ganttChart
-#      sizeX: 12
-#      sizeY: 6
-#      bindings:
-#        database: uscontracts
-#        table: testcontracts
-#        rowTitle-field: desc
-#        startField: signed
-#        endField: completion
-#        colorField: state
+    -
+      type: ganttChart
+      sizeX: 12
+      sizeY: 6
+      bindings:
+        database: uscontracts
+        table: testcontracts
+        rowTitle-field: desc
+        startField: signed
+        endField: completion
+        colorField: state
     -
       type: sunburstChart
       sizeX: 9
