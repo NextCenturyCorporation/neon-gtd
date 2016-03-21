@@ -114,7 +114,8 @@ coreMap.Map.Layer.NodeLayer.prototype.calculateLineWidth = function(weight) {
         percentOfDataRange = (weight - this.minLineWidth) / this.lineWidthDiff;
     }
 
-    return coreMap.Map.Layer.NodeLayer.MIN_LINE_WIDTH + (percentOfDataRange * this.baseLineWidthDiff);
+    var lineWidth = coreMap.Map.Layer.NodeLayer.MIN_LINE_WIDTH + (percentOfDataRange * this.baseLineWidthDiff);
+    return lineWidth;
 };
 
 /**
@@ -458,17 +459,14 @@ coreMap.Map.Layer.NodeLayer.prototype.updateFeatures = function() {
         // This means even if the date is in to.date, keep the date at the top level with key "to.date" instead
         // of in the object "to".
 
-        // If the line has substance, render it.
-        if(lineWeight > 0) {
-            var lineMappingElement = me.getValueFromDataElement(me.lineMapping, element);
-            var line = me.createWeightedLine(pt1, pt2, lineWeight, lineMappingElement);
-            line.attributes[dateMapping] = date;
-            lines.push(line);
+        var lineMappingElement = me.getValueFromDataElement(me.lineMapping, element);
+        var line = me.createWeightedLine(pt1, pt2, lineWeight, lineMappingElement);
+        line.attributes[dateMapping] = date;
+        lines.push(line);
 
-            var arrow = me.createWeightedArrow(pt1, pt2, lineWeight, nodeWeight, lineMappingElement);
-            arrow.attributes[dateMapping] = date;
-            arrows.push(arrow);
-        }
+        var arrow = me.createWeightedArrow(pt1, pt2, lineWeight, nodeWeight, lineMappingElement);
+        arrow.attributes[dateMapping] = date;
+        arrows.push(arrow);
 
         // Add the nodes to the node list if necesary.
         var nodeMappingElement;
