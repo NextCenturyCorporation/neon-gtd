@@ -839,22 +839,12 @@ angular.module('neonDemo.controllers').controller('lineChartController', ['$scop
         var layer = layers[0];
 
         $scope.data[layer.id] = data;
-
-        var doneQuerying = $scope.active.layers.every(function(layer) {
-            return !layer.querying;
-        });
-
-        if(doneQuerying) {
-            updateLineChartForFilter();
-        }
     };
 
     /**
      * Redraws all visible line charts using the data from the previous queries within the current chart brush extent.
-     * @method updateLineChartForFilter
-     * @private
      */
-    var updateLineChartForFilter = function() {
+    $scope.functions.onDoneQueryAndUpdate = function() {
         var dateRange = getDateRange();
         var fullDateRange = getDateRange(true);
 
@@ -869,12 +859,12 @@ angular.module('neonDemo.controllers').controller('lineChartController', ['$scop
 
         // Get all series data and color mappings for each chart layer.
         $scope.active.layers.forEach(function(layer) {
-            var updatedData = $scope.data[layer.id];
+            var updatedData = $scope.data[layer.id] || [];
 
             // Get only the data within the chart brush extent if filter is enabled.
             if(layer.filter && $scope.extent.length >= 2) {
-                var indices = getIndicesForData($scope.data[layer.id], $scope.extent[0], $scope.extent[1]);
-                updatedData = $scope.data[layer.id].slice(indices.startIndex, indices.endIndex);
+                var indices = getIndicesForData(updatedData, $scope.extent[0], $scope.extent[1]);
+                updatedData = updatedData.slice(indices.startIndex, indices.endIndex);
             }
             seriesData = seriesData.concat(createLineSeriesData(layer, updatedData, dateRange.minDate, dateRange.maxDate));
 
@@ -936,11 +926,13 @@ angular.module('neonDemo.controllers').controller('lineChartController', ['$scop
                 var min;
                 var max;
 
-                var range = d3.extent($scope.data[layer.id], function(d) {
-                    return new Date(d.date);
-                });
-                min = range[0];
-                max = range[1];
+                if($scope.data[layer.id]) {
+                    var range = d3.extent($scope.data[layer.id], function(d) {
+                        return new Date(d.date);
+                    });
+                    min = range[0];
+                    max = range[1];
+                }
 
                 if(min < minDate || !minDate) {
                     minDate = min;

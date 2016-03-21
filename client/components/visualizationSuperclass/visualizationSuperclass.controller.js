@@ -109,7 +109,6 @@ function($scope, external, connectionService, datasetService, errorNotificationS
      * @return {Object}
      */
     $scope.functions.addToLayerBindings = function(bindings, layer) {
-        bindings.name = layer.name;
         return bindings;
     };
 
@@ -269,6 +268,14 @@ function($scope, external, connectionService, datasetService, errorNotificationS
      * @method $scope.functions.onDestroy
      */
     $scope.functions.onDestroy = function() {
+        // Do nothing by default.
+    };
+
+    /**
+     * Handles any additional behavior after all queries have been run and data has been updated.
+     * @method $scope.functions.onDoneQueryAndUpdate
+     */
+    $scope.functions.onDoneQueryAndUpdate = function() {
         // Do nothing by default.
     };
 
@@ -700,10 +707,8 @@ function($scope, external, connectionService, datasetService, errorNotificationS
      */
     $scope.functions.queryAndUpdate = function(inputOptions) {
         var options = inputOptions || {};
-        findQueryAndUpdateData(options.database, options.table).forEach(function(item) {
-            queryAndUpdate(item.layers, item.database, item.table, options.addToQuery || $scope.functions.addToQuery, options.executeQuery || $scope.functions.executeQuery,
+        queryAndUpdate(findQueryAndUpdateData(options.database, options.table), 0, options.addToQuery || $scope.functions.addToQuery, options.executeQuery || $scope.functions.executeQuery,
                 options.updateData || $scope.functions.updateData);
-        });
     };
 
     /**
@@ -1250,9 +1255,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
         // Resize the title and display after the error is hidden and the title is changed.
         resize();
 
-        findQueryAndUpdateData(databaseName, tableName).forEach(function(item) {
-            queryAndUpdate(item.layers, item.database, item.table, $scope.functions.addToQuery,  $scope.functions.executeQuery, $scope.functions.updateData);
-        });
+        queryAndUpdate(findQueryAndUpdateData(databaseName, tableName), 0, $scope.functions.addToQuery,  $scope.functions.executeQuery, $scope.functions.updateData);
     };
 
     /**
@@ -1298,43 +1301,38 @@ function($scope, external, connectionService, datasetService, errorNotificationS
     /**
      * Builds and executes a query on the given layers for the database and table with the given names and updates the data for this visualization using the given functions.
      * @method queryAndUpdate
-     * @param {Array} layers
-     * @param {String} databaseName
-     * @param {String} tableName
+     * @param {Array} data Contains {String} database, {String} name, and {Array} of {Object} layers
+     * @param {Number} index
      * @param {Function} addToQueryFunction
      * @param {Function} executeQueryFunction
      * @param {Function} updateDataFunction
      * @private
      */
-    var queryAndUpdate = function(layers, databaseName, tableName, addToQueryFunction, executeQueryFunction, updateDataFunction) {
-        if($scope.errorMessage) {
-            errorNotificationService.hideErrorMessage($scope.errorMessage);
-            $scope.errorMessage = undefined;
-        }
-
-        // Mark each layer as querying for use in some visualizations.
-        layers.forEach(function(layer) {
-            layer.querying = true;
-        });
-
-        // Remove all data from the display.
-        updateDataFunction();
-
-        var finishQueryingLayers = function() {
-            // Reset the querying status of each layer.
-            layers.forEach(function(layer) {
-                layer.querying = false;
-            });
-        };
-
-        var connection = connectionService.getActiveConnection();
-
-        if(!connection || !$scope.functions.areDataFieldsValid(layers)) {
-            finishQueryingLayers();
+    var queryAndUpdate = function(data, index, addToQueryFunction, executeQueryFunction, updateDataFunction) {
+        if(!data.length || index >= data.length) {
+            $scope.functions.onDoneQueryAndUpdate();
             return;
         }
 
-        var query = buildQuery(layers, databaseName, tableName, addToQueryFunction);
+        var item = data[index];
+
+        if(!index) {
+            if($scope.errorMessage) {
+                errorNotificationService.hideErrorMessage($scope.errorMessage);
+                $scope.errorMessage = undefined;
+            }
+
+            // Remove all data in the affected layers from the display.
+            updateDataFunction([], item.layers);
+        }
+
+        var connection = connectionService.getActiveConnection();
+
+        if(!connection || !$scope.functions.areDataFieldsValid(item.layers)) {
+            return;
+        }
+
+        var query = buildQuery(item.layers, item.database, item.table, addToQueryFunction);
 
         XDATA.userALE.log({
             activity: "alter",
@@ -1348,18 +1346,18 @@ function($scope, external, connectionService, datasetService, errorNotificationS
         });
 
         // Cancel any previous data query currently running.
-        if($scope.outstandingDataQuery[databaseName] && $scope.outstandingDataQuery[databaseName][tableName]) {
-            $scope.outstandingDataQuery[databaseName][tableName].abort();
+        if($scope.outstandingDataQuery[item.database] && $scope.outstandingDataQuery[item.database][item.table]) {
+            $scope.outstandingDataQuery[item.database][item.table].abort();
         }
 
         // Execute the data query, calling the function defined in "done" or "fail" as needed.
-        $scope.outstandingDataQuery[databaseName][tableName] = executeQueryFunction(connection, query);
+        $scope.outstandingDataQuery[item.database][item.table] = executeQueryFunction(connection, query);
 
-        $scope.outstandingDataQuery[databaseName][tableName].always(function() {
-            $scope.outstandingDataQuery[databaseName][tableName] = undefined;
+        $scope.outstandingDataQuery[item.database][item.table].always(function(response) {
+            $scope.outstandingDataQuery[item.database][item.table] = undefined;
         });
 
-        $scope.outstandingDataQuery[databaseName][tableName].done(function(response) {
+        $scope.outstandingDataQuery[item.database][item.table].done(function(response) {
             XDATA.userALE.log({
                 activity: "alter",
                 action: "receive",
@@ -1371,11 +1369,10 @@ function($scope, external, connectionService, datasetService, errorNotificationS
                 tags: ["receive", $scope.type]
             });
 
-            finishQueryingLayers();
-
             $scope.$apply(function() {
                 // The response for an array-counts query is an array and the response for other queries is an object containing a data array.
-                updateDataFunction(neon.helpers.escapeDataRecursively(response.data || response), layers);
+                updateDataFunction(neon.helpers.escapeDataRecursively(response.data || response), item.layers);
+                queryAndUpdate(data, ++index, addToQueryFunction, executeQueryFunction, updateDataFunction);
             });
 
             XDATA.userALE.log({
@@ -1390,9 +1387,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
             });
         });
 
-        $scope.outstandingDataQuery[databaseName][tableName].fail(function(response) {
-            finishQueryingLayers();
-
+        $scope.outstandingDataQuery[item.database][item.table].fail(function(response) {
             if(response.status === 0) {
                 XDATA.userALE.log({
                     activity: "alter",
@@ -1417,7 +1412,8 @@ function($scope, external, connectionService, datasetService, errorNotificationS
                 });
 
                 $scope.$apply(function() {
-                    updateDataFunction([], layers);
+                    updateDataFunction([], item.layers);
+                    queryAndUpdate(data, ++index, addToQueryFunction, executeQueryFunction, updateDataFunction);
                 });
 
                 // See if the error response contains a Neon notification to show through the Error Notification Service.
@@ -1567,6 +1563,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
                 var layerBindings = {
                     database: (layer.database && layer.database.name) ? layer.database.name : undefined,
                     filterable: layer.filterable || true,
+                    name: layer.name,
                     show: layer.show || true,
                     table: (layer.table && layer.table.name) ? layer.table.name : undefined,
                     unsharedFilterField: hasUnsharedFilter ? layer.unsharedFilterField.columnName : undefined,
