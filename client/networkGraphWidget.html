@@ -42,7 +42,7 @@
         <link rel="stylesheet" type="text/css" ng-href="app/themes/{{theme.selected.file}}.css">
         <!-- Widget Config -->
         <div class="visualization-well visualization-widget">
-            <div visualization-superclass implementation="singleLayer" name="Network Graph" type="networkGraph" class="single-table-visualization" active="active" bindings="bindings" log-element-group="graph_group" log-element-type="networkGraph" visualization-id="{{visualizationId}}" state-id="{{visualizationId}}"></div>
+            <div visualization-superclass implementation="singleLayer" name="Network Graph" type="networkGraph" class="single-table-visualization" bindings="bindings" log-element-group="graph_group" log-element-type="networkGraph" visualization-id="{{visualizationId}}" state-id="{{visualizationId}}"></div>
         </div>
         <div id="tooltip-container"></div>
         <!-- In production use:
@@ -118,6 +118,30 @@
         <script src="app/namespaces.js"></script>
          <!-- Setup our widget's OWF handlers and trigger the angular code -->
         <script type="text/javascript">
+            var WidgetConfig = {
+                templateURL: 'networkGraphWidget.html',
+                namespace: 'com.ncc.neon.networkgraph',
+                theme: 'Dark Green',
+                demoModuleList: [
+                    'neonDemo.controllers',
+                    'neonDemo.services',
+                    'neonDemo.directives',
+                    'neonDemo.filters',
+                    'gridster',
+                    'ngDraggable',
+                    'ngRoute',
+                    'ui.bootstrap.datetimepicker',
+                    'linkify',
+
+                    'agGrid',
+
+                    'gantt',
+                    'gantt.tooltips',
+                    'gantt.tree',
+                    'gantt.groups'
+                ]
+            };
+
             // -----------------------------------
             // Initialize the close handlers.
             // -----------------------------------

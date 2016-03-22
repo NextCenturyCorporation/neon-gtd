@@ -15,13 +15,13 @@
 
                 <div class="form-group" ng-if="implementation === SINGLE_LAYER" ng-hide="bindings.hideAdvancedOptions">
                     <label>Database</label>
-                    <select class="form-control" ng-model="active.database" ng-options="database.prettyName for database in active.databases" ng-required="true" ng-disabled="(active.databases.length < 2)" ng-change="handleChangeDatabase()">
+                    <select class="form-control" ng-model="active.database" ng-options="database.prettyName for database in active.databases track by database.name" ng-required="true" ng-disabled="(active.databases.length < 2)" ng-change="handleChangeDatabase()">
                     </select>
                 </div>
 
                 <div class="form-group" ng-if="implementation === SINGLE_LAYER" ng-hide="bindings.hideAdvancedOptions">
                     <label>Table</label>
-                    <select class="form-control" ng-model="active.table" ng-options="table.prettyName for table in active.tables" ng-required="true" ng-disabled="(active.tables.length < 2)" ng-change="handleChangeTable()">
+                    <select class="form-control" ng-model="active.table" ng-options="table.prettyName for table in active.tables track by table.name" ng-required="true" ng-disabled="(active.tables.length < 2)" ng-change="handleChangeTable()">
                     </select>
                 </div>
 

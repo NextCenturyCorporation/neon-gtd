@@ -16,7 +16,228 @@
  */
 
 
+// -----------------------------------
+// Initialize the close handlers.
+// -----------------------------------
 
+OWF.ready(function () {
+    OWF.relayFile = 'assets/vendor/eventing/rpc_relay.uncompressed.html';
+
+    // -----------------------------------
+    // Hide the body when the widget is not visible.
+    // -----------------------------------
+    var eventMonitor = {};
+    eventMonitor.widgetEventingController = Ozone.eventing.Widget.getInstance();
+
+    eventMonitor.widgetState = Ozone.state.WidgetState.getInstance({
+        widgetEventingController: eventMonitor.widgetEventingController,
+        autoInit: true,
+        onStateEventReceived: function(sender, msg) {
+            var event = msg.eventName;
+
+            if(event === 'activate' || event === 'show') {
+                $(document.body).show();
+                console.log("activating line chart widget");
+            }
+            else if(event === 'hide') {
+                $(document.body).hide();
+                console.log("hiding line chart widget");
+            } 
+        }
+    });
+
+
+    // listen for  activate and hide events so that we can
+    // hide our body.  Some browsers, specifically Chrome, continues
+    // to render iframes with elments that use specific webkit transforms
+    // even when they are hidden.  This impact many Map packages and some
+    // SVG packages.  The work around for this is to hide our widget body
+    // on hide events.
+    eventMonitor.widgetState.addStateEventListeners({
+        events: ['activate', 'hide', 'show', 'beforedestroy', 'beforeclose', 'destroy', 'close', 'remove', 'removed']
+    });
+
+    OWF.notifyWidgetReady();
+});
+
+// Defaulting the Neon SERVER_URL to be under the neon context on the same host machine.
+// Used by neon core server.  Don't delete this or you will probably break everything!
+neon.SERVER_URL = "/neon";
+
+/**
+ * Utility that calls the given function in an $apply if the given $scope is not in the apply/digest phase or just calls the given function normally otherwise.
+ * @param {Object} $scope The $scope of an angular directive.
+ * @param {Fucntion} func The function to call.
+ * @method safeApply
+ */
+neon.safeApply = function($scope, func) {
+    if(!$scope || !func || typeof func !== "function") {
+        return;
+    }
+
+    var phase = $scope.$root.$$phase;
+    if(phase === "$apply" || phase === "$digest") {
+        func();
+    } else {
+        $scope.$apply(func);
+    }
+};
+
+neon.helpers = {
+    /**
+     * Finds and returns the field value in data. If field contains '.', representing that the field is in an object within data, it will
+     * find the nested field value.
+     * @param {Object} data
+     * @param {String} field
+     * @method getNestedValue
+     */
+    getNestedValue: function(data, field) {
+        var fieldArray = field.split(".");
+        var dataValue = data;
+        fieldArray.forEach(function(field) {
+            if(dataValue) {
+                dataValue = dataValue[field];
+            }
+        });
+        return dataValue;
+    },
+    /**
+     * Escapes all values in the given data, recursively.
+     * @param {Object|Array} data
+     * @method escapeDataRecursively
+     */
+    escapeDataRecursively: function(data) {
+        if(_.isArray(data)) {
+            for(var i = 0; i < data.length; i++) {
+                data[i] = neon.helpers.escapeDataRecursively(data[i]);
+            }
+        } else if(_.keys(data).length) {
+            var keys = _.keys(data);
+            for(var i = 0; i < keys.length; i++) {
+                data[keys[i]] = neon.helpers.escapeDataRecursively(data[keys[i]]);
+            }
+        } else if(_.isString(data)) {
+            data = _.escape(data);
+        }
+        return data;
+    }
+};
+
+var neonDemo = angular.module('neonDemo', WidgetConfig.demoModuleList);
+
+neonDemo.config(["$routeProvider", "$locationProvider", function($routeProvider, $locationProvider) {
+    $routeProvider.when('/', {
+        templateUrl: WidgetConfig.templateURL,
+        controller: 'neonDemoController'
+    });
+    $locationProvider.html5Mode({
+        enabled: true,
+        requireBase: false
+    });
+}]);
+
+
+// AngularJS filter for reversing the order of an array.
+// http://stackoverflow.com/questions/15266671/angular-ng-repeat-in-reverse
+neonDemo.filter("reverse", function() {
+    return function(items) {
+        return items.slice().reverse();
+    };
+});
+
+angular.module('neonDemo.directives', []);
+angular.module('neonDemo.controllers', []);
+angular.module('neonDemo.services', []);
+
+angular.module('neonDemo.filters', [])
+.filter('numberShort', function() {
+    return function(number) {
+        if(typeof number !== undefined) {
+            var abs = Math.abs(number);
+            if(abs >= Math.pow(10, 12)) {
+                number = (number / Math.pow(10, 12)).toFixed(1) + "T";
+            } else if(abs < Math.pow(10, 12) && abs >= Math.pow(10, 9)) {
+                number = (number / Math.pow(10, 9)).toFixed(1) + "B";
+            } else if(abs < Math.pow(10, 9) && abs >= Math.pow(10, 6)) {
+                number = (number / Math.pow(10, 6)).toFixed(1) + "M";
+            } else if(abs < Math.pow(10, 6) && abs >= Math.pow(10, 3)) {
+                number = (number / Math.pow(10, 3)).toFixed(1) + "K";
+            } else {
+                number = Math.round(number * 100) / 100;
+            }
+        }
+        return number;
+    };
+});
+angular.module('neonDemo.controllers')
+.controller('neonDemoController', ['$scope', '$timeout', '$location', 'config', 'layouts', 'datasets', 'ThemeService', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'VisualizationService', 'widgetState',
+function($scope, $timeout, $location, config, layouts, datasets, themeService, connectionService, datasetService, errorNotificationService, visualizationService, widgetState) {
+    $scope.messenger = new neon.eventing.Messenger();
+
+    themeService.setTheme(WidgetConfig.theme);
+    $scope.theme = {
+        list: themeService.getThemes(),
+        selected: themeService.getTheme()
+    };
+
+    $scope.updateTheme = function() {
+        themeService.setTheme($scope.theme.selected.name);
+    };
+
+    $scope.hideNavbarItems = config.hideNavbarItems;
+    $scope.hideFilterStatusTray = config.hideFilterStatusTray;
+
+    $scope.hideAddVisualizationsButton = false;
+    $scope.hideAdvancedOptions = false;
+    $scope.element = $("body");
+
+    $scope.element = $(window);
+    $scope.visualizationId = OWF.getInstanceId();
+
+    // Load and connect to the first dataset for now.
+    // TODO: Need a way to handle switching datasets.
+    $scope.bindings = widgetState || {};
+    $scope.bindings.hideAdvancedOptions = config.hideAdvancedOptions;
+    $scope.bindings.hideHeader = config.hideHeader;
+
+    //datasetService.addDataset(datasets[0]);
+    datasetService.setActiveDataset(datasets[0]);
+    connectionService.createActiveConnection(datasets[0].datastore, datasets[0].hostname);
+    if(WidgetConfig.loadingFilterBuilder) {
+        datasetService.updateDatabases(datasets[0], connectionService.getActiveConnection(), function(dataset) {
+            $scope.$apply(function(dataset) {
+                datasets[0] = dataset;
+                if ($scope.updateFilterBuilderMenus) {
+                    $scope.updateFilterBuilderMenus();
+                }
+            });
+            
+         }, 0);
+    } else {
+        datasetService.updateDatabases(datasets[0], connectionService.getActiveConnection());
+    }
+
+    // Watch for changes to our visualization's configuration and store them as OWF prefs.
+    $scope.$watch(function() {
+        var widgets = visualizationService.getWidgets();
+        if (widgets.length == 1) {
+            return widgets[0].callback();
+        }
+        return undefined;
+    }, function(newVal) {
+        if (newVal) {
+            OWF.Preferences.setUserPreference({
+                'namespace': WidgetConfig.namespace + '.' + $scope.visualizationId,
+                'name': 'Neon Preferences',
+                'value': JSON.stringify(newVal),
+                'onSuccess': function (msg) {
+                 },
+                'onFailure': function (msg) {
+                }
+            });
+        }
+    }, true);
+}]);
 
 
 
@@ -332,11 +553,12 @@ var readDatasetFilesAndSaveDatasets = function($http, datasets, datasetFiles, ca
     }
 };
 
-var saveNeonConfig = function($http, config) {
+var saveNeonConfig = function($http, config, widgetState) {
     saveUserAle(config);
     saveOpenCpu(config);
     saveDashboards(config);
     saveVisualizations(config);
+    neonDemo.value('widgetState', widgetState);
 
     var files = (config.files || []);
     var layouts = (config.layouts || {});
@@ -355,12 +577,26 @@ var saveNeonConfig = function($http, config) {
 };
 
 angular.element(document).ready(function() {
-    var $http = angular.injector(['ng']).get('$http');
-    $http.get("./app/config/config.yaml").then(function(response) {
-        saveNeonConfig($http, jsyaml.load(response.data));
-    }, function() {
-        $http.get("./app/config/config.json").then(function(response) {
-            saveNeonConfig($http, response.data);
+    // Try to read out bindings from OWF Prefs before loading angular and generating our visualization.
+    OWF.ready(function() {
+        OWF.Preferences.getUserPreference({
+            'namespace': WidgetConfig.namespace + '.' + OWF.getInstanceId(),
+            'name': 'Neon Preferences',
+            'onSuccess': function (msg) {
+                var widgetState = msg.value ? JSON.parse(msg.value) : {};
+                var $http = angular.injector(['ng']).get('$http');
+                $http.get("./app/config/config.yaml").then(function(response) {
+                    saveNeonConfig($http, jsyaml.load(response.data), widgetState);
+                }, function() {
+                    $http.get("./app/config/config.json").then(function(response) {
+                        saveNeonConfig($http, response.data, widgetState);
+                    });
+                });
+            }, 
+            'onFailure': function onFail(msg) {
+                console.log("failed to get widget state");
+            }
         });
     });
+    
 });

@@ -118,167 +118,31 @@
         <script src="app/namespaces.js"></script>
          <!-- Setup our widget's OWF handlers and trigger the angular code -->
         <script type="text/javascript">
-            // -----------------------------------
-            // Initialize the close handlers.
-            // -----------------------------------
+            var WidgetConfig = {
+                templateURL: 'sunburstChartWidget.html',
+                namespace: 'com.ncc.neon.sunburstchart',
+                theme: 'Dark Green',
+                demoModuleList: [
+                    'neonDemo.controllers',
+                    'neonDemo.services',
+                    'neonDemo.directives',
+                    'neonDemo.filters',
+                    'gridster',
+                    'ngDraggable',
+                    'ngRoute',
+                    'ui.bootstrap.datetimepicker',
+                    'linkify',
 
-            OWF.ready(function () {
+                    'agGrid',
 
-                // -----------------------------------
-                // Hide the body when the widget is not visible.
-                // -----------------------------------
-                var widgetState = Ozone.state.WidgetState.getInstance({
-                    onStateEventReceived: function(sender, msg) {
-                        var event = msg.eventName;
-
-                        if(event === 'activate' || event === 'show') {
-                            $(document.body).show();
-                        }
-                        else if(event === 'hide') {
-                            $(document.body).hide();
-                        }
-                    }
-                });
-
-                // listen for  activate and hide events so that we can
-                // hide our body.  Some browsers, specifically Chrome, continues
-                // to render iframes with elments that use specific webkit transforms
-                // even when they are hidden.  This impact many Map packages and some
-                // SVG packages.  The work around for this is to hide our widget body
-                // on hide events.
-                widgetState.addStateEventListeners({
-                    events: ['activate', 'hide', 'show']
-                });
-
-                OWF.notifyWidgetReady();
-            });
-
-            // Defaulting the Neon SERVER_URL to be under the neon context on the same host machine.
-            // Used by neon core server.  Don't delete this or you will probably break everything!
-            neon.SERVER_URL = "/neon";
-
-            /**
-             * Utility that calls the given function in an $apply if the given $scope is not in the apply/digest phase or just calls the given function normally otherwise.
-             * @param {Object} $scope The $scope of an angular directive.
-             * @param {Fucntion} func The function to call.
-             * @method safeApply
-             */
-            neon.safeApply = function($scope, func) {
-                if(!$scope || !func || typeof func !== "function") {
-                    return;
-                }
-
-                var phase = $scope.$root.$$phase;
-                if(phase === "$apply" || phase === "$digest") {
-                    func();
-                } else {
-                    $scope.$apply(func);
-                }
+                    'gantt',
+                    'gantt.tooltips',
+                    'gantt.tree',
+                    'gantt.groups'
+                ]
             };
+            
 
-            neon.helpers = {
-                /**
-                 * Finds and returns the field value in data. If field contains '.', representing that the field is in an object within data, it will
-                 * find the nested field value.
-                 * @param {Object} data
-                 * @param {String} field
-                 * @method getNestedValue
-                 */
-                getNestedValue: function(data, field) {
-                    var fieldArray = field.split(".");
-                    var dataValue = data;
-                    fieldArray.forEach(function(field) {
-                        if(dataValue) {
-                            dataValue = dataValue[field];
-                        }
-                    });
-                    return dataValue;
-                },
-                /**
-                 * Escapes all values in the given data, recursively.
-                 * @param {Object|Array} data
-                 * @method escapeDataRecursively
-                 */
-                escapeDataRecursively: function(data) {
-                    if(_.isArray(data)) {
-                        for(var i = 0; i < data.length; i++) {
-                            data[i] = neon.helpers.escapeDataRecursively(data[i]);
-                        }
-                    } else if(_.keys(data).length) {
-                        var keys = _.keys(data);
-                        for(var i = 0; i < keys.length; i++) {
-                            data[keys[i]] = neon.helpers.escapeDataRecursively(data[keys[i]]);
-                        }
-                    } else if(_.isString(data)) {
-                        data = _.escape(data);
-                    }
-                    return data;
-                }
-            };
-
-            var neonDemo = angular.module('neonDemo', [
-                'neonDemo.controllers',
-                'neonDemo.services',
-                'neonDemo.directives',
-                'neonDemo.filters',
-                'gridster',
-                'ngDraggable',
-                'ngRoute',
-                'ui.bootstrap.datetimepicker',
-                'linkify',
-
-                'agGrid',
-
-                'gantt',
-                'gantt.tooltips',
-                'gantt.tree',
-                'gantt.groups'
-            ]);
-
-            neonDemo.config(["$routeProvider", "$locationProvider", function($routeProvider, $locationProvider) {
-                $routeProvider.when('/', {
-                    templateUrl: 'dataSelectorWidget.html',
-                    controller: 'neonDemoController'
-                });
-                $locationProvider.html5Mode({
-                    enabled: true,
-                    requireBase: false
-                });
-            }]);
-
-
-            // AngularJS filter for reversing the order of an array.
-            // http://stackoverflow.com/questions/15266671/angular-ng-repeat-in-reverse
-            neonDemo.filter("reverse", function() {
-                return function(items) {
-                    return items.slice().reverse();
-                };
-            });
-
-            angular.module('neonDemo.directives', []);
-            angular.module('neonDemo.controllers', []);
-            angular.module('neonDemo.services', []);
-
-            angular.module('neonDemo.filters', [])
-            .filter('numberShort', function() {
-                return function(number) {
-                    if(typeof number !== undefined) {
-                        var abs = Math.abs(number);
-                        if(abs >= Math.pow(10, 12)) {
-                            number = (number / Math.pow(10, 12)).toFixed(1) + "T";
-                        } else if(abs < Math.pow(10, 12) && abs >= Math.pow(10, 9)) {
-                            number = (number / Math.pow(10, 9)).toFixed(1) + "B";
-                        } else if(abs < Math.pow(10, 9) && abs >= Math.pow(10, 6)) {
-                            number = (number / Math.pow(10, 6)).toFixed(1) + "M";
-                        } else if(abs < Math.pow(10, 6) && abs >= Math.pow(10, 3)) {
-                            number = (number / Math.pow(10, 3)).toFixed(1) + "K";
-                        } else {
-                            number = Math.round(number * 100) / 100;
-                        }
-                    }
-                    return number;
-                };
-            });
         </script>
 
         <script src="owf-widgets/js/widget.js"></script>
@@ -293,56 +157,7 @@
         <script src="app/translation.service.js"></script>
         <script src="app/visualization.service.js"></script>
         <script  type="text/javascript">
-          angular.module('neonDemo.controllers')
-            .controller('neonDemoController', ['$scope', '$timeout', '$location', 'config', 'layouts', 'datasets', 'ThemeService', 'ConnectionService', 'DatasetService', 'ErrorNotificationService',
-            function($scope, $timeout, $location, config, layouts, datasets, themeService, connectionService, datasetService, errorNotificationService) {
-                $scope.messenger = new neon.eventing.Messenger();
-
-                themeService.setTheme("Dark Green");
-                $scope.theme = {
-                    list: themeService.getThemes(),
-                    selected: themeService.getTheme()
-                };
-
-                $scope.updateTheme = function() {
-                    themeService.setTheme($scope.theme.selected.name);
-                };
-
-                $scope.hideNavbarItems = config.hideNavbarItems;
-                $scope.hideFilterStatusTray = config.hideFilterStatusTray;
-
-                $scope.hideAddVisualizationsButton = false;
-                $scope.hideAdvancedOptions = false;
-                $scope.element = $("body");
-
-                $scope.element = $(window);
-
-                // Load the possible datasets.
-                // for (var i = 0; i < datasets.length; i++) {
-                //     datasetService.addDataset(datasets[i]);
-                // }
-                datasetService.addDataset(datasets[0]);
-                datasetService.setActiveDataset(datasets[0]);
-                connectionService.createActiveConnection(datasets[0].datastore, datasets[0].hostname);
-                datasetService.updateDatabases(datasets[0], connectionService.getActiveConnection());
-                $scope.active = {
-                    database: {'name': 'test'},
-                    table: {'name': 'earthquakes'}
-                };
-
-                
-                $scope.bindings = {
-                    aggregation: 'count',
-                    limit: 1000,
-                    database: {'name': 'test'},
-                    table: {'name': 'earthquakes'},
-                    dateField: 'time'
-                };
-                $scope.bindings.hideAdvancedOptions = config.hideAdvancedOptions;
-                $scope.bindings.hideHeader = config.hideHeader;
-                $scope.visualizationId = OWF.getInstanceId();
-            }]);
-
+         
         </script>
         <script src="components/addVisualization/addVisualization.directive.js"></script>
         <script src="components/aggregationTable/aggregationTable.controller.js"></script>

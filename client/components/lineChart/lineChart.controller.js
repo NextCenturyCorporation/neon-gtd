@@ -278,7 +278,7 @@ angular.module('neonDemo.controllers').controller('lineChartController', ['$scop
         if(!$scope.functions.isFieldValid(layer.dateField)) {
             fields.push("Date");
         }
-        if(layer.aggregationType !== "count" && $scope.functions.isFieldValid(layer.aggregationField)) {
+        if(layer.aggregationType !== "count" && !$scope.functions.isFieldValid(layer.aggregationField)) {
             fields.push("Aggregation Field");
         }
         layer.error = fields.length ? "Please choose fields:  " + fields.join(", ") : undefined;
@@ -936,17 +936,19 @@ angular.module('neonDemo.controllers').controller('lineChartController', ['$scop
                 var min;
                 var max;
 
-                var range = d3.extent($scope.data[layer.id], function(d) {
-                    return new Date(d.date);
-                });
-                min = range[0];
-                max = range[1];
+                if ($scope.data[layer.id]) {
+                    var range = d3.extent($scope.data[layer.id], function(d) {
+                        return new Date(d.date);
+                    });
+                    min = range[0];
+                    max = range[1];
 
-                if(min < minDate || !minDate) {
-                    minDate = min;
-                }
-                if(max > maxDate || !maxDate) {
-                    maxDate = max;
+                    if(min < minDate || !minDate) {
+                        minDate = min;
+                    }
+                    if(max > maxDate || !maxDate) {
+                        maxDate = max;
+                    }
                 }
             });
         } else {
