@@ -145,7 +145,7 @@ angular.module('neonDemo.controllers').controller('scatterPlotController', ['$sc
             x: x,
             y: y,
             mode: ($scope.bindings.subType || 'markers'),
-            type: $scope.active.type,
+            type: 'scatter',
             hoverinfo: 'text'
         };
 
