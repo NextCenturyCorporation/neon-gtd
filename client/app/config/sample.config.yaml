@@ -25,11 +25,12 @@ dashboard:
   showVideoOnLoad: false
   showImport: false
   showExport: true
-  translationKeys:
-    google: API_KEY
+  # Uncomment the next two lines and specify the translation key to allow language translations
+  #translationKeys:
+  #  google: API_KEY
 
 help:
-  guide: ./app/help/Neon-Dashboard-User-Guide-1.1.5.pdf
+  guide: ./app/help/Neon-Dashboard-User-Guide.pdf
   webVideo:
   localVideo:
 
@@ -157,6 +158,204 @@ datasets:
         color: dark
         protocol: https
 
+  -
+    name: Earthquakes and Contracts
+    datastore: mongo
+    hostname: localhost
+    layout: all-visualizations
+    databases:
+      -
+        name: test
+        prettyName: Test
+        tables:
+          -
+            name: earthquakes
+            prettyName: Earthquakes
+            fields:
+              -
+                columnName: _id
+                prettyName: Database ID
+              -
+                columnName: time
+                prettyName: Time
+              -
+                columnName: latitude
+                prettyName: Latitude
+              -
+                columnName: longitude
+                prettyName: Longitude
+              -
+                columnName: depth
+                prettyName: Depth
+              -
+                columnName: mag
+                prettyName: Magnitude
+              -
+                columnName: magType
+                prettyName: Magnitude Type
+              -
+                columnName: nst
+                prettyName: NST
+              -
+                columnName: gap
+                prettyName: Gap
+              -
+                columnName: dmin
+                prettyName: DMIN
+              -
+                columnName: rms
+                prettyName: RMS
+              -
+                columnName: net
+                prettyName: Net
+              -
+                columnName: id
+                prettyName: ID
+              -
+                columnName: updated
+                prettyName: Updated
+              -
+                columnName: place
+                prettyName: Place
+              -
+                columnName: type
+                prettyName: Type
+            mappings:
+              date: time
+              latitude: latitude
+              longitude: longitude
+              line_category: type
+              bar_x_axis: net
+              y_axis: mag
+              color_by: type
+              size_by: mag
+              sort_by: time
+              count_by: net
+      -
+        name: uscontracts
+        prettyName: US Contracts
+        tables:
+          -
+            name: testcontracts
+            prettyName: Test Contracts
+            fields:
+              -
+                columnName: _id
+                prettyName: Database ID
+              -
+                columnName: base
+                prettyName: Base Funding
+              -
+                columnName: andUsedOptions
+                prettyName: Base and Used Options
+              -
+                columnName: allOptions
+                prettyName: Base and All Options
+              -
+                columnName: agCat
+                prettyName: Agency Category
+              -
+                columnName: ag
+                prettyName: Agency
+              -
+                columnName: fundCat
+                prettyName: Funding Agency Category
+              -
+                columnName: fundAg
+                prettyName: Funding Agency
+              -
+                columnName: signed
+                prettyName: Date Signed
+              -
+                columnName: effective
+                prettyName: Date Effective
+              -
+                columnName: completion
+                prettyName: Completion Date
+              -
+                columnName: ultimate
+                prettyName: Ultimate Date
+              -
+                columnName: desc
+                prettyName: Description
+              -
+                columnName: desc_array
+                prettyName: Array of Description Words
+              -
+                columnName: vendor
+                prettyName: Vendor
+              -
+                columnName: vendorLegalName
+                prettyName: Vendor's Legal Name
+              -
+                columnName: address1
+                prettyName: Address
+              -
+                columnName: address2
+                prettyName: Address 2
+              -
+                columnName: city
+                prettyName: City
+              -
+                columnName: state
+                prettyName: State
+              -
+                columnName: zip
+                prettyName: Zip Code
+              -
+                columnName: country
+                prettyName: Country
+              -
+                columnName: prod2
+                prettyName: Product Type
+              -
+                columnName: prod3
+                prettyName: Product Subtype
+              -
+                columnName: prod4
+                prettyName: Product Category
+              -
+                columnName: prod5
+                prettyName: Product Subcategory
+              -
+                columnName: prod6
+                prettyName: Product Code
+              -
+                columnName: annualRev
+                prettyName: Company Annual Revenue
+            mappings:
+              date: signed
+              count_by: prod2
+
+    mapConfig:
+      myMap1:
+        bounds:
+          left: -180
+          bottom: -90
+          right: 180
+          top: 90
+    linkyConfig:
+      mentions: false
+      hashtags: false
+      urls: true
+      linkTo: twitter
+    options:
+      colorMaps:
+        test:
+          earthquakes:
+            myField:
+              fieldA: #123456
+              fieldB: #654321
+      mapBaseLayer:
+        color: dark
+        protocol: https
+
+    relations:
+      -
+        test:
+          earthquakes: time
+        uscontracts:
+          testcontracts: signed
 layouts:
   default:
     -
@@ -188,7 +387,114 @@ layouts:
       type: dataTable
     -
       type: filterBuilder
-
+  all-visualizations:
+    -
+      sizeX: 12
+      type: timeline
+    -
+      sizeX: 12
+      type: timeline
+      bindings:
+        database: uscontracts
+        table: testcontracts
+    -
+      sizeX: 12
+      type: map
+      bindings:
+        config:
+          -
+            name: Earthquake Points
+            database: test
+            table: earthquakes
+            type: points
+          -
+            name: Vendors To Pops
+            database: uscontracts
+            table: testcontracts
+            type: nodes and arrows
+            sourceLatitudeField: vendorLatitude
+            sourceLongitudeField: vendorLongitude
+            targetLatitudeField: popLatitude
+            targetLongitudeField: popLongitude
+            lineSizeField: annualRev
+    -
+      sizeX: 12
+      type: lineChart
+      bindings:
+        config:
+          -
+            database: test
+            table: earthquakes
+    -
+      type: aggregationTable
+    -
+      type: barChart
+    -
+      type: opsClock
+    -
+      type: dataTable
+    -
+      type: filterBuilder
+    -
+      type: scatterPlot
+      bindings:
+        type: heatmapScatter
+        xAxisField: mag
+        yAxisField: depth
+    -
+      type: dataTable
+      bindings:
+        database: uscontracts
+        table: testcontracts
+    -
+      type: newsFeed
+      sizeY: 6
+      bindings:
+        database: uscontracts
+        table: testcontracts
+        dateField: signed
+        primaryTitleField: vendor
+        secondaryTitleField: ag
+        contentField: desc
+    -
+      type: textCloud
+      sizeY: 6
+      bindings:
+        database: uscontracts
+        table: testcontracts
+        dataField: desc_array
+    -
+      type: ganttChart
+      sizeX: 12
+      sizeY: 6
+      bindings:
+        database: uscontracts
+        table: testcontracts
+        rowTitle-field: desc
+        startField: signed
+        endField: completion
+        colorField: state
+    -
+      type: sunburstChart
+      sizeX: 9
+      sizeY: 9
+      bindings:
+        database: uscontracts
+        table: testcontracts
+        groupFields: prod2,prod3,prod4,prod6
+        valueField: base
+    -
+      sizeX: 9
+      sizeY: 9
+      type: networkGraph
+      bindings:
+        database: uscontracts
+        table: testcontracts
+        nodeField: vendor
+        nameField: vendor
+        linkedNodeField: ag
+        linkedNameField: ag
+        dateField: signed
   example-with-bindings:
     -
       sizeX: 12

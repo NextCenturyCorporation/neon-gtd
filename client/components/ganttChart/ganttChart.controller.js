@@ -23,6 +23,9 @@
  * @constructor
  */
 angular.module('neonDemo.controllers').controller('ganttChartController', ['$scope', function($scope) {
+    // The default record limit.
+    var DEFAULT_LIMIT = 50;
+
     $scope.active.legend = [];
     $scope.active.startField = {};
     $scope.active.endField = {};
@@ -33,6 +36,7 @@ angular.module('neonDemo.controllers').controller('ganttChartController', ['$sco
     $scope.active.selectableGroups = [];
     $scope.active.selectedGroups = [];
     $scope.active.selectedGroup = "";
+    $scope.active.limit = DEFAULT_LIMIT;
 
     $scope.registerHooks = function(ganttApi) {
         ganttApi.directives.on.new($scope, function(dName, dScope, dElement) {
@@ -180,6 +184,7 @@ angular.module('neonDemo.controllers').controller('ganttChartController', ['$sco
             fields.push(groupField.columnName);
         });
         query.withFields(fields);
+        query.limit($scope.active.limit);
         return query;
     };
 
@@ -350,6 +355,10 @@ angular.module('neonDemo.controllers').controller('ganttChartController', ['$sco
             $scope.functions.queryAndUpdate();
         }
         $scope.active.selectedGroup = "";
+    };
+
+    $scope.handleChangeLimit = function() {
+        $scope.functions.logChangeAndUpdate("limit", $scope.active.limit, "button");
     };
 
     $scope.getFilterData = function() {
