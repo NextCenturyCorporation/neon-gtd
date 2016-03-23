@@ -1323,7 +1323,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
             }
 
             // Remove all data in the affected layers from the display.
-            updateDataFunction([], item.layers);
+            updateDataFunction(null, item.layers);
         }
 
         var connection = connectionService.getActiveConnection();
