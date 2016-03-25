@@ -15,51 +15,6 @@
  *
  */
 
-
-// -----------------------------------
-// Initialize the close handlers.
-// -----------------------------------
-
-OWF.ready(function () {
-    OWF.relayFile = 'assets/vendor/eventing/rpc_relay.uncompressed.html';
-
-    // -----------------------------------
-    // Hide the body when the widget is not visible.
-    // -----------------------------------
-    var eventMonitor = {};
-    eventMonitor.widgetEventingController = Ozone.eventing.Widget.getInstance();
-
-    eventMonitor.widgetState = Ozone.state.WidgetState.getInstance({
-        widgetEventingController: eventMonitor.widgetEventingController,
-        autoInit: true,
-        onStateEventReceived: function(sender, msg) {
-            var event = msg.eventName;
-
-            if(event === 'activate' || event === 'show') {
-                $(document.body).show();
-                console.log("activating line chart widget");
-            }
-            else if(event === 'hide') {
-                $(document.body).hide();
-                console.log("hiding line chart widget");
-            } 
-        }
-    });
-
-
-    // listen for  activate and hide events so that we can
-    // hide our body.  Some browsers, specifically Chrome, continues
-    // to render iframes with elments that use specific webkit transforms
-    // even when they are hidden.  This impact many Map packages and some
-    // SVG packages.  The work around for this is to hide our widget body
-    // on hide events.
-    eventMonitor.widgetState.addStateEventListeners({
-        events: ['activate', 'hide', 'show', 'beforedestroy', 'beforeclose', 'destroy', 'close', 'remove', 'removed']
-    });
-
-    OWF.notifyWidgetReady();
-});
-
 // Defaulting the Neon SERVER_URL to be under the neon context on the same host machine.
 // Used by neon core server.  Don't delete this or you will probably break everything!
 neon.SERVER_URL = "/neon";
@@ -227,7 +182,7 @@ function($scope, $timeout, $location, config, layouts, datasets, themeService, c
     }, function(newVal) {
         if (newVal) {
             OWF.Preferences.setUserPreference({
-                'namespace': WidgetConfig.namespace + '.' + $scope.visualizationId,
+                'namespace': WidgetConfig.namespace + '.' + OWF.getInstanceId(),
                 'name': 'Neon Preferences',
                 'value': JSON.stringify(newVal),
                 'onSuccess': function (msg) {
@@ -271,6 +226,8 @@ var saveUserAle = function(config) {
     });
     XDATA.userALE = new userale(aleConfig);
     XDATA.userALE.register();
+    // Disable user ale log polling or widget demos.
+    clearInterval(timerId)
 };
 
 var saveOpenCpu = function(config) {
@@ -577,8 +534,66 @@ var saveNeonConfig = function($http, config, widgetState) {
 };
 
 angular.element(document).ready(function() {
-    // Try to read out bindings from OWF Prefs before loading angular and generating our visualization.
+    // Set any OWF Handlers and try to read our bindings from OWF Prefs 
+    // before loading our angular app and generating our visualization.
     OWF.ready(function() {
+        OWF.relayFile = 'assets/vendor/eventing/rpc_relay.uncompressed.html';
+
+        // -----------------------------------
+        // Hide the body when the widget is not visible.
+        // -----------------------------------
+        var eventMonitor = {};
+        eventMonitor.widgetEventingController = Ozone.eventing.Widget.getInstance();
+
+        eventMonitor.widgetState = Ozone.state.WidgetState.getInstance({
+            widgetEventingController: eventMonitor.widgetEventingController,
+            autoInit: true,
+            onStateEventReceived: function(sender, msg) {
+                var event = msg.eventName;
+
+                if(event === 'activate' || event === 'show') {
+                    $(document.body).css("visibility", "visible");
+                }
+                else if(event === 'hide') {
+                    $(document.body).css("visibility", "hidden");
+                } 
+                else if(event === 'beforeclose') {
+                    // Clean up our preferences when we are closed.
+                    eventMonitor.widgetState.removeStateEventOverrides({
+                        event: [event],
+                        callback: function() {
+                            OWF.Preferences.deleteUserPreference({
+                                namespace: WidgetConfig.namespace + '.' + OWF.getInstanceId(),
+                                name: 'Neon Preferences',
+                                onSuccess: function (response) {
+                                    eventMonitor.widgetState.closeWidget();
+                                },
+                                onFailure: function (response) {
+                                    eventMonitor.widgetState.closeWidget();
+                                }
+                            });
+                        }
+                    });
+                }
+            }
+        });
+
+        // listen for  activate and hide events so that we can
+        // hide our body.  Some browsers, specifically Chrome, continues
+        // to render iframes with elments that use specific webkit transforms
+        // even when they are hidden.  This impact many Map packages and some
+        // SVG packages.  The work around for this is to hide our widget body
+        // on hide events.
+        eventMonitor.widgetState.addStateEventListeners({
+            events: ['activate', 'hide', 'show']
+        });
+
+        // override beforeclose event so that we can clean up
+        // widget state data
+        eventMonitor.widgetState.addStateEventOverrides({
+            events: ['beforeclose']
+        });
+
         OWF.Preferences.getUserPreference({
             'namespace': WidgetConfig.namespace + '.' + OWF.getInstanceId(),
             'name': 'Neon Preferences',
@@ -592,11 +607,10 @@ angular.element(document).ready(function() {
                         saveNeonConfig($http, response.data, widgetState);
                     });
                 });
-            }, 
-            'onFailure': function onFail(msg) {
-                console.log("failed to get widget state");
             }
         });
+
+        OWF.notifyWidgetReady();
     });
     
 });
