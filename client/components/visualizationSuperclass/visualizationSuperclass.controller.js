@@ -169,6 +169,10 @@ function($scope, external, connectionService, datasetService, errorNotificationS
     /**
      * Creates and returns the text for the options menu button.
      * Called by the options-menu directive.
+     *
+     * TODO - This should probably be renamed, since visualizations don't use
+     * this to describe the menu, but instead use it to say how many records
+     * were found, or if there were any limits applied.
      * @method $scope.functions.createMenuText
      * @return {String}
      */
@@ -401,6 +405,8 @@ function($scope, external, connectionService, datasetService, errorNotificationS
 
     /**
      * Updates the filter displayed by this visualization on the fields with the given names using the where clause in the given Neon filter.
+     *
+     * This is called when another visualization creates a filter on one of the fields returned by getFilterFields()
      * @method $scope.functions.updateFilterValues
      * @param {neon.query.Filter} neonFilter
      * @param {Array} fieldNames
