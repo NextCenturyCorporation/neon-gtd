@@ -64,10 +64,13 @@ angular.module('neonDemo.controllers').controller('textCloudController', ['$scop
         return $scope.functions.isFieldValid($scope.active.dataField);
     }
 
-    $scope.functions.executeQuery = function(connection, query) {
-        // Note that the where clause must be null, not undefined.
-        return connection.executeArrayCountQuery($scope.active.database.name, $scope.active.table.name, $scope.active.dataField.columnName, $scope.active.limit,
-                query.filter.whereClause || null);
+    $scope.functions.createNeonQueryWhereClause = function() {
+        return neon.query.where($scope.active.dataField.columnName, "!=", null);
+    };
+
+    $scope.functions.addToQuery = function(query) {
+        return query.groupBy($scope.active.dataField.columnName).aggregate(neon.query.COUNT, '*', 'count').sortBy('count', neon.query.DESCENDING)
+            .limit($scope.active.limit).enableAggregateArraysByElement();
     };
 
     $scope.functions.updateData = function(data) {
@@ -76,13 +79,14 @@ angular.module('neonDemo.controllers').controller('textCloudController', ['$scop
         if($scope.functions.isFilterSet() && $scope.active.andFilters) {
             cloudData = cloudData.filter(function(item) {
                 var index = _.findIndex($scope.filters, {
-                    value: item.key
+                    value: item[$scope.active.dataField.columnName]
                 });
                 return index === -1;
             });
         }
 
         $scope.active.data = cloudData.map(function(item) {
+            item.key = item[$scope.active.dataField.columnName];
             item.keyTranslated = item.key;
             return item;
         });
@@ -270,12 +274,12 @@ angular.module('neonDemo.controllers').controller('textCloudController', ['$scop
             }]
         };
         finalObject.data[0].fields.push({
-            query: "key",
-            pretty: "Key"
+            query: $scope.active.dataField.columnName,
+            pretty: $scope.active.dataField.columnName
         });
         finalObject.data[0].fields.push({
             query: "count",
-            pretty: "Count"
+            pretty: "count"
         });
         return finalObject;
     };
