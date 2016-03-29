@@ -72,7 +72,9 @@ angular.module('neonDemo.controllers').controller('scatterPlotController', ['$sc
 
     $scope.functions.updateData = function(data) {
         $scope.data = data || [];
-        drawGraph();
+        if($scope.data.length) {
+            drawGraph();
+        }
     };
 
     var drawGraph = function() {
