@@ -31,6 +31,7 @@ angular.module('neonDemo.controllers').controller('aggregationTableController', 
     $scope.active.aggregationField = {};
     $scope.active.groupField = {};
     $scope.active.limit = $scope.bindings.limit || 100;
+    $scope.active.aggregateArraysByElement = false;
 
     var handleRowClick = function(cell) {
         if($scope.active.gridOptions.api.getSelectedNodes()[0] && $scope.active.gridOptions.api.getSelectedNodes()[0].id === cell.rowIndex) {
@@ -136,6 +137,10 @@ angular.module('neonDemo.controllers').controller('aggregationTableController', 
 
         if($scope.active.limit) {
             query.limit($scope.active.limit);
+        }
+
+        if($scope.active.aggregateArraysByElement) {
+            query.enableAggregateArraysByElement();
         }
 
         return query.groupBy($scope.active.groupField.columnName);
@@ -287,6 +292,10 @@ angular.module('neonDemo.controllers').controller('aggregationTableController', 
 
     $scope.handleChangeLimit = function() {
         $scope.functions.logChangeAndUpdate("limit", $scope.active.limit, "button");
+    };
+
+    $scope.handleChangeAggregateArraysByElement = function() {
+        $scope.functions.logChangeAndUpdate("aggregateArraysByElement", $scope.active.aggregateArraysByElement, "button");
     };
 
     $scope.functions.createMenuText = function() {
