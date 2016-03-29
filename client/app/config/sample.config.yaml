@@ -1,17 +1,18 @@
 user_ale:
-  loggingUrl: http://192.168.1.100
-  toolName: Neon Dashboard
-  toolVersion: 1.2.0
-  elementGroups:
-    - top
-    - map_group
-    - table_group
-    - chart_group
-    - query_group
-    - graph_group
-  workerUrl: bower_components/user-ale/js/userale-worker.js
-  debug: false
-  sendLogs: false
+  enable: false
+#  loggingUrl: http://192.168.1.100
+#  toolName: Neon Dashboard
+#  toolVersion: 1.2.0
+#  elementGroups:
+#    - top
+#    - map_group
+#    - table_group
+#    - chart_group
+#    - query_group
+#    - graph_group
+#  workerUrl: bower_components/user-ale/js/userale-worker.js
+#  debug: false
+#  sendLogs: false
 
 dashboard:
   gridsterColumns: 24

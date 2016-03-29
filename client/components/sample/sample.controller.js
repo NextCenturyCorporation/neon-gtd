@@ -37,7 +37,7 @@ angular.module('neonDemo.controllers').controller('sampleController', ['$scope',
     // Functions defined on $scope.functions override default/stub implementations in the superclass directive.
     // See the Single Table Visualization API for documentation on all of the available functions.
     $scope.functions.isFilterSet = function() {
-        return $scope.filter;
+        return Boolean($scope.filter);
     };
 
     $scope.functions.areDataFieldsValid = function() {
@@ -49,6 +49,8 @@ angular.module('neonDemo.controllers').controller('sampleController', ['$scope',
     };
 
     // The following two functions display text next to the options menu in the upper right corner of the visualization (the gear icon).
+    // "MenuText" is a misnomer: it is usually used to display how many records were found, or if the limit was hit.
+    // It just happens to be displayed next to the menu icon.
     $scope.functions.createMenuText = function() {
         return ($scope.active.data.length || "No") + ($scope.active.data.length === 1 ? " result " : " results");
     };

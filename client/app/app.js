@@ -241,24 +241,32 @@ var startAngular = function() {
 };
 
 var saveUserAle = function(config) {
-    // Configure the user-ale logger.
-    var aleConfig = (config.user_ale || {
-        loggingUrl: "http://192.168.1.100",
-        toolName: "Neon Dashboard",
-        elementGroups: [
-            "top",
-            "map_group",
-            "table_group",
-            "chart_group",
-            "query_group",
-            "graph_group"
-        ],
-        workerUrl: "bower_components/user-ale/helper-libs/javascript/userale-worker.js",
-        debug: false,
-        sendLogs: false
-    });
-    XDATA.userALE = new userale(aleConfig);
-    XDATA.userALE.register();
+    if (config.user_ale.enable === false) {
+        // timerId is the global variable that the UserALE code creates for the
+        // one second time. If UserALE is disabled, then clear that timer.
+        clearInterval(timerId);
+        // Create a dummy logger
+        XDATA.userALE = { log: function() {}};
+    } else {
+        // Configure the user-ale logger.
+        var aleConfig = (config.user_ale || {
+            loggingUrl: "http://192.168.1.100",
+            toolName: "Neon Dashboard",
+            elementGroups: [
+                "top",
+                "map_group",
+                "table_group",
+                "chart_group",
+                "query_group",
+                "graph_group"
+            ],
+            workerUrl: "bower_components/user-ale/helper-libs/javascript/userale-worker.js",
+            debug: false,
+            sendLogs: false
+        });
+        XDATA.userALE = new userale(aleConfig);
+        XDATA.userALE.register();
+    }
 };
 
 var saveOpenCpu = function(config) {
