@@ -25,7 +25,7 @@
 angular.module('neonDemo.controllers').controller('networkGraphController', ['$scope', '$timeout', '$filter', function($scope, $timeout, $filter) {
     var TIMEOUT_MS = 250;
 
-    $scope.dataIsLimited = false;
+    $scope.isDataLimited = false;
     $scope.bucketizer = dateBucketizer();
     $scope.mediator = undefined;
 
@@ -61,16 +61,12 @@ angular.module('neonDemo.controllers').controller('networkGraphController', ['$s
     $scope.active.selectedNodeIds = [];
 
     $scope.functions.createMenuText = function() {
-        if(!$scope.mediator || !$scope.mediator.getNumberOfNodes()) {
-            return "No Data";
+        if(!$scope.mediator || !$scope.mediator.nodesTotal) {
+            return "No Nodes";
         }
-        var text = $scope.mediator.getNumberOfNodes() + " Nodes";
+        var text = $scope.mediator.nodesTotal + " Nodes" + ($scope.mediator.nodesShown ? "" : " Hidden") + ($scope.isDataLimited ? " [Limited]" : "");
         if($scope.bucketizer && $scope.mediator && $scope.mediator.getSelectedDateBucket()) {
-            var date = $filter("date")($scope.bucketizer.getDateForBucket($scope.mediator.getSelectedDateBucket()).toISOString(), $scope.bucketizer.getDateFormat());
-            text += " (" + date + ")";
-        }
-        if($scope.dataIsLimited) {
-            text += " [Limited]";
+            text += " (" + $filter("date")($scope.bucketizer.getDateForBucket($scope.mediator.getSelectedDateBucket()).toISOString(), $scope.bucketizer.getDateFormat()) + ")";
         }
         return text;
     };
@@ -170,8 +166,7 @@ angular.module('neonDemo.controllers').controller('networkGraphController', ['$s
                 return $scope.functions.getElement(".directed-graph").width();
             },
             redrawGraph: redrawGraphInAngularDigest,
-            updateSelectedNodeIds: updateSelectedNodeIdsInAngularDigest,
-            getNestedValue: neon.helpers.getNestedValue
+            updateSelectedNodeIds: updateSelectedNodeIdsInAngularDigest
         });
 
         $scope.mediator.setBucketizer($scope.bucketizer);
@@ -199,16 +194,18 @@ angular.module('neonDemo.controllers').controller('networkGraphController', ['$s
         var news = [];
         data.forEach(function(item) {
             var newsItem = {
-                primaryTitle: neon.helpers.getNestedValue(item, $scope.active.nodeField.columnName)
+                primaryTitle: neon.helpers.getNestedValues(item, $scope.active.nodeField.columnName)
             };
             if($scope.functions.isFieldValid($scope.active.dateField)) {
-                newsItem.date = new Date(neon.helpers.getNestedValue(item, $scope.active.dateField.columnName));
+                newsItem.date = new Date(neon.helpers.getNestedValues(item, $scope.active.dateField.columnName).sort(function(a, b) {
+                    return new Date(a).getTime() - new Date(b).getTime();
+                })[0]);
             }
             if($scope.functions.isFieldValid($scope.active.nameField)) {
-                newsItem.secondaryTitle = neon.helpers.getNestedValue(item, $scope.active.nameField.columnName);
+                newsItem.secondaryTitle = neon.helpers.getNestedValues(item, $scope.active.nameField.columnName);
             }
             if($scope.functions.isFieldValid($scope.active.textField)) {
-                newsItem.content = neon.helpers.getNestedValue(item, $scope.active.textField.columnName);
+                newsItem.content = neon.helpers.getNestedValues(item, $scope.active.textField.columnName);
                 // Delete the text from the data to improve our memory preformance because we don't need it any longer.
                 delete item[$scope.active.textField.columnName];
             }
@@ -240,6 +237,8 @@ angular.module('neonDemo.controllers').controller('networkGraphController', ['$s
     };
 
     $scope.functions.areDataFieldsValid = function() {
+        // This is checked before a query is run, so only return true if runQuery is enabled or node(s) are selected.
+        // Since network graph queries can take a long time, we don't want to run them all the time (only on demand).
         return $scope.functions.isFieldValid($scope.active.nodeField) && ($scope.runQuery || $scope.active.selectedNodeIds.length);
     };
 
@@ -248,6 +247,7 @@ angular.module('neonDemo.controllers').controller('networkGraphController', ['$s
      * @method queryForNetworkGraph
      */
     $scope.queryForNetworkGraph = function() {
+        // Enable runQuery to signal that the next query triggered should be run (not ignored).
         $scope.runQuery = true;
         // TODO Log user button click
         $scope.functions.queryAndUpdate();
@@ -260,6 +260,7 @@ angular.module('neonDemo.controllers').controller('networkGraphController', ['$s
      * @private
      */
     $scope.queryForNodeList = function() {
+        // Enable runQuery to signal that the next query triggered should be run (not ignored).
         $scope.runQuery = true;
         // TODO Log user button click
         $scope.functions.queryAndUpdate({
@@ -273,18 +274,19 @@ angular.module('neonDemo.controllers').controller('networkGraphController', ['$s
 
     var updateNodeListData = function(data) {
         if(data) {
+            // Reset runQuery on a response containing data (as opposed to a reset in which the data is null).
             $scope.runQuery = false;
         }
 
         (data || []).forEach(function(item) {
-            var nodeId = item[i][$scope.active.nodeField.columnName];
-            if($scope.existingNodeIds.indexOf(nodeId) < 0) {
-                $scope.existingNodeIds.push(nodeId);
+            var nodeId = item[$scope.active.nodeField.columnName];
+            if($scope.active.existingNodeIds.indexOf(nodeId) < 0) {
+                $scope.active.existingNodeIds.push(nodeId);
             }
         });
 
         // Sort the nodes so they are displayed in alphabetical order in the options dropdown.
-        $scope.existingNodeIds.sort(function(a, b) {
+        $scope.active.existingNodeIds.sort(function(a, b) {
             if(typeof a === "string" && typeof b === "string") {
                 return a.toLowerCase().localeCompare(b.toLowerCase());
             }
@@ -366,11 +368,12 @@ angular.module('neonDemo.controllers').controller('networkGraphController', ['$s
 
     $scope.functions.updateData = function(data) {
         if(data) {
+            // Reset runQuery on a response containing data (as opposed to a reset in which the data is null).
             $scope.runQuery = false;
         }
 
         var graphData = data || [];
-        $scope.dataIsLimited = graphData.length ? (graphData.length >= $scope.active.limit) : false;
+        $scope.isDataLimited = graphData.length ? (graphData.length >= $scope.active.limit) : false;
         $scope.active.legend = graphData.length ? $scope.mediator.createLegend($scope.active.clusterNodes, $scope.functions.isFieldValid($scope.active.flagField), $scope.tooltip.flagLabel) : [];
 
         recreateGraph();
@@ -460,11 +463,13 @@ angular.module('neonDemo.controllers').controller('networkGraphController', ['$s
     };
 
     $scope.handleToggleHideSimpleNetworks = function() {
-        $scope.functions.logChangeAndUpdate("hideSimpleNetworks", $scope.active.limit, "button");
+        $scope.runQuery = true;
+        $scope.functions.logChangeAndUpdate("hideSimpleNetworks", $scope.active.hideSimpleNetworks, "button");
     };
 
     $scope.handleToggleClusterNodes = function() {
-        $scope.functions.logChangeAndUpdate("clusterNodes", $scope.active.limit, "button");
+        $scope.runQuery = true;
+        $scope.functions.logChangeAndUpdate("clusterNodes", $scope.active.clusterNodes, "button");
     };
 
     $scope.functions.hideHeaders = function() {

@@ -33,6 +33,8 @@ mediators.DirectedGraphMediator = (function() {
 
         this.graphNodes = [];
         this.graphLinks = [];
+        this.nodesTotal = 0;
+        this.nodesShown = 0;
 
         this.maps = {
             nodeIdsToFlags: {},
@@ -46,9 +48,9 @@ mediators.DirectedGraphMediator = (function() {
         this.selected = {
             dateBucket: undefined,
             graphNodeIds: [],
-            graphNetworkId: undefined,
+            graphNetworkId: -1,
             mouseoverNodeIds: [],
-            mouseoverNetworkId: undefined
+            mouseoverNetworkId: -1
         };
 
         this.graph = new charts.DirectedGraph(root, selector, {
@@ -85,7 +87,7 @@ mediators.DirectedGraphMediator = (function() {
      */
     DirectedGraphMediator.prototype.evaluateDataAndUpdateGraph = function(data, options) {
         this.options = options;
-        this.options.flagMode = this.options.flagMode || DirectedGraphMediator.FLAG_LINKED;
+        this.options.flagMode = this.options.flagMode || DirectedGraphMediator.FLAG_RESULT;
 
         if(!options.nodeField) {
             return;
@@ -114,46 +116,62 @@ mediators.DirectedGraphMediator = (function() {
 
         // Add each unique node from the data to the graph as a node.
         data.forEach(function(item) {
-            var nodeId = mediator.callbacks.getNestedValue(item, options.nodeField);
-            var nodeName = options.nameField ? mediator.callbacks.getNestedValue(item, options.nameField) : nodeId;
-            var nodeSize = options.sizeField ? mediator.callbacks.getNestedValue(item, options.sizeField) : 1;
-            var nodeFlag = options.flagField ? mediator.callbacks.getNestedValue(item, options.flagField) : true;
-            var itemDate = options.dateField ? new Date(mediator.callbacks.getNestedValue(item, options.dateField)) : undefined;
+            neon.helpers.getNestedValues(item, options.nodeField).forEach(function(nodeId) {
+                // Get the node fields from the data.
+                var names = options.nameField ? neon.helpers.getNestedValues(item, options.nameField) : [];
+                var nodeName = names.length ? names.join(",") : nodeId;
+                var sizes = options.sizeField ? neon.helpers.getNestedValues(item, options.sizeField) : [];
+                var nodeSize = sizes.length ? sizes.sort()[0] : 1;
+                var flags = options.flagField ? neon.helpers.getNestedValues(item, options.flagField) : [];
+                var nodeFlag = flags.length ? flags.some(function(flag) {
+                    return flag;
+                }) : false;
+                var dates = options.dateField ? neon.helpers.getNestedValues(item, options.dateField) : [];
+                var itemDate = dates.length ? new Date(dates.sort(function(a, b) {
+                    return new Date(a).getTime() - new Date(b).getTime();
+                })[0]) : undefined;
 
-            if(nodeId) {
+                // Create a new node and add its date.
                 var node = addNodeIfUnique(nodes, nodeId, nodeName, nodeSize);
                 if(itemDate) {
                     node.dates.push(itemDate);
                 }
+
                 // Add a flag using a boolean field in the data if configured to do so.  The flag defaults to false.
                 node.flag = (options.flagMode === DirectedGraphMediator.FLAG_RESULT || options.flagMode === DirectedGraphMediator.FLAG_ALL) ? nodeFlag : false;
                 mediator.maps.nodeIdsToFlags[node.id] = node.flag;
+
                 // Mark this node as a node created from a data item.
                 node.inData = true;
 
                 // Find the data for the linked nodes (if configured) from the data item.
-                var linkedNodeIds = createFieldArray(mediator.callbacks.getNestedValue(item, options.linkedNodeField), 0);
-                var linkedNodeNames = createFieldArray(mediator.callbacks.getNestedValue(item, options.linkedNameField), linkedNodeIds.length);
-                var linkedNodeSizes = createFieldArray(mediator.callbacks.getNestedValue(item, options.linkedSizeField), linkedNodeIds.length);
+                var linkedNodeIds = neon.helpers.getNestedValues(item, options.linkedNodeField);
+                var linkedNodeNames = neon.helpers.getNestedValues(item, options.linkedNameField);
+                var linkedNodeSizes = neon.helpers.getNestedValues(item, options.linkedSizeField);
 
                 // Add each linked node to the graph as a node with a link to the original node.
                 linkedNodeIds.forEach(function(linkedNodeId, index) {
                     if(linkedNodeId && linkedNodeId !== nodeId) {
                         // Linked nodes have no date because each date is an instance of the node in the data.  Future instances of the linked node in the data will add their dates to
                         // the linked node's date array.  If the linked node is not in the data, it will be styled different based on the inData property.
-                        var linkedNode = addNodeIfUnique(nodes, linkedNodeId, linkedNodeNames[index], linkedNodeSizes[index]);
+                        var linkedNode = addNodeIfUnique(nodes, linkedNodeId, linkedNodeNames.length > index ? linkedNodeNames[index] : undefined,
+                            linkedNodeSizes.length > index ? linkedNodeSizes[index] : undefined);
                         // Add a flag using a boolean field in the data if configured to do so.  The flag defaults to false.
                         linkedNode.flag = (options.flagMode === DirectedGraphMediator.FLAG_LINKED || options.flagMode === DirectedGraphMediator.FLAG_ALL) ? nodeFlag : false;
                         mediator.maps.nodeIdsToFlags[linkedNode.id] = mediator.maps.nodeIdsToFlags[linkedNode.id] || linkedNode.flag;
                         addLinkIfUnique(links, linkedNodeId, nodeId, itemDate, mediator.maps);
                     }
                 });
-            }
+            });
         });
+
+        this.nodesTotal = nodes.length;
 
         // Cluster and hide nodes if specified in the options.
         nodes = clusterNodesAndHideSimpleNetworks(nodes, this.maps, (this.selected.graphNodeIds.length > 0), options.hideSimpleNetworks, options.useNodeClusters);
         sortNodeOrLinkListByDate(nodes);
+
+        this.nodesShown = nodes.length;
 
         // Set the node/link network IDs and transform links connecting node IDs to links connecting node indices.
         links = finalizeNetworksAndCreateLinks(nodes, links, this.maps, this.selected);
@@ -300,28 +318,6 @@ mediators.DirectedGraphMediator = (function() {
      */
     var createLinkKey = function(sourceId, sourceType, targetId, targetType) {
         return createNodeKey(sourceId, sourceType) + "-" + createNodeKey(targetId, targetType);
-    };
-
-    /**
-     * Creates and returns an array of the given length for the field in the given data item.
-     * @param {String} columnName
-     * @param {Object} item
-     * @param {Number} length
-     * @method createFieldArray
-     * @private
-     * @return {Array}
-     */
-    var createFieldArray = function(columnValue, length) {
-        var array = [];
-        if(columnValue) {
-            array = (columnValue.constructor === Array) ? columnValue : [columnValue];
-        }
-        if(array.length < length) {
-            for(var i = array.length; i < length; ++i) {
-                array.push(undefined);
-            }
-        }
-        return array;
     };
 
     /**
@@ -919,10 +915,10 @@ mediators.DirectedGraphMediator = (function() {
      */
     var createFunctionToCalculateNodeOpacity = function(mediator) {
         return function(node) {
-            if(mediator.selected.mouseoverNetworkId && mediator.selected.mouseoverNetworkId !== node.network) {
+            if(mediator.selected.mouseoverNetworkId >= 0 && mediator.selected.mouseoverNetworkId !== node.network) {
                 return mediator.graph.DEFAULT_NODE_OPACITY / 2;
             }
-            if(mediator.selected.graphNetworkId && mediator.selected.graphNetworkId !== node.network) {
+            if(mediator.selected.graphNetworkId >= 0 && mediator.selected.graphNetworkId !== node.network) {
                 return mediator.graph.DEFAULT_NODE_OPACITY / 2;
             }
             return mediator.graph.DEFAULT_NODE_OPACITY;
@@ -1137,7 +1133,7 @@ mediators.DirectedGraphMediator = (function() {
     var createFunctionToHandleNodeDeselect = function(mediator) {
         return function(node) {
             mediator.selected.mouseoverNodeIds = [];
-            mediator.selected.mouseoverNetworkId = undefined;
+            mediator.selected.mouseoverNetworkId = -1;
             mediator.graph.redrawNodesAndLinks();
         };
     };
@@ -1196,7 +1192,7 @@ mediators.DirectedGraphMediator = (function() {
         if(index >= 0 && deselectSelected) {
             selected.graphNodeIds.splice(index, 1);
             if(!selected.graphNodeIds.length) {
-                selected.graphNetworkId = undefined;
+                selected.graphNetworkId = -1;
             }
         }
 
@@ -1230,7 +1226,7 @@ mediators.DirectedGraphMediator = (function() {
     var createFunctionToHandleLinkDeselect = function(mediator) {
         return function(link) {
             mediator.selected.mouseoverNodeIds = [];
-            mediator.selected.mouseoverNetworkId = undefined;
+            mediator.selected.mouseoverNetworkId = -1;
             mediator.graph.redrawNodesAndLinks();
         };
     };
@@ -1256,7 +1252,7 @@ mediators.DirectedGraphMediator = (function() {
      * @method deselectAllNodesAndNetwork
      */
     DirectedGraphMediator.prototype.deselectAllNodesAndNetwork = function() {
-        this.selected.graphNetworkId = undefined;
+        this.selected.graphNetworkId = -1;
         this.selected.graphNodeIds = [];
         this.graph.redrawNodesAndLinks();
     };
@@ -1267,11 +1263,11 @@ mediators.DirectedGraphMediator = (function() {
      * @method selectNodeAndNetworkFromNodeId
      */
     DirectedGraphMediator.prototype.selectNodeAndNetworkFromNodeId = function(selectedNodeId) {
-        if(selectedNodeId !== "") {
+        if(selectedNodeId) {
             var nodeId = Number(selectedNodeId) ? Number(selectedNodeId) : selectedNodeId;
             var networkId = this.maps.nodeIdsToNetworkIds[nodeId];
 
-            if(networkId !== undefined && this.selected.graphNodeIds.indexOf(nodeId) < 0) {
+            if(networkId >= 0 && this.selected.graphNodeIds.indexOf(nodeId) < 0) {
                 addSelectedNodeAndNetwork(this.selected, nodeId, networkId);
                 this.graph.redrawNodesAndLinks();
             }
@@ -1387,16 +1383,7 @@ mediators.DirectedGraphMediator = (function() {
      * @return {Array}
      */
     DirectedGraphMediator.prototype.getNodeIdsInSelectedNetwork = function() {
-        return (this.selected.graphNetworkId ? (this.maps.networkIdsToNodeIds[this.selected.graphNetworkId] || []) : []);
-    };
-
-    /**
-     * Returns the number of nodes in the graph.
-     * @method getNumberOfNodes
-     * @return {Number}
-     */
-    DirectedGraphMediator.prototype.getNumberOfNodes = function() {
-        return this.graphNodes.length;
+        return (this.selected.graphNetworkId >= 0 ? (this.maps.networkIdsToNodeIds[this.selected.graphNetworkId] || []) : []);
     };
 
     /**
@@ -1438,7 +1425,7 @@ mediators.DirectedGraphMediator = (function() {
         if(useFlag) {
             legend.push({
                 color: DirectedGraphMediator.FLAGGED_COLOR,
-                label: flagLabel || DEFAULT_TOOLTIP_FLAG_LABEL
+                label: flagLabel || DirectedGraphMediator.DEFAULT_TOOLTIP_FLAG_LABEL
             });
         }
 
