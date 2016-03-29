@@ -194,7 +194,7 @@ angular.module('neonDemo.controllers').controller('lineChartController', ['$scop
             query.aggregate(neon.query.MAX, layer.aggregationField.columnName, COUNT_FIELD_NAME);
         }
 
-        query.aggregate(neon.query.MIN, layer.dateField.columnName, 'date').sortBy('date', neon.query.ASCENDING);
+        query.aggregate(neon.query.MIN, layer.dateField.columnName, 'date').sortBy('date', neon.query.ASCENDING).enableAggregateArraysByElement();
 
         if(!layer.filter && $scope.functions.isFilterSet()) {
             var filterClause = $scope.functions.createNeonFilterClause({

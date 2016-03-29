@@ -264,7 +264,7 @@ angular.module('neonDemo.controllers').controller('newsFeedController', ['$scope
     };
 
     $scope.functions.areDataFieldsValid = function() {
-        return $scope.functions.isFieldValid($scope.active.dateField) || $scope.functions.isFieldValid($scope.active.contentField);
+        return $scope.functions.isFieldValid($scope.active.dateField) && $scope.functions.isFieldValid($scope.active.contentField);
     };
 
     $scope.functions.addToQuery = function(query) {
@@ -275,8 +275,7 @@ angular.module('neonDemo.controllers').controller('newsFeedController', ['$scope
         if($scope.functions.isFieldValid($scope.active.secondaryTitleField)) {
             fields.push($scope.active.secondaryTitleField.columnName);
         }
-        query.withFields(fields).sortBy($scope.active.dateField.columnName, $scope.active.sortDirection).limit($scope.active.limit);
-        return query;
+        return query.withFields(fields).sortBy($scope.active.dateField.columnName, $scope.active.sortDirection).limit($scope.active.limit);
     };
 
     $scope.functions.updateData = function(data) {
@@ -299,17 +298,17 @@ angular.module('neonDemo.controllers').controller('newsFeedController', ['$scope
      */
     var updateData = function(data) {
         data.forEach(function(item) {
-            var primary = $scope.functions.isFieldValid($scope.active.primaryTitleField) ? neon.helpers.getNestedValue(item, $scope.active.primaryTitleField.columnName) : "";
-            var secondary = $scope.functions.isFieldValid($scope.active.secondaryTitleField) ? neon.helpers.getNestedValue(item, $scope.active.secondaryTitleField.columnName) : "";
+            var primary = $scope.functions.isFieldValid($scope.active.primaryTitleField) ? neon.helpers.getNestedValues(item, $scope.active.primaryTitleField.columnName) : "";
+            var secondary = $scope.functions.isFieldValid($scope.active.secondaryTitleField) ? neon.helpers.getNestedValues(item, $scope.active.secondaryTitleField.columnName) : "";
             var createdLinks = createExternalLinksForNewsItemData(primary, secondary);
-
-            var content = neon.helpers.getNestedValue(item, $scope.active.contentField.columnName);
-            if(_.isArray(content)) {
-                content = content.join("\n");
-            }
+            var content = neon.helpers.getNestedValues(item, $scope.active.contentField.columnName);
+            var dates = neon.helpers.getNestedValues(item, $scope.active.dateField.columnName).sort(function(a, b) {
+                return new Date(a).getTime() - new Date(b).getTime();
+            });
 
             $scope.active.data.push({
-                date: new Date(neon.helpers.getNestedValue(item, $scope.active.dateField.columnName)),
+                // If the date field contains multiple dates, arbitrarily choose the earliest date.
+                date: dates.length ? new Date(dates[0]) : null,
                 primaryTitle: primary,
                 primaryTitleTranslated: primary,
                 secondaryTitle: secondary,
@@ -494,7 +493,7 @@ angular.module('neonDemo.controllers').controller('newsFeedController', ['$scope
      */
     $scope.getNewsItemStyleClass = function(item) {
         var style = [];
-        if($scope.selectedDate && item.date.getTime() > $scope.selectedDate.getTime()) {
+        if($scope.selectedDate && item.date && item.date.getTime() > $scope.selectedDate.getTime()) {
             style.push("future");
         }
         if(newsHighlights.highlights.primaryTitles.length || newsHighlights.highlights.secondaryTitles.length) {

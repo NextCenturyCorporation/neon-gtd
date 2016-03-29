@@ -635,9 +635,8 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
         query.aggregate(neon.query.COUNT, '*', 'count');
         // TODO: Does this need to be an aggregate on the date field? What is MIN doing or is this just an arbitrary function to include the date with the query?
         query.aggregate(neon.query.MIN, $scope.active.dateField.columnName, 'date');
-        query.sortBy('date', neon.query.ASCENDING);
 
-        return query;
+        return query.sortBy('date', neon.query.ASCENDING).enableAggregateArraysByElement();
     };
 
     $scope.functions.createNeonQueryWhereClause = function() {
@@ -661,9 +660,7 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
             neon.query.where($scope.active.dateField.columnName, '=', null)
         );
 
-        query.aggregate(neon.query.COUNT, '*', 'invalidCount');
-
-        return query;
+        return query.aggregate(neon.query.COUNT, '*', 'invalidCount').enableAggregateArraysByElement();
     };
 
     $scope.functions.addToQuery = function(query) {
@@ -833,7 +830,8 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
                 },
                 updateData: function(data) {
                     if(data) {
-                        $scope.referenceStartDate = new Date(getDateField(data[0]));
+                        var dateField = getDateFields(data[0]);
+                        $scope.referenceStartDate = new Date(_.isArray(dateField) ? dateField[0] : dateField);
                         queryForMaxDate(callback);
                     }
                 }
@@ -856,7 +854,8 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
                 },
                 updateData: function(data) {
                     if(data) {
-                        $scope.referenceEndDate = new Date(getDateField(data[0]));
+                        var dateField = getDateFields(data[0]);
+                        $scope.referenceEndDate = new Date(_.isArray(dateField) ? dateField[dateField.length - 1] : dateField);
                         callback();
                     }
                 }
@@ -867,12 +866,15 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
     /**
      * Finds and returns the date field in the data. If the date contains '.', representing that the date is in an object
      * within the data, it will find the nested value.
+     * @method getDateFields
      * @param {Object} data
-     * @method getDateField
+     * @return {Array}
      * @private
      */
-    var getDateField = function(data) {
-        return neon.helpers.getNestedValue(data, $scope.active.dateField.columnName);
+    var getDateFields = function(data) {
+        return neon.helpers.getNestedValues(data, $scope.active.dateField.columnName.split(".")).sort(function(a, b) {
+            return new Date(a).getTime() - new Date(b).getTime();
+        });
     };
 
     /**
