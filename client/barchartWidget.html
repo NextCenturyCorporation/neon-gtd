@@ -42,7 +42,6 @@
         <link rel="stylesheet" type="text/css" ng-href="app/themes/{{theme.selected.file}}.css">
         <!-- Widget Config -->
         <div class="visualization-well visualization-widget">
-            <div visualization-superclass implementation="singleLayer"name="BarChart" type="barChart" class="single-table-visualization" active="active" bindings="bindings" log-element-group="chart_group" log-element-type="barchart" visualization-id="{{visualizationId}}" state-id="{{visualizationId}}"></div>
         </div>
         <div id="tooltip-container"></div>
         <!-- In production use:
@@ -119,8 +118,12 @@
          <!-- Setup our widget's OWF handlers and trigger the angular code -->
         <script type="text/javascript">
             var WidgetConfig = {
-                templateURL: 'dataSelectorWidget.html',
-                namespace: 'com.ncc.neon.linechart',
+                templateURL: 'barchartWidget.html',
+                namespace: 'com.ncc.neon.barchart',
+                name: 'Bar Chart',
+                type: 'barChart',
+                logElementGroup: 'chart_group',
+                logElementType: 'canvas',
                 theme: 'Dark Green',
                 demoModuleList: [
                     'neonDemo.controllers',
@@ -154,10 +157,6 @@
         <script src="app/theme.service.js"></script>
         <script src="app/translation.service.js"></script>
         <script src="app/visualization.service.js"></script>
-        <script  type="text/javascript">
-
-
-        </script>
         <script src="components/addVisualization/addVisualization.directive.js"></script>
         <script src="components/aggregationTable/aggregationTable.controller.js"></script>
         <script src="components/barChart/barChart.controller.js"></script>

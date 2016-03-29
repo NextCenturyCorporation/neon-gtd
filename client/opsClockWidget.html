@@ -40,9 +40,8 @@
     </head>
     <body style="height:100%" ng-controller="neonDemoController">
         <link rel="stylesheet" type="text/css" ng-href="app/themes/{{theme.selected.file}}.css">
-        <!-- Widget Config -->
+        <!-- Widget Container div -->
         <div class="visualization-well visualization-widget">
-            <div visualization-superclass implementation="singleLayer" name="Ops Clock" type="opsClock" class="single-table-visualization" active="active" bindings="bindings" log-element-group="chart_group" log-element-type="opsclock" visualization-id="{{visualizationId}}" state-id="{{visualizationdId}}"></div>
         </div>
         <!-- In production use:
         <script src="//ajax.googleapis.com/ajax/libs/angularjs/x.x.x/angular.min.js"></script>
@@ -120,6 +119,10 @@
             var WidgetConfig = {
                 templateURL: 'opsClockWidget.html',
                 namespace: 'com.ncc.neon.opsclock',
+                name: 'Ops Clock',
+                type: 'opsClock',
+                logElementGroup: 'chart_group',
+                logElementType: 'canvas',
                 theme: 'Dark Green',
                 demoModuleList: [
                     'neonDemo.controllers',

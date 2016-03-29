@@ -42,7 +42,6 @@
         <link rel="stylesheet" type="text/css" ng-href="app/themes/{{theme.selected.file}}.css">
         <!-- Widget Config -->
         <div class="visualization-well visualization-widget">
-            <div visualization-superclass implementation="singleLayer" name="Timeline" type="timeline" class="single-table-visualization" active="active" bindings="bindings" log-element-group="chart_group" log-element-type="timeline" visualization-id="{{visualizationId}}" state-id="{{visualizationsId}}"></div>
         </div>
         <div id="tooltip-container"></div>
         <!-- In production use:
@@ -121,6 +120,10 @@
             var WidgetConfig = {
                 templateURL: 'timelineSelectorWidget.html',
                 namespace: 'com.ncc.neon.timelineselector',
+                name: 'Timeline',
+                type: 'timeline',
+                logElementGroup: 'chart_group',
+                logElementType: 'canvas',
                 theme: 'Dark Green',
                 demoModuleList: [
                     'neonDemo.controllers',

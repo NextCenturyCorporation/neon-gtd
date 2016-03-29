@@ -42,8 +42,6 @@
         <link rel="stylesheet" type="text/css" ng-href="app/themes/{{theme.selected.file}}.css">
         <!-- Widget Config -->
         <div class="visualization-well visualization-widget">
-            <div filter-builder  implementation="singleLayer" type="filterBuilder" name="Filter Builder" class="filter-directive"
-                visualization-id="{{visualizationId}}" state-id="{{visualizationId}}" bindings="bindings" update-menus="updateFilterBuilderMenus"></div>
         </div>
         <!-- In production use:
         <script src="//ajax.googleapis.com/ajax/libs/angularjs/x.x.x/angular.min.js"></script>
@@ -119,8 +117,12 @@
          <!-- Setup our widget's OWF handlers and trigger the angular code -->
         <script type="text/javascript">
             var WidgetConfig = {
-                templateURL: 'timelineSelectorWidget.html',
-                namespace: 'com.ncc.neon.timelineselector',
+                templateURL: 'filterBuilderWidget.html',
+                namespace: 'com.ncc.neon.filterbuilder',
+                name: 'Filter Builder',
+                type: 'filterBuilder',
+                logElementGroup: 'query_group',
+                logElementType: '',
                 theme: 'Dark Green',
                 demoModuleList: [
                     'neonDemo.controllers',

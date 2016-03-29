@@ -42,7 +42,6 @@
         <link rel="stylesheet" type="text/css" ng-href="app/themes/{{theme.selected.file}}.css">
         <!-- Widget Config -->
         <div class="visualization-well visualization-widget">
-            <div visualization-superclass implementation="singleLayer" name="Data Table" type="dataTable" class="single-table-visualization" active="active" bindings="bindings" log-element-group="table_group" log-element-type="table" visualization-id="{{visualizationId}}" state-id="{{visualizationId}}"></div>
         </div>
         <div id="tooltip-container"></div>
         <!-- In production use:
@@ -121,6 +120,10 @@
             var WidgetConfig = {
                 templateURL: 'dataTableWidget.html',
                 namespace: 'com.ncc.neon.datatable',
+                name: 'Data Table',
+                type: 'dataTable',
+                logElementGroup: 'table_group',
+                logElementType: 'datagrid',
                 theme: 'Dark Green',
                 demoModuleList: [
                     'neonDemo.controllers',
@@ -154,10 +157,6 @@
         <script src="app/theme.service.js"></script>
         <script src="app/translation.service.js"></script>
         <script src="app/visualization.service.js"></script>
-        <script  type="text/javascript">
-  
-
-        </script>
         <script src="components/addVisualization/addVisualization.directive.js"></script>
         <script src="components/aggregationTable/aggregationTable.controller.js"></script>
         <script src="components/barChart/barChart.controller.js"></script>

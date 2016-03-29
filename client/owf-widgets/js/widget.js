@@ -125,8 +125,8 @@ angular.module('neonDemo.filters', [])
     };
 });
 angular.module('neonDemo.controllers')
-.controller('neonDemoController', ['$scope', '$timeout', '$location', 'config', 'layouts', 'datasets', 'ThemeService', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'VisualizationService', 'widgetState',
-function($scope, $timeout, $location, config, layouts, datasets, themeService, connectionService, datasetService, errorNotificationService, visualizationService, widgetState) {
+.controller('neonDemoController', ['$scope', '$compile', '$timeout', '$location', 'config', 'layouts', 'datasets', 'ThemeService', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'VisualizationService', 'widgetState',
+function($scope, $compile, $timeout, $location, config, layouts, datasets, themeService, connectionService, datasetService, errorNotificationService, visualizationService, widgetState) {
     $scope.messenger = new neon.eventing.Messenger();
 
     themeService.setTheme(WidgetConfig.theme);
@@ -155,21 +155,54 @@ function($scope, $timeout, $location, config, layouts, datasets, themeService, c
     $scope.bindings.hideAdvancedOptions = config.hideAdvancedOptions;
     $scope.bindings.hideHeader = config.hideHeader;
 
-    //datasetService.addDataset(datasets[0]);
     datasetService.setActiveDataset(datasets[0]);
     connectionService.createActiveConnection(datasets[0].datastore, datasets[0].hostname);
+
+    // Create a helper function to build the widget's visualization directive from the WidgetConfig object.
+    // TODO:  For now, this duplicates a method in visualizationWidget component used in the single page
+    // Neon-GTD application.  
+    var addWidgetElement = function() {
+        var widgetContainer = document.getElementsByClassName("visualization-widget");
+        var widget = document.createElement('div');
+        
+        var implementation = WidgetConfig.type === "lineChart" || WidgetConfig.type === "map" ? "multipleLayer" : "singleLayer";
+        var superclassType = WidgetConfig.type === "filterBuilder" ? "filter-builder" : "visualization-superclass";
+        widget.setAttribute(superclassType, "");
+        widget.setAttribute("implementation", implementation);
+        widget.setAttribute("name", WidgetConfig.name);
+        widget.setAttribute("type", WidgetConfig.type);
+        widget.setAttribute("state-id", WidgetConfig.type + "-" + OWF.getInstanceId());
+        widget.setAttribute("visualization-id", WidgetConfig.type + "-" + OWF.getInstanceId());
+        widget.setAttribute("log-element-group", WidgetConfig.logElementGroup);
+        widget.setAttribute("log-element-type", WidgetConfig.logElementType);
+
+        // TODO Add to visualization configuration.
+        if(WidgetConfig.type === "filterBuilder") {
+            widget.setAttribute("update-menus", "updateFilterBuilderMenus");
+        }
+        widget.setAttribute("bindings", "bindings");
+        $(widgetContainer[0]).append($compile(widget)($scope));
+    };
+
     if(WidgetConfig.loadingFilterBuilder) {
+        addWidgetElement();
         datasetService.updateDatabases(datasets[0], connectionService.getActiveConnection(), function(dataset) {
             $scope.$apply(function(dataset) {
                 datasets[0] = dataset;
                 if ($scope.updateFilterBuilderMenus) {
                     $scope.updateFilterBuilderMenus();
                 }
+                ;
             });
             
-         }, 0);
+        }, 0);
     } else {
-        datasetService.updateDatabases(datasets[0], connectionService.getActiveConnection());
+        datasetService.updateDatabases(datasets[0], connectionService.getActiveConnection(), function(dataset) {
+            $scope.$apply(function(dataset) {
+                datasets[0] = dataset;
+                addWidgetElement();
+            });
+        }, 0);
     }
 
     // Watch for changes to our visualization's configuration and store them as OWF prefs.
@@ -193,9 +226,6 @@ function($scope, $timeout, $location, config, layouts, datasets, themeService, c
         }
     }, true);
 }]);
-
-
-
 
 var XDATA = {};
 
@@ -259,23 +289,9 @@ var saveDashboards = function(config) {
         showExport: true
     };
     dashboardConfig.theme = config.theme;
-    dashboardConfig.gridsterColumns = dashboardConfig.gridsterColumns || 8;
-    dashboardConfig.gridsterMargins = dashboardConfig.gridsterMargins || 10;
-    // Most visualizations should have a minimum size of about 300px square to have space for their UI elements.
-    // TODO Use the browser width to determine the minimum size for visualizations and update it on browser resize.
-    dashboardConfig.gridsterDefaultMinSizeX = Math.floor(dashboardConfig.gridsterColumns / 4);
-    dashboardConfig.gridsterDefaultMinSizeY = Math.floor(dashboardConfig.gridsterColumns / 6);
     dashboardConfig.help = helpConfig;
     dashboardConfig.showExport = (dashboardConfig.showExport === undefined || dashboardConfig.showExport) ? true : false;
     neonDemo.constant('config', dashboardConfig);
-
-    // Keep the autoplay video code here because when it was in the neonDemoController the dashboard would start playing the video whenever the dataset was changed.
-    if(dashboardConfig.showVideoOnLoad && dashboardConfig.help.localVideo) {
-        neon.ready(function() {
-            $("#videoModal").modal("show");
-            $("#helpVideo").attr("autoplay", "");
-        });
-    }
 };
 
 var saveVisualizations = function(config) {

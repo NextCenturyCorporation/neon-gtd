@@ -42,7 +42,6 @@
         <link rel="stylesheet" type="text/css" ng-href="app/themes/{{theme.selected.file}}.css">
         <!-- Widget Config -->
         <div class="visualization-well visualization-widget">
-            <div visualization-superclass implementation="singleLayer" name="Sunburst" type="sunburstChart" class="single-table-visualization" active="active" bindings="bindings" log-element-group="chart_group" log-element-type="sunburstChart" visualization-id="{{visualizationId}}" state-id="{{visualizationId}}"></div>
         </div>
         <div id="tooltip-container"></div>
         <!-- In production use:
@@ -121,6 +120,10 @@
             var WidgetConfig = {
                 templateURL: 'sunburstChartWidget.html',
                 namespace: 'com.ncc.neon.sunburstchart',
+                name: 'Sunburst Chart',
+                type: 'sunburstChart',
+                logElementGroup: 'chart_group',
+                logElementType: 'canvas',
                 theme: 'Dark Green',
                 demoModuleList: [
                     'neonDemo.controllers',
