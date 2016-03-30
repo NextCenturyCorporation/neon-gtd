@@ -154,7 +154,7 @@ var startAngular = function() {
 };
 
 var saveUserAle = function(config) {
-    if (config.user_ale.enable === false) {
+    if(!config.user_ale || !config.user_ale.enable) {
         // timerId is the global variable that the UserALE code creates for the
         // one second time. If UserALE is disabled, then clear that timer.
         clearInterval(timerId);
