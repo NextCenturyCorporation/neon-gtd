@@ -41,6 +41,7 @@ coreMap.Map.Layer.PointsLayer = OpenLayers.Class(OpenLayers.Layer.Vector, {
     defaultColor: '',
     categoryMapping: '',
     dateMapping: '',
+    applyTransientDateFilter: false,
     gradient: false,
     cluster: false,
     linkyConfig: {
@@ -350,7 +351,7 @@ coreMap.Map.Layer.PointsLayer.prototype.setData = function(data) {
 };
 
 coreMap.Map.Layer.PointsLayer.prototype.setDateFilter = function(filterBounds) {
-    if(this.dateMapping && filterBounds && filterBounds.start && filterBounds.end) {
+    if(this.dateMapping && this.applyTransientDateFilter && filterBounds && filterBounds.start && filterBounds.end) {
         // Update the filter
         this.dateFilter.lowerBoundary = filterBounds.start;
         this.dateFilter.upperBoundary = filterBounds.end;

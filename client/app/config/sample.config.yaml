@@ -1,17 +1,18 @@
 user_ale:
-  loggingUrl: http://192.168.1.100
-  toolName: Neon Dashboard
-  toolVersion: 1.2.0
-  elementGroups:
-    - top
-    - map_group
-    - table_group
-    - chart_group
-    - query_group
-    - graph_group
-  workerUrl: bower_components/user-ale/js/userale-worker.js
-  debug: false
-  sendLogs: false
+  enable: false
+#  loggingUrl: http://192.168.1.100
+#  toolName: Neon Dashboard
+#  toolVersion: 1.2.0
+#  elementGroups:
+#    - top
+#    - map_group
+#    - table_group
+#    - chart_group
+#    - query_group
+#    - graph_group
+#  workerUrl: bower_components/user-ale/js/userale-worker.js
+#  debug: false
+#  sendLogs: false
 
 dashboard:
   gridsterColumns: 24
@@ -407,6 +408,7 @@ layouts:
             database: test
             table: earthquakes
             type: points
+            applyTransientDateFilter: false
           -
             name: Vendors To Pops
             database: uscontracts
@@ -417,6 +419,7 @@ layouts:
             targetLatitudeField: popLatitude
             targetLongitudeField: popLongitude
             lineSizeField: annualRev
+            applyTransientDateFilter: false
     -
       sizeX: 12
       type: lineChart
