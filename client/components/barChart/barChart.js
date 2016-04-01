@@ -528,8 +528,7 @@ charts.BarChart.prototype.showTooltipXaxis_ = function(item, mouseEvent) {
         }
     });
 
-    var html = '<div><strong>' + this.xLabel_ + ':</strong> ' + item + '</div>' +
-                '<div><strong>' + this.yLabel_ + ':</strong> ' + yValue + '</div>';
+    var html = this.createTooltipBody_(this.xLabel_, this.yLabel_, item, yValue);
 
     $("#tooltip-container").html(html);
     $("#tooltip-container").show();
@@ -553,8 +552,7 @@ charts.BarChart.prototype.showTooltip_ = function(item, mouseEvent) {
     var yValue = this.isStacked ? (item.values - item[this.yMinAttribute_]) : item.values;
     yValue = d3.format("0,000.00")(yValue);
 
-    var html = '<div><strong>' + this.xLabel_ + ':</strong> ' + xValue + '</div>' +
-                '<div><strong>' + this.yLabel_ + ':</strong> ' + yValue + '</div>';
+    var html = this.createTooltipBody_(this.xLabel_, this.yLabel_, xValue, yValue);
 
     $("#tooltip-container").html(html);
     $("#tooltip-container").show();
@@ -570,6 +568,11 @@ charts.BarChart.prototype.showTooltip_ = function(item, mouseEvent) {
         source: "user",
         tags: ["tooltip", "barchart"]
     });
+};
+
+charts.BarChart.prototype.createTooltipBody_ = function(xLabel, yLabel, xValue, yValue) {
+    return '<div><strong>' + _.escape(xLabel) + ':</strong> ' + _.escape(xValue) + '</div>' +
+                '<div><strong>' + _.escape(yLabel) + ':</strong> ' + _.escape(yValue) + '</div>';
 };
 
 charts.BarChart.prototype.positionTooltip_ = function(tooltip, mouseEvent) {
