@@ -641,9 +641,11 @@ angular.module('neonDemo.directives')
             // Wait for neon to be ready, the create our messenger and intialize the view and data.
             neon.ready(function() {
                 neon.widget.getInstanceId("filterBuilder", function(instanceId) {
-                    $scope.instanceId = instanceId;
-                    initialize();
-                    displayActiveDataset();
+                    $scope.$apply(function() {
+                        $scope.instanceId = instanceId;
+                        initialize();
+                        displayActiveDataset();
+                    });
                 });
             });
         }

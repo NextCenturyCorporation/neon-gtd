@@ -36,32 +36,6 @@
 
             OWF.ready(function () {
 
-                // // -----------------------------------
-                // // Hide the body when the widget is not visible.
-                // // -----------------------------------
-                // var widgetState = Ozone.state.WidgetState.getInstance({
-                //     onStateEventReceived: function(sender, msg) {
-                //         var event = msg.eventName;
-
-                //         if(event === 'activate' || event === 'show') {
-                //             $(document.body).show();
-                //         }
-                //         else if(event === 'hide') {
-                //             $(document.body).hide();
-                //         }
-                //     }
-                // });
-
-                // // listen for  activate and hide events so that we can
-                // // hide our body.  Some browsers, specifically Chrome, continues
-                // // to render iframes with elments that use specific webkit transforms
-                // // even when they are hidden.  This impact many Map packages and some
-                // // SVG packages.  The work around for this is to hide our widget body
-                // // on hide events.
-                // widgetState.addStateEventListeners({
-                //     events: ['activate', 'hide', 'show']
-                // });
-
                 OWF.notifyWidgetReady();
 
                 neon.ready(function() {

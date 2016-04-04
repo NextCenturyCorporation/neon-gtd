@@ -124,6 +124,8 @@ angular.module('neonDemo.filters', [])
         return number;
     };
 });
+
+// Create the main controller for the application.
 angular.module('neonDemo.controllers')
 .controller('neonDemoController', ['$scope', '$compile', '$timeout', '$location', 'config', 'layouts', 'datasets', 'ThemeService', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'VisualizationService', 'widgetState',
 function($scope, $compile, $timeout, $location, config, layouts, datasets, themeService, connectionService, datasetService, errorNotificationService, visualizationService, widgetState) {
@@ -158,6 +160,67 @@ function($scope, $compile, $timeout, $location, config, layouts, datasets, theme
     datasetService.setActiveDataset(datasets[0]);
     connectionService.createActiveConnection(datasets[0].datastore, datasets[0].hostname);
 
+    // Setup some OWF event handlers to cover when the widget is hidden/shown/closed.
+    var eventMonitor = {};
+    eventMonitor.widgetEventingController = Ozone.eventing.Widget.getInstance();
+
+    eventMonitor.widgetState = Ozone.state.WidgetState.getInstance({
+        widgetEventingController: eventMonitor.widgetEventingController,
+        autoInit: true,
+        onStateEventReceived: function(sender, msg) {
+            var event = msg.eventName;
+
+            if(event === 'activate' || event === 'show') {
+                $(document.body).css("visibility", "visible");
+            }
+            else if(event === 'hide') {
+                $(document.body).css("visibility", "hidden");
+            } 
+            else if(event === 'beforeclose') {
+                // Destroy our widget explicitly so it cleans up any filters it was holding onto.
+                $scope.$destroy();
+
+                // Clean up our preferences when we are closed.
+                eventMonitor.widgetState.removeStateEventOverrides({
+                    event: [event],
+                    callback: function() {
+                        OWF.Preferences.deleteUserPreference({
+                            namespace: WidgetConfig.namespace + '.' + OWF.getInstanceId(),
+                            name: 'Neon Preferences',
+                            onSuccess: function (response) {
+                                eventMonitor.widgetState.closeWidget();
+                            },
+                            onFailure: function (response) {
+                                eventMonitor.widgetState.closeWidget();
+                            }
+                        });
+                    }
+                });
+            }
+        }
+    });
+
+    // listen for  activate and hide events so that we can
+    // hide our body.  Some browsers, specifically Chrome, continues
+    // to render iframes with elments that use specific webkit transforms
+    // even when they are hidden.  This impact many Map packages and some
+    // SVG packages.  The work around for this is to hide our widget body
+    // on hide events.
+    eventMonitor.widgetState.addStateEventListeners({
+        events: ['activate', 'hide', 'show']
+    });
+
+    // override beforeclose event so that we can clean up
+    // widget state data
+    eventMonitor.widgetState.addStateEventOverrides({
+        events: ['beforeclose']
+    });
+
+    // Handle clearing our filters on a page refresh.
+    $(window).bind("beforeunload", function(){
+        $scope.$destroy();
+    });
+
     // Create a helper function to build the widget's visualization directive from the WidgetConfig object.
     // TODO:  For now, this duplicates a method in visualizationWidget component used in the single page
     // Neon-GTD application.  
@@ -187,13 +250,13 @@ function($scope, $compile, $timeout, $location, config, layouts, datasets, theme
     if(WidgetConfig.loadingFilterBuilder) {
         addWidgetElement();
         datasetService.updateDatabases(datasets[0], connectionService.getActiveConnection(), function(dataset) {
-            $scope.$apply(function(dataset) {
-                datasets[0] = dataset;
-                if ($scope.updateFilterBuilderMenus) {
-                    $scope.updateFilterBuilderMenus();
-                }
-                ;
-            });
+            // $scope.$apply(function(dataset) {
+            //     datasets[0] = dataset;
+            //     if ($scope.updateFilterBuilderMenus) {
+            //         $scope.updateFilterBuilderMenus();
+            //     }
+            //     ;
+            // });
             
         }, 0);
     } else {
@@ -555,61 +618,7 @@ angular.element(document).ready(function() {
     OWF.ready(function() {
         OWF.relayFile = 'assets/vendor/eventing/rpc_relay.uncompressed.html';
 
-        // -----------------------------------
-        // Hide the body when the widget is not visible.
-        // -----------------------------------
-        var eventMonitor = {};
-        eventMonitor.widgetEventingController = Ozone.eventing.Widget.getInstance();
-
-        eventMonitor.widgetState = Ozone.state.WidgetState.getInstance({
-            widgetEventingController: eventMonitor.widgetEventingController,
-            autoInit: true,
-            onStateEventReceived: function(sender, msg) {
-                var event = msg.eventName;
-
-                if(event === 'activate' || event === 'show') {
-                    $(document.body).css("visibility", "visible");
-                }
-                else if(event === 'hide') {
-                    $(document.body).css("visibility", "hidden");
-                } 
-                else if(event === 'beforeclose') {
-                    // Clean up our preferences when we are closed.
-                    eventMonitor.widgetState.removeStateEventOverrides({
-                        event: [event],
-                        callback: function() {
-                            OWF.Preferences.deleteUserPreference({
-                                namespace: WidgetConfig.namespace + '.' + OWF.getInstanceId(),
-                                name: 'Neon Preferences',
-                                onSuccess: function (response) {
-                                    eventMonitor.widgetState.closeWidget();
-                                },
-                                onFailure: function (response) {
-                                    eventMonitor.widgetState.closeWidget();
-                                }
-                            });
-                        }
-                    });
-                }
-            }
-        });
-
-        // listen for  activate and hide events so that we can
-        // hide our body.  Some browsers, specifically Chrome, continues
-        // to render iframes with elments that use specific webkit transforms
-        // even when they are hidden.  This impact many Map packages and some
-        // SVG packages.  The work around for this is to hide our widget body
-        // on hide events.
-        eventMonitor.widgetState.addStateEventListeners({
-            events: ['activate', 'hide', 'show']
-        });
-
-        // override beforeclose event so that we can clean up
-        // widget state data
-        eventMonitor.widgetState.addStateEventOverrides({
-            events: ['beforeclose']
-        });
-
+        // Pull our config files and any saved OWF preferences prior to kicking off the application.
         OWF.Preferences.getUserPreference({
             'namespace': WidgetConfig.namespace + '.' + OWF.getInstanceId(),
             'name': 'Neon Preferences',
