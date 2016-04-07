@@ -632,11 +632,7 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
             query.groupBy(yearGroupClause, monthGroupClause, dayGroupClause, hourGroupClause);
         }
 
-        query.aggregate(neon.query.COUNT, '*', 'count');
-        // TODO: Does this need to be an aggregate on the date field? What is MIN doing or is this just an arbitrary function to include the date with the query?
-        query.aggregate(neon.query.MIN, $scope.active.dateField.columnName, 'date');
-
-        return query.sortBy('date', neon.query.ASCENDING).enableAggregateArraysByElement();
+        return query.aggregate(neon.query.COUNT, '*', 'count').enableAggregateArraysByElement();
     };
 
     $scope.functions.createNeonQueryWhereClause = function() {
@@ -905,10 +901,10 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
             // Fill our data into the appropriate interval buckets.
             var resultDate;
             for(i = 0; i < rawLength; i++) {
-                resultDate = new Date(data[i].date);
+                resultDate = new Date(data[i].year, (data[i].month || 1) - 1, data[i].day || 1, data[i].hour || 0);
                 var bucketIndex = $scope.bucketizer.getBucketIndex(resultDate);
                 if(queryData[bucketIndex]) {
-                    queryData[bucketIndex].value = data[i].count;
+                    queryData[bucketIndex].value += data[i].count;
                 }
             }
         }
