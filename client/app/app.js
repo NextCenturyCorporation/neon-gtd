@@ -241,7 +241,9 @@ var startAngular = function() {
 };
 
 var saveUserAle = function(config) {
-    if(!config.user_ale || !config.user_ale.enable) {
+    // If there's a user_ale section, then assume that userALE should be enabled
+    // unless it is explicitly disabled.
+    if(!config.user_ale || config.user_ale.enable === false) {
         // timerId is the global variable that the UserALE code creates for the
         // one second time. If UserALE is disabled, then clear that timer.
         clearInterval(timerId);

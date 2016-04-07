@@ -28,6 +28,7 @@ coreMap.Map.Layer.NodeLayer = OpenLayers.Class(OpenLayers.Layer.Vector, {
     nodeMapping: '',
     lineMapping: '',
     lineWeightMapping: '',
+    applyTransientDateFilter: false,
     maxNodeRadius: 0,
     minNodeRadius: 0,
     maxLineWidth: 0,
@@ -372,7 +373,7 @@ coreMap.Map.Layer.NodeLayer.prototype.setData = function(data, limit) {
 };
 
 coreMap.Map.Layer.NodeLayer.prototype.setDateFilter = function(filterBounds) {
-    if(this.dateMapping && filterBounds && filterBounds.start && filterBounds.end) {
+    if(this.dateMapping && this.applyTransientDateFilter && filterBounds && filterBounds.start && filterBounds.end) {
         // Update the filter
         this.dateFilter.lowerBoundary = filterBounds.start;
         this.dateFilter.upperBoundary = filterBounds.end;

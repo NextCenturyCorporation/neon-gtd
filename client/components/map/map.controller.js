@@ -334,6 +334,7 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
         layer.gradientColorCode3 = config.gradientColorCode3;
         layer.gradientColorCode4 = config.gradientColorCode4;
         layer.gradientColorCode5 = config.gradientColorCode5;
+        layer.applyTransientDateFilter = config.applyTransientDateFilter;
         layer.popupFields = config.popupFields || [];
         updateFields(layer, config);
         return layer;
@@ -922,6 +923,7 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
             lineWeightMapping: $scope.functions.isFieldValid(layer.lineSizeField) ? layer.lineSizeField.columnName : "",
             nodeWeightMapping: $scope.functions.isFieldValid(layer.nodeSizeField) ? layer.nodeSizeField.columnName : "",
             lineDefaultColor: layer.lineColorCode || "",
+            applyTransientDateFilter: layer.applyTransientDateFilter || false,
             nodeDefaultColor: layer.nodeColorCode || "",
             gradients: generateGradientList(layer),
             clusterPopupFields: layer.popupFields,
@@ -1059,6 +1061,7 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
         bindings.gradientColorCode3 = layer.gradientColorCode3 || "";
         bindings.gradientColorCode4 = layer.gradientColorCode4 || "";
         bindings.gradientColorCode5 = layer.gradientColorCode5 || "";
+        bindings.applyTransientDateFilter = layer.applyTransientDateFilter || false;
         bindings.popupFields = layer.popupFields || [];
         return bindings;
     };
