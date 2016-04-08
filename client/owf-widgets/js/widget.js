@@ -14,6 +14,15 @@
  * limitations under the License.
  *
  */
+/*
+ * Widget.js is a modified version of app.js from the Neon-GTD single-page application.  It 
+ * has been altered in the following ways to accomodate multiple OWF Widgets based upon
+ * Neon-GTD visualizations:
+ * - Removal of references to unnecesssary components from the single page app (e.g., gridster)
+ * - Addition of OWF event handles to support saving widget settings via OWF Preferences
+ * - Pruning of functions required only by the single page application.
+ * - Added to the event chain of actions required before the angular code of the widget starts to support OWF elements.
+ */
 
 // Defaulting the Neon SERVER_URL to be under the neon context on the same host machine.
 // Used by neon core server.  Don't delete this or you will probably break everything!
@@ -154,7 +163,7 @@ function($scope, $compile, $timeout, $location, config, layouts, datasets, theme
     // Load and connect to the first dataset for now.
     // TODO: Need a way to handle switching datasets.
     $scope.bindings = widgetState || {};
-    // Clear the previous title so it can be determined on the fly as the user selected different databases.
+    // Clear the previous title so it can be determined on the fly as the user selects different databases.
     $scope.bindings.title = '';
     $scope.bindings.hideAdvancedOptions = config.hideAdvancedOptions;
     $scope.bindings.hideHeader = config.hideHeader;
@@ -251,15 +260,7 @@ function($scope, $compile, $timeout, $location, config, layouts, datasets, theme
 
     if(WidgetConfig.loadingFilterBuilder) {
         addWidgetElement();
-        datasetService.updateDatabases(datasets[0], connectionService.getActiveConnection(), function(dataset) {
-            // $scope.$apply(function(dataset) {
-            //     datasets[0] = dataset;
-            //     if ($scope.updateFilterBuilderMenus) {
-            //         $scope.updateFilterBuilderMenus();
-            //     }
-            //     ;
-            // });
-            
+        datasetService.updateDatabases(datasets[0], connectionService.getActiveConnection(), function(dataset) { 
         }, 0);
     } else {
         datasetService.updateDatabases(datasets[0], connectionService.getActiveConnection(), function(dataset) {
