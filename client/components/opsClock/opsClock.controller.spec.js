@@ -15,27 +15,26 @@
  *
  */
 
-describe('Directive: circularHeatForm', function() {
+describe('Controller: opsClock', function() {
     // load the necessary modules
     beforeEach(module('neonDemo'));
 
-    beforeEach(module('partials/directives/circularHeatForm.html'));
 
-    var scope;
-    var element;
+    var $controller;
 
-    beforeEach(inject(function($compile, $rootScope) {
-        scope = $rootScope;
-        element = angular.element('<circular-heat-form></circular-heat-form>');
-        $compile(element)(scope);
-        element.scope().$digest();
+    beforeEach(inject(function(_$controller_) {
+        // The injector unwraps the underscores (_) from around the parameter names when matching
+        $controller = _$controller_;
     }));
 
     it('should initialize scope fields properly', function() {
-        expect(element).not.toBeNull();
-        expect(element.isolateScope().days.length).toBe(0);
-        expect(element.isolateScope().timeofday.length).toBe(0);
-        expect(element.isolateScope().maxDay).toBe('');
-        expect(element.isolateScope().maxTime).toBe('');
+        var $scope = {
+            active: {},
+            functions: {}
+        };
+        var controller = $controller('opsClockController', {$scope: $scope});
+        expect($scope.active.dateField).toEqual({});
+        expect($scope.active.maxDay).toBe('');
+        expect($scope.active.maxTime).toBe('');
     });
 });
