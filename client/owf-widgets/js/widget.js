@@ -154,6 +154,8 @@ function($scope, $compile, $timeout, $location, config, layouts, datasets, theme
     // Load and connect to the first dataset for now.
     // TODO: Need a way to handle switching datasets.
     $scope.bindings = widgetState || {};
+    // Clear the previous title so it can be determined on the fly as the user selected different databases.
+    $scope.bindings.title = '';
     $scope.bindings.hideAdvancedOptions = config.hideAdvancedOptions;
     $scope.bindings.hideHeader = config.hideHeader;
 
