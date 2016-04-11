@@ -687,7 +687,7 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
         return query;
     };
 
-    $scope.functions.createNeonQueryClause = function(layers) {
+    $scope.functions.createNeonQueryWhereClause = function(layers) {
         var validation = $scope.functions.getDatasetOptions().checkForCoordinateValidation;
 
         if(validation === "valid_numbers") {
