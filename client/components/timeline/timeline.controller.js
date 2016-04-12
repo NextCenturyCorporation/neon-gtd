@@ -544,7 +544,9 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
             setDateTimePickerStart($scope.bucketizer.getStartDate());
             setDateTimePickerEnd($scope.bucketizer.getEndDate());
         }
-        $scope.functions.updateNeonFilter(true);
+        $scope.functions.updateNeonFilter({
+            queryAfterFilter: true
+        });
     };
 
     $scope.functions.createNeonFilterClause = function(databaseAndTableName, fieldName) {
