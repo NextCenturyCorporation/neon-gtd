@@ -67,6 +67,7 @@ angular.module('neonDemo.controllers').controller('newsFeedController', ['$scope
     $scope.active.data = [];
     $scope.active.dateField = {};
     $scope.active.limit = LIMIT_INTERVAL;
+    $scope.active.total = LIMIT_INTERVAL;
     $scope.active.primaryTitleField = {};
     $scope.active.secondaryTitleField = {};
     $scope.active.sortDirection = neon.query.ASCENDING;
@@ -118,16 +119,16 @@ angular.module('neonDemo.controllers').controller('newsFeedController', ['$scope
         if(!$scope.loadingNews && $scope.active.data.length < newsTotalCount && element.find(".item").last().position().top <= element.height()) {
             // Prevent extraneous queries from updateNewsfeedOnScroll.
             $scope.loadingNews = true;
-            $scope.active.limit = $scope.active.limit + LIMIT_INTERVAL;
+            $scope.active.total = $scope.active.total + $scope.active.limit;
             if(newsEventData.length) {
-                updateData(newsEventData.slice($scope.active.limit - LIMIT_INTERVAL, $scope.active.limit));
+                updateData(newsEventData.slice($scope.active.total - $scope.active.limit, $scope.active.total));
             } else {
                 $scope.loadingNews = true;
                 $scope.functions.queryAndUpdate({
                     updateData: function(data) {
                         if(data) {
                             // Only add the items to the feed that aren't there already.
-                            updateData(data.slice($scope.active.limit - LIMIT_INTERVAL, $scope.active.limit));
+                            updateData(data.slice($scope.active.total - $scope.active.limit, $scope.active.total));
                             $scope.loadingNews = false;
                         }
                     }
@@ -257,7 +258,7 @@ angular.module('neonDemo.controllers').controller('newsFeedController', ['$scope
 
     var deleteData = function() {
         $scope.active.data = [];
-        $scope.active.limit = LIMIT_INTERVAL;
+        $scope.active.total = $scope.active.limit;
         $scope.topNewsItemIndex = 0;
         $scope.functions.removeLinks();
         newsEventData = [];
@@ -275,7 +276,7 @@ angular.module('neonDemo.controllers').controller('newsFeedController', ['$scope
         if($scope.functions.isFieldValid($scope.active.secondaryTitleField)) {
             fields.push($scope.active.secondaryTitleField.columnName);
         }
-        query.withFields(fields).sortBy($scope.active.dateField.columnName, $scope.active.sortDirection).limit($scope.active.limit);
+        query.withFields(fields).sortBy($scope.active.dateField.columnName, $scope.active.sortDirection).limit($scope.active.total);
         return query;
     };
 

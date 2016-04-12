@@ -827,7 +827,7 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
                 addToQuery: function(query) {
                     query.sortBy($scope.active.dateField.columnName, neon.query.ASCENDING).limit(1).ignoreFilters();
                     return query;
-                }, 
+                },
                 executeQuery: function(connection, query) {
                     return connection.executeQuery(query);
                 },

@@ -1735,7 +1735,6 @@ function($scope, external, connectionService, datasetService, errorNotificationS
             tags: ["options", $scope.type, "export"]
         });
 
-
         return $scope.createExportData(buildQuery, exportService);
     };
 
@@ -1932,6 +1931,5 @@ function($scope, external, connectionService, datasetService, errorNotificationS
                 other.filterable = layer.filterable;
             };
         });
-
     };
 }]);

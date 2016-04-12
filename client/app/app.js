@@ -161,7 +161,9 @@ var saveUserAle = function(config) {
         // one second time. If UserALE is disabled, then clear that timer.
         clearInterval(timerId);
         // Create a dummy logger
-        XDATA.userALE = { log: function() {}};
+        XDATA.userALE = {
+            log: function() {}
+        };
     } else {
         // Configure the user-ale logger.
         var aleConfig = (config.user_ale || {
