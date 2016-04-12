@@ -281,8 +281,8 @@ angular.module("neonDemo.services")
                 var table = database.tables[j];
                 var success = true;
                 var fields = {};
-                if (keys  && keys.length > 0) {
-                    for (var k = 0; k < keys.length; k++) {
+                if(keys  && keys.length > 0) {
+                    for(var k = 0; k < keys.length; k++) {
                         if(table.mappings[keys[k]]) {
                             fields[keys[k]] = table.mappings[keys[k]];
                         } else {

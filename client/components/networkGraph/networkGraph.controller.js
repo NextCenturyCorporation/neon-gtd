@@ -23,7 +23,6 @@
  * @constructor
  */
 angular.module('neonDemo.controllers').controller('networkGraphController', ['$scope', '$timeout', '$filter', function($scope, $timeout, $filter) {
-
     $scope.dataIsLimited = false;
     $scope.bucketizer = dateBucketizer();
     $scope.mediator = undefined;

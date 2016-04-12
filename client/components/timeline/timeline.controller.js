@@ -1170,7 +1170,6 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
         // The timelineSelector always asks for count and date, so it's fine to hard-code these in.
         // GroupBy clauses will always be added to the query in the same order, so this takes advantage
         // of that to add the pretty names of the clauses in the same order for as many as were added.
-        
         // TODO NEON-1973
         /*
         var counter = 0;

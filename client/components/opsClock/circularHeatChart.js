@@ -15,8 +15,7 @@
  *
  */
 
-function CircularHeatChart(el) { 
-   
+function CircularHeatChart(el) {
     var margin = {
         top: 20,
         right: 20,
