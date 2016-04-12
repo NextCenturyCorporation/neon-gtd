@@ -29,13 +29,6 @@ angular.module('neonDemo.controllers').controller('newsFeedController', ['$scope
 
     var DEFAULT_TYPE = "NEWS";
 
-    var DEFAULT_LINKY_CONFIG = {
-        mentions: false,
-        hashtags: false,
-        urls: true,
-        linkTo: ""
-    };
-
     // The default limit and the number of news items added to the feed whenever the user scrolls to the bottom of the feed.
     var LIMIT_INTERVAL = 50;
 
@@ -138,9 +131,11 @@ angular.module('neonDemo.controllers').controller('newsFeedController', ['$scope
 
         if(!$scope.loadingTranslations && $scope.active.showTranslations) {
             // See if the news item before the first translated news item is visible; if so, translate it.
+            var index = 0;
+            var newsItem = {};
             if(translatedIndexRange[0] > 0) {
-                var index = translatedIndexRange[0] + 1;
-                var newsItem = element.find(".item:nth-of-type(" + index + ")");
+                index = translatedIndexRange[0] + 1;
+                newsItem = element.find(".item:nth-of-type(" + index + ")");
                 if(newsItem.position().top >= 0) {
                     runAllTranslations(Math.max(0, translatedIndexRange[0] - TRANSLATION_INTERVAL), translatedIndexRange[0]);
                 }
@@ -148,8 +143,8 @@ angular.module('neonDemo.controllers').controller('newsFeedController', ['$scope
 
             // See if the news item after the final translated news item is visible; if so, translate it.
             if(translatedIndexRange[1] > 0 && translatedIndexRange[1] < $scope.active.data.length) {
-                var index = translatedIndexRange[1] + 1;
-                var newsItem = element.find(".item:nth-of-type(" + index + ")");
+                index = translatedIndexRange[1] + 1;
+                newsItem = element.find(".item:nth-of-type(" + index + ")");
                 if(newsItem.position().top <= element.height()) {
                     runAllTranslations(translatedIndexRange[1], Math.min($scope.active.data.length, translatedIndexRange[1] + TRANSLATION_INTERVAL));
                 }
@@ -254,7 +249,7 @@ angular.module('neonDemo.controllers').controller('newsFeedController', ['$scope
 
     $scope.functions.onChangeOption = function() {
         deleteData();
-    }
+    };
 
     var deleteData = function() {
         $scope.active.data = [];

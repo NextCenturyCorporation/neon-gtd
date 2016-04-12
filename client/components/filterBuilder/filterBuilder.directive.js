@@ -209,7 +209,7 @@ angular.module('neonDemo.directives')
 
             $scope.updateMenus = function() {
                 displayActiveDataset();
-            }
+            };
 
             $scope.updateTables = function() {
                 $scope.tables = datasetService.getTables($scope.selectedDatabase.name);
