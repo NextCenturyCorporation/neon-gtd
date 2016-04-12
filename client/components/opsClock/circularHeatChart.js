@@ -14,9 +14,9 @@
  * limitations under the License.
  *
  */
-/* jshint unused:false */
-function CircularHeatChart(el) {
-    /* jshint unused:true */
+
+function CircularHeatChart(el) { 
+   
     var margin = {
         top: 20,
         right: 20,
@@ -241,3 +241,6 @@ function CircularHeatChart(el) {
 
     return chart;
 }
+
+charts = charts || {};
+charts.CircularHeatChart = CircularHeatChart;

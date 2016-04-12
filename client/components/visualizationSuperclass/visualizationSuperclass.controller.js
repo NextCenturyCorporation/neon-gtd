@@ -468,7 +468,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
         var mappings = datasetService.getMappings(databaseName, tableName);
         var links = linksPopupService.createAllServiceLinkObjects(external.services, mappings, field.columnName, value);
         var key = linksPopupService.generateKey(field, value);
-        linksPopupService.addLinks($scope.visualizationId, linksPopupService.generateKey(field, value), links);
+        linksPopupService.addLinks($scope.visualizationId, key, links);
         return !!(links.length);
     };
 

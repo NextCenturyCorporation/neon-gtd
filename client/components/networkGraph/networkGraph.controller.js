@@ -23,7 +23,6 @@
  * @constructor
  */
 angular.module('neonDemo.controllers').controller('networkGraphController', ['$scope', '$timeout', '$filter', function($scope, $timeout, $filter) {
-    var TIMEOUT_MS = 250;
 
     $scope.dataIsLimited = false;
     $scope.bucketizer = dateBucketizer();
@@ -275,9 +274,9 @@ angular.module('neonDemo.controllers').controller('networkGraphController', ['$s
         if(data) {
             $scope.runQuery = false;
         }
-
-        (data || []).forEach(function(item) {
-            var nodeId = item[i][$scope.active.nodeField.columnName];
+        var items = data || [];
+        _.each(items, function(item) {
+            var nodeId = item[$scope.active.nodeField.columnName];
             if($scope.existingNodeIds.indexOf(nodeId) < 0) {
                 $scope.existingNodeIds.push(nodeId);
             }

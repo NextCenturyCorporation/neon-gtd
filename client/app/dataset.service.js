@@ -281,13 +281,15 @@ angular.module("neonDemo.services")
                 var table = database.tables[j];
                 var success = true;
                 var fields = {};
-                keys.forEach(function(key) {
-                    if(table.mappings[key]) {
-                        fields[key] = table.mappings[key];
-                    } else {
-                        success = false;
+                if (keys  && keys.length > 0) {
+                    for (var k = 0; k < keys.length; k++) {
+                        if(table.mappings[keys[k]]) {
+                            fields[keys[k]] = table.mappings[keys[k]];
+                        } else {
+                            success = false;
+                        }
                     }
-                });
+                }
 
                 if(success) {
                     return {
