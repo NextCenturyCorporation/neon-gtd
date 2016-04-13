@@ -38,4 +38,51 @@ describe('Chart: barChart', function() {
         // Verify that there are now two axis elements in the barchart
         expect(barChartContainer.find(".axis").length).toBe(2);
     });
+
+    it('bars are labeled', function() {
+        var opts = {
+            data: [
+                {
+                    x_column: "foo",
+                    y_column: 53
+                },
+                {
+                    x_column: "bar",
+                    y_column: 7
+                }
+            ],
+            x: "x_column",
+            y: "y_column",
+            responsive: false,
+            selectedKey: undefined
+        };
+        var chart = new charts.BarChart(barChartContainer[0], '.barchart', opts);
+        chart.draw();
+        expect(barChartContainer.text()).toContain("foo");
+        expect(barChartContainer.text()).toContain("bar");
+    });
+
+    it('bar labels with HTML characters are escaped', function() {
+        var opts = {
+            data: [
+                {
+                    x_column: "<foo>",
+                    y_column: 53
+                },
+                {
+                    x_column: "b&ar\"",
+                    y_column: 7
+                }
+            ],
+            x: "x_column",
+            y: "y_column",
+            responsive: false,
+            selectedKey: undefined
+        };
+        var chart = new charts.BarChart(barChartContainer[0], '.barchart', opts);
+        chart.draw();
+        // Check the html instead of the text to make sure we see the escaped characters
+        expect(barChartContainer.html()).toContain("&lt;foo&gt;");
+        expect(barChartContainer.html()).toContain("b&amp;ar\"");
+    });
 });
