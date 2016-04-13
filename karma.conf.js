@@ -24,12 +24,12 @@ module.exports = function(config){
     // neon-gtd.  Note that the base neon.js file also includes jquery, lodash, and a few other
     // items that are not explicitly pulled in here.
     files : [
+        'client/bower_components/jquery/dist/jquery.min.js',
         'client/bower_components/angular/angular.min.js',
         'client/bower_components/angular-route/angular-route.min.js',
         'client/bower_components/angular-mocks//angular-mocks.js',
         'client/bower_components/angular-gridster/dist/angular-gridster.min.js',
         '../neon/neon-server/build/js/neon.js',
-        'client/bower_components/jquery/dist/jquery.min.js',
         'client/bower_components/javascript-detect-element-resize/jquery.resize.js',
         'client/bower_components/opencpu/opencpu-0.5.js',
         'client/bower_components/user-ale/client/www/js/draper.activity_logger-2.1.1.js',
