@@ -85,4 +85,12 @@ describe('Chart: barChart', function() {
         expect(barChartContainer.html()).toContain("&lt;foo&gt;");
         expect(barChartContainer.html()).toContain("b&amp;ar\"");
     });
+
+    it('tooltips with HTML characters are escaped', function() {
+        // The tooltip function doesn't rely on any internal state, so just call it directly
+        var tooltipBody = charts.BarChart.prototype.createTooltipBody_("<first>", "&second", 10, 12);
+        // Check the html instead of the text to make sure we see the escaped characters
+        expect(tooltipBody).toContain("&lt;first&gt;");
+        expect(tooltipBody).toContain("&amp;second");
+    });
 });
