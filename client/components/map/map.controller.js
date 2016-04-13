@@ -183,12 +183,14 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
         $scope.showLinksPopupButton = $scope.functions.createLinksForData(neonMappings.BOUNDS, $scope.getLinksPopupBoundsKey(), linkData);
 
         removeZoomRect();
-        $scope.zoomRectId = $scope.map.drawBox({
+        var bounds = {
             left: $scope.extent.minimumLongitude,
             bottom: $scope.extent.minimumLatitude,
             right: $scope.extent.maximumLongitude,
             top: $scope.extent.maximumLatitude
-        });
+        };
+        $scope.zoomRectId = $scope.map.drawBox(bounds);
+        $scope.map.zoomToBounds(bounds);
     };
 
     $scope.getLinksPopupBoundsKey = function() {
