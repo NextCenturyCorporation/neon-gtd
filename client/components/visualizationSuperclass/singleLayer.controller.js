@@ -24,7 +24,9 @@
  * @constructor
  */
 angular.module('neonDemo.controllers').controller('singleLayerController', ['$scope', '$controller', 'DatasetService', function($scope, $controller, datasetService) {
-    $controller('visualizationSuperclassController', { $scope: $scope });
+    $controller('visualizationSuperclassController', {
+    $scope: $scope
+});
 
     // All needed properties will be defined in $scope.active.
     $scope.active.layers = undefined;

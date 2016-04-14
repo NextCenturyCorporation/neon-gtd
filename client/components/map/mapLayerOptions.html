@@ -150,11 +150,21 @@
     </div>
 </div>
 
-<div class="layer-options-row" ng-show="layer.type == NODE_AND_ARROW_LAYER">
+<div class="layer-options-row" ng-show="layer.type == NODE_AND_ARROW_LAYER || layer.type == POINT_LAYER">
     <div class="form-group layer-options-col" ng-show="layer.type == NODE_AND_ARROW_LAYER">
         <label>Date Field</label>
         <select class="form-control" ng-cancel-drag ng-model="layer.dateField" ng-options="field.prettyName for field in layer.fields" ng-required="false" ng-disabled="!(layer.fields.length > 0)">
             <option value="">None</option>
         </select>
+    </div>
+    <div class="form-group layer-options-col" ng-show="layer.type == NODE_AND_ARROW_LAYER || layer.type == POINT_LAYER">
+    <label>Transient Date Filter</label>
+    <div class="btn-group">
+        <label class="btn btn-default" ng-class="{true: 'active', false: ''}[layer.applyTransientDateFilter]">
+            <input type="radio" style="display:none" ng-model="layer.applyTransientDateFilter" ng-value="true">On
+        </label>
+        <label class="btn btn-default" ng-class="{true: '', false: 'active'}[layer.applyTransientDateFilter]">
+            <input type="radio" style="display:none" ng-model="layer.applyTransientDateFilter" ng-value="false">Off
+        </label>
     </div>
 </div>

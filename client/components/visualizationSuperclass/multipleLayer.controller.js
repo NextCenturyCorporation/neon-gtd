@@ -23,6 +23,6 @@
  * @extends visualizationSuperclass
  * @constructor
  */
-angular.module('neonDemo.controllers').controller('multipleLayerController', ['$scope', function($scope) {
+angular.module('neonDemo.controllers').controller('multipleLayerController', ['$scope', function() {
     // Use the default implementation of the visualization superclass.
 }]);

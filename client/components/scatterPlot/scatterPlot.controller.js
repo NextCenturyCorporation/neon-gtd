@@ -98,7 +98,7 @@ angular.module('neonDemo.controllers').controller('scatterPlotController', ['$sc
         return buildScatterConfig(data);
     };
 
-    var buildScatterConfig = function(data, markerType) {
+    var buildScatterConfig = function(data) {
         var x = [];
         var y = [];
         var text = [];
@@ -265,14 +265,14 @@ angular.module('neonDemo.controllers').controller('scatterPlotController', ['$sc
             $scope.functions.removeNeonFilter();
         } else {
             $scope.functions.updateNeonFilter();
-        };
+        }
     };
 
     $scope.functions.getFilterFields = function() {
         return [$scope.active.xAxisField, $scope.active.yAxisField];
     };
 
-    $scope.functions.updateFilterValues = function(neonFilter) {
+    $scope.functions.updateFilterValues = function() {
         // TODO NEON-1939
     };
 

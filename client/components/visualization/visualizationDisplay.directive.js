@@ -32,7 +32,7 @@ angular.module('neonDemo.directives').directive('visualizationDisplay', function
                     // scope which contains the appropriate visualization ID.
                     $element.attr("id", $scope.visualizationId);
                 },
-                post: function($scope, $element) {
+                post: function($scope) {
                     neon.ready(function() {
                         $scope.init();
                     });

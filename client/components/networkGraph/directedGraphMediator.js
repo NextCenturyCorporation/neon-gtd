@@ -339,8 +339,9 @@ mediators.DirectedGraphMediator = (function() {
         // Create cluster nodes, ignore nodes that are replaced by cluster nodes, and hide nodes within simple networks containing zero or one link, as appropriate.
         var resultNodes = [];
 
-        // Give each cluster a unique ID.
+        // Give each cluster a unique ID and track their nodes.
         var nextFreeClusterId = 1;
+        var numberOfNodesToCluster = 0;
 
         // The cluster for all nodes that are not linked to any other nodes.
         var unlinkedCluster = createNode(0, null, DirectedGraphMediator.CLUSTER_TYPE, 0);
@@ -373,7 +374,7 @@ mediators.DirectedGraphMediator = (function() {
                 }
             } else if(node.numberOfTargets === 1) {
                 var targetId = maps.sourcesToTargets[node.id][0];
-                var numberOfNodesToCluster = findNumberOfNodesToCluster(targetId, maps.targetsToSources, maps.sourcesToTargets);
+                numberOfNodesToCluster = findNumberOfNodesToCluster(targetId, maps.targetsToSources, maps.sourcesToTargets);
                 if(useNodeClusters && numberOfNodesToCluster > 1) {
                     if(shouldAddClusterNode(targetId, maps.targetsToSources, maps.sourcesToTargets, numberOfNodesToCluster, hasSelected, hideSimpleNetworks, maps.nodeIdsToFlags)) {
                         nodeIdsToLinkedClusterIds[targetId] = addCluster(resultNodes, nodeIdsToLinkedClusterIds[targetId] || nextFreeClusterId++, node, maps.nodeIdsToClusterIds);
@@ -383,7 +384,7 @@ mediators.DirectedGraphMediator = (function() {
                 }
             } else if(node.numberOfSources === 1) {
                 var sourceId = maps.targetsToSources[node.id][0];
-                var numberOfNodesToCluster = findNumberOfNodesToCluster(sourceId, maps.sourcesToTargets, maps.targetsToSources);
+                numberOfNodesToCluster = findNumberOfNodesToCluster(sourceId, maps.sourcesToTargets, maps.targetsToSources);
                 if(useNodeClusters && numberOfNodesToCluster > 1) {
                     if(shouldAddClusterNode(sourceId, maps.sourcesToTargets, maps.targetsToSources, numberOfNodesToCluster, hasSelected, hideSimpleNetworks, maps.nodeIdsToFlags)) {
                         nodeIdsToLinkedClusterIds[sourceId] = addCluster(resultNodes, nodeIdsToLinkedClusterIds[sourceId] || nextFreeClusterId++, node, maps.nodeIdsToClusterIds);
@@ -864,7 +865,7 @@ mediators.DirectedGraphMediator = (function() {
      */
     var getNumberOfDatesInBucket = function(object, bucketizer, dateBucket) {
         if(bucketizer && dateBucket) {
-            var index = _.findIndex(object.dates, function(date, index) {
+            var index = _.findIndex(object.dates, function(date) {
                 return bucketizer.getBucketIndex(date) > dateBucket;
             }) || object.dates.length;
             return object.dates.slice(0, index).length;
@@ -1041,7 +1042,7 @@ mediators.DirectedGraphMediator = (function() {
      * @return {Function}
      */
     var createFunctionToCalculateLinkOpacity = function(mediator) {
-        return function(link) {
+        return function() {
             return mediator.graph.DEFAULT_LINK_STROKE_OPACITY;
         };
     };
@@ -1071,14 +1072,15 @@ mediators.DirectedGraphMediator = (function() {
      */
     var createFunctionToGenerateLinkTooltip = function(mediator) {
         return function(link) {
+            var nodesInCluster = [];
             var sourceText = '<td class="graph-tooltip-value">' + link.source.name + '</td>';
             if(link.source.type === DirectedGraphMediator.CLUSTER_TYPE) {
-                var nodesInCluster = mediator.selected.dateBucket ? link.source.nodesForSelectedDateBucket : link.source.nodes;
+                nodesInCluster = mediator.selected.dateBucket ? link.source.nodesForSelectedDateBucket : link.source.nodes;
                 sourceText = '<td class="graph-tooltip-value">Cluster of ' + nodesInCluster.length + '</td>';
             }
             var targetText = '<td class="graph-tooltip-value">' + link.target.name + '</td>';
             if(link.target.type === DirectedGraphMediator.CLUSTER_TYPE) {
-                var nodesInCluster = mediator.selected.dateBucket ? link.target.nodesForSelectedDateBucket : link.target.nodes;
+                nodesInCluster = mediator.selected.dateBucket ? link.target.nodesForSelectedDateBucket : link.target.nodes;
                 targetText = '<td class="graph-tooltip-value">Cluster of ' + nodesInCluster.length + '</td>';
             }
 
@@ -1135,7 +1137,7 @@ mediators.DirectedGraphMediator = (function() {
      * @return {Function}
      */
     var createFunctionToHandleNodeDeselect = function(mediator) {
-        return function(node) {
+        return function() {
             mediator.selected.mouseoverNodeIds = [];
             mediator.selected.mouseoverNetworkId = undefined;
             mediator.graph.redrawNodesAndLinks();
@@ -1167,7 +1169,6 @@ mediators.DirectedGraphMediator = (function() {
      */
     var addSelectedNode = function(selected, node, deselectSelected) {
         if(node.type === DirectedGraphMediator.CLUSTER_TYPE) {
-            var mediator = this;
             // Note:  Add the IDs for all nodes in the cluster, not just the IDs for nodes in or before the selected date bucket.
             node.nodes.forEach(function(nodeInCluster) {
                 addSelectedNode(selected, nodeInCluster, deselectSelected);
@@ -1228,7 +1229,7 @@ mediators.DirectedGraphMediator = (function() {
      * @return {Function}
      */
     var createFunctionToHandleLinkDeselect = function(mediator) {
-        return function(link) {
+        return function() {
             mediator.selected.mouseoverNodeIds = [];
             mediator.selected.mouseoverNetworkId = undefined;
             mediator.graph.redrawNodesAndLinks();
@@ -1288,7 +1289,7 @@ mediators.DirectedGraphMediator = (function() {
             return;
         }
 
-        var bucket = undefined;
+        var bucket;
         var nodes = this.graphNodes;
         var links = this.graphLinks;
 
@@ -1438,7 +1439,7 @@ mediators.DirectedGraphMediator = (function() {
         if(useFlag) {
             legend.push({
                 color: DirectedGraphMediator.FLAGGED_COLOR,
-                label: flagLabel || DEFAULT_TOOLTIP_FLAG_LABEL
+                label: flagLabel || DirectedGraphMediator.DEFAULT_TOOLTIP_FLAG_LABEL
             });
         }
 

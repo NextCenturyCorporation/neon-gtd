@@ -176,7 +176,7 @@ angular.module('neonDemo.services')
      * @method createLinkHtml
      * @return {String}
      */
-    service.createLinkHtml = function(source, key, tooltip) {
+    service.createLinkHtml = function(source, key) {
         return service.createLinkHtmlFromList([{
             source: source,
             key: key

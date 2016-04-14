@@ -17,4 +17,24 @@
     .results-table {
         height: inherit;
     }
+    // The CSS below is to make the text in the data table selectable (per
+    // NEON-1863). It is taken from a comment in
+    // https://github.com/ceolter/ag-grid/issues/87 which is the bug filed
+    // against ag-grid because text is not selectable. There are two downsides
+    // of this fix:
+    // 1. If text in multiple cells are selected, copied, and pasted, then there
+    //    will be no space or comma between the data from the cells.
+    // 2. If the user double-clicks to select a whole word, the edges of the
+    //    cell are not treated as word boundaries. Double-clicking on the first
+    //    or last word in a cell can cause the text in adjacent cell(s) to be
+    //    selected as well.
+    // One possible solution to these problems is to insert a zero-width div
+    // that has a space in it between each cell.
+    .ag-body {
+        -webkit-user-select:text;
+        -moz-user-select:text;
+        -ms-user-select:text;
+        user-select:text;
+    }
+
 }

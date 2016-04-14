@@ -46,7 +46,7 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
 
     $scope.functions.createMenuText = function() {
         var text = "";
-        $scope.active.layers.forEach(function(layer, index) {
+        $scope.active.layers.forEach(function(layer) {
             if(!layer.new && layer.show) {
                 text += (text ? ", " : "") + layer.name;
                 if(layer.queryLimited) {
@@ -183,12 +183,14 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
         $scope.showLinksPopupButton = $scope.functions.createLinksForData(neonMappings.BOUNDS, $scope.getLinksPopupBoundsKey(), linkData);
 
         removeZoomRect();
-        $scope.zoomRectId = $scope.map.drawBox({
+        var bounds = {
             left: $scope.extent.minimumLongitude,
             bottom: $scope.extent.minimumLatitude,
             right: $scope.extent.maximumLongitude,
             top: $scope.extent.maximumLatitude
-        });
+        };
+        $scope.zoomRectId = $scope.map.drawBox(bounds);
+        $scope.map.zoomToBounds(bounds);
     };
 
     $scope.getLinksPopupBoundsKey = function() {
@@ -335,6 +337,7 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
         layer.gradientColorCode3 = config.gradientColorCode3;
         layer.gradientColorCode4 = config.gradientColorCode4;
         layer.gradientColorCode5 = config.gradientColorCode5;
+        layer.applyTransientDateFilter = config.applyTransientDateFilter;
         layer.popupFields = config.popupFields || [];
         updateFields(layer, config);
         return layer;
@@ -686,11 +689,11 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
         return query;
     };
 
-    $scope.functions.createNeonQueryClause = function(layers) {
+    $scope.functions.createNeonQueryWhereClause = function(layers) {
         var validation = $scope.functions.getDatasetOptions().checkForCoordinateValidation;
-
+        var whereClauses;
         if(validation === "valid_numbers") {
-            var whereClauses = [];
+            whereClauses = [];
             layers.forEach(function(layer) {
                 if(layer.type === coreMap.Map.NODE_AND_ARROW_LAYER) {
                     whereClauses.push(neon.query.and(
@@ -719,7 +722,7 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
         }
 
         if(validation === "null_values") {
-            var whereClauses = [];
+            whereClauses = [];
             layers.forEach(function(layer) {
                 if(layer.type === coreMap.Map.NODE_AND_ARROW_LAYER) {
                     whereClauses.push(neon.query.and(
@@ -777,6 +780,9 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
         var rightClause = neon.query.where(longitudeFieldName, "<=", $scope.extent.maximumLongitude);
         var bottomClause = neon.query.where(latitudeFieldName, ">=", $scope.extent.minimumLatitude);
         var topClause = neon.query.where(latitudeFieldName, "<=", $scope.extent.maximumLatitude);
+        var leftDateLine = {};
+        var rightDateLine = {};
+        var datelineClause = {};
 
         // Deal with different dateline crossing scenarios.
         if($scope.extent.minimumLongitude < -180 && $scope.extent.maximumLongitude > 180) {
@@ -793,9 +799,9 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
 
         if($scope.extent.maximumLongitude > 180) {
             rightClause = neon.query.where(longitudeFieldName, "<=", $scope.extent.maximumLongitude - 360);
-            var rightDateLine = neon.query.where(longitudeFieldName, ">=", -180);
-            var leftDateLine = neon.query.where(longitudeFieldName, "<=", 180);
-            var datelineClause = neon.query.or(neon.query.and(leftClause, leftDateLine), neon.query.and(rightClause, rightDateLine));
+            rightDateLine = neon.query.where(longitudeFieldName, ">=", -180);
+            leftDateLine = neon.query.where(longitudeFieldName, "<=", 180);
+            datelineClause = neon.query.or(neon.query.and(leftClause, leftDateLine), neon.query.and(rightClause, rightDateLine));
             return neon.query.and(topClause, bottomClause, datelineClause);
         }
 
@@ -942,6 +948,7 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
             lineWeightMapping: $scope.functions.isFieldValid(layer.lineSizeField) ? layer.lineSizeField.columnName : "",
             nodeWeightMapping: $scope.functions.isFieldValid(layer.nodeSizeField) ? layer.nodeSizeField.columnName : "",
             lineDefaultColor: layer.lineColorCode || "",
+            applyTransientDateFilter: layer.applyTransientDateFilter || false,
             nodeDefaultColor: layer.nodeColorCode || "",
             gradients: generateGradientList(layer),
             clusterPopupFields: layer.popupFields,
@@ -990,7 +997,7 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
         }
     };
 
-    $scope.functions.onReorderLayers = function(newIndexReversed, layer) {
+    $scope.functions.onReorderLayers = function() {
         $scope.map.reorderLayers(_.filter($scope.active.layers, function(layer) {
             return !layer.new;
         }).map(function(item) {
@@ -1079,6 +1086,7 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
         bindings.gradientColorCode3 = layer.gradientColorCode3 || "";
         bindings.gradientColorCode4 = layer.gradientColorCode4 || "";
         bindings.gradientColorCode5 = layer.gradientColorCode5 || "";
+        bindings.applyTransientDateFilter = layer.applyTransientDateFilter || false;
         bindings.popupFields = layer.popupFields || [];
         return bindings;
     };
