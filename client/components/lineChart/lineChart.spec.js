@@ -41,4 +41,31 @@ describe('Chart: lineChart', function() {
         expect(lineChartContainer.children().first().children().length).toBe(1);
     });
 
+    it('draw() an empty series', function() {
+        var opts = {
+            data: [],
+            x: "date",
+            y: "value",
+            responsive: false,
+            granularity: "day",
+            colorMappings: [],
+            selectedKey: undefined
+        };
+        var chart = new charts.LineChart(lineChartContainer[0], ".linechart", opts);
+        chart.draw([{
+            aggregation: "count",
+            count: 0,
+            min: 1,
+            max: 1,
+            series: "a:group",
+            total: 1,
+            data: [{
+                date: new Date("2005-02-04 14:00:00"),
+                value: 1
+            }]
+        }]);
+        // Verify that there are now two axis elements in the barchart
+        expect(lineChartContainer.find(".axis").length).toBe(2);
+    });
+
 });
