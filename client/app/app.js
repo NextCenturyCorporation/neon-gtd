@@ -51,7 +51,7 @@ neon.helpers = {
      */
     getNestedValues: function(data, name) {
         var fields = _.isArray(name) ? name : name.split(".");
-        var values = data[fields[0]] || [];
+        var values = data[fields[0]] === undefined ? [] : data[fields[0]];
 
         if(_.isArray(values)) {
             values = [].concat.apply([], values.map(function(item) {
