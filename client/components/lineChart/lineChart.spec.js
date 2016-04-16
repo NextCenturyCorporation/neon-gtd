@@ -68,4 +68,54 @@ describe('Chart: lineChart', function() {
         expect(lineChartContainer.find(".axis").length).toBe(2);
     });
 
+    it('tooltips escape HTML characters', function() {
+        // Add the tooltip-container element. It is expected to be outside the chart's directive.
+        $('body').append("<div id='tooltip-container'></div>");
+
+        var opts = {
+            data: [],
+            x: "date",
+            y: "value",
+            responsive: false,
+            granularity: "day",
+            colorMappings: [],
+            selectedKey: undefined
+        };
+        var chart = new charts.LineChart(lineChartContainer[0], ".linechart", opts);
+        chart.draw([
+            {
+                aggregation: "count",
+                count: 0,
+                min: 1,
+                max: 1,
+                series: "a:foo:bar",
+                total: 1,
+                data: [{
+                    date: new Date("2005-02-04 14:00:00"),
+                    value: 1
+                }]
+            },
+            {
+                aggregation: "count",
+                count: 0,
+                min: 1,
+                max: 1,
+                series: "b:<b>this & that</b>",
+                total: 2,
+                data: [{
+                    date: new Date("2005-02-04 14:00:00"),
+                    value: 1
+                }]
+            }
+        ]);
+        // The chart will use this "mouse event" to place the tooltip
+        d3.event = {
+            pageY: 0,
+            pageX: 0
+        };
+        chart.showTooltip(0,new Date("2005-02-04 14:00:00"));
+        // Verify that there are now two axis elements in the barchart
+        expect($('#tooltip-container').html()).toContain('foo:bar');
+        expect($('#tooltip-container').html()).toContain('&lt;b&gt;this &amp; that&lt;/b&gt;');
+    });
 });
