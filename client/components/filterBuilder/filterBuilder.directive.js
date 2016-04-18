@@ -37,7 +37,7 @@ angular.module('neonDemo.directives')
             filterCount: '=?',
             updateMenus: '=?'
         },
-        
+
         link: function($scope, $element) {
             $scope.databases = [];
             $scope.tables = [];
@@ -72,7 +72,6 @@ angular.module('neonDemo.directives')
              * @private
              */
             var initialize = function() {
-
                 $element.resize(resizeDateTimePickerDropdowns);
 
                 $scope.messenger = new neon.eventing.Messenger();
@@ -210,7 +209,7 @@ angular.module('neonDemo.directives')
 
             $scope.updateMenus = function() {
                 displayActiveDataset();
-            }
+            };
 
             $scope.updateTables = function() {
                 $scope.tables = datasetService.getTables($scope.selectedDatabase.name);

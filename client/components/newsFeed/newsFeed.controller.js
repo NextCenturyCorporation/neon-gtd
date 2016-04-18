@@ -29,13 +29,6 @@ angular.module('neonDemo.controllers').controller('newsFeedController', ['$scope
 
     var DEFAULT_TYPE = "NEWS";
 
-    var DEFAULT_LINKY_CONFIG = {
-        mentions: false,
-        hashtags: false,
-        urls: true,
-        linkTo: ""
-    };
-
     // The default limit and the number of news items added to the feed whenever the user scrolls to the bottom of the feed.
     var LIMIT_INTERVAL = 50;
 
@@ -67,6 +60,7 @@ angular.module('neonDemo.controllers').controller('newsFeedController', ['$scope
     $scope.active.data = [];
     $scope.active.dateField = {};
     $scope.active.limit = LIMIT_INTERVAL;
+    $scope.active.total = LIMIT_INTERVAL;
     $scope.active.primaryTitleField = {};
     $scope.active.secondaryTitleField = {};
     $scope.active.sortDirection = neon.query.ASCENDING;
@@ -118,16 +112,16 @@ angular.module('neonDemo.controllers').controller('newsFeedController', ['$scope
         if(!$scope.loadingNews && $scope.active.data.length < newsTotalCount && element.find(".item").last().position().top <= element.height()) {
             // Prevent extraneous queries from updateNewsfeedOnScroll.
             $scope.loadingNews = true;
-            $scope.active.limit = $scope.active.limit + LIMIT_INTERVAL;
+            $scope.active.total = $scope.active.total + $scope.active.limit;
             if(newsEventData.length) {
-                updateData(newsEventData.slice($scope.active.limit - LIMIT_INTERVAL, $scope.active.limit));
+                updateData(newsEventData.slice($scope.active.total - $scope.active.limit, $scope.active.total));
             } else {
                 $scope.loadingNews = true;
                 $scope.functions.queryAndUpdate({
                     updateData: function(data) {
                         if(data) {
                             // Only add the items to the feed that aren't there already.
-                            updateData(data.slice($scope.active.limit - LIMIT_INTERVAL, $scope.active.limit));
+                            updateData(data.slice($scope.active.total - $scope.active.limit, $scope.active.total));
                             $scope.loadingNews = false;
                         }
                     }
@@ -137,9 +131,11 @@ angular.module('neonDemo.controllers').controller('newsFeedController', ['$scope
 
         if(!$scope.loadingTranslations && $scope.active.showTranslations) {
             // See if the news item before the first translated news item is visible; if so, translate it.
+            var index = 0;
+            var newsItem = {};
             if(translatedIndexRange[0] > 0) {
-                var index = translatedIndexRange[0] + 1;
-                var newsItem = element.find(".item:nth-of-type(" + index + ")");
+                index = translatedIndexRange[0] + 1;
+                newsItem = element.find(".item:nth-of-type(" + index + ")");
                 if(newsItem.position().top >= 0) {
                     runAllTranslations(Math.max(0, translatedIndexRange[0] - TRANSLATION_INTERVAL), translatedIndexRange[0]);
                 }
@@ -147,8 +143,8 @@ angular.module('neonDemo.controllers').controller('newsFeedController', ['$scope
 
             // See if the news item after the final translated news item is visible; if so, translate it.
             if(translatedIndexRange[1] > 0 && translatedIndexRange[1] < $scope.active.data.length) {
-                var index = translatedIndexRange[1] + 1;
-                var newsItem = element.find(".item:nth-of-type(" + index + ")");
+                index = translatedIndexRange[1] + 1;
+                newsItem = element.find(".item:nth-of-type(" + index + ")");
                 if(newsItem.position().top <= element.height()) {
                     runAllTranslations(translatedIndexRange[1], Math.min($scope.active.data.length, translatedIndexRange[1] + TRANSLATION_INTERVAL));
                 }
@@ -253,11 +249,11 @@ angular.module('neonDemo.controllers').controller('newsFeedController', ['$scope
 
     $scope.functions.onChangeOption = function() {
         deleteData();
-    }
+    };
 
     var deleteData = function() {
         $scope.active.data = [];
-        $scope.active.limit = LIMIT_INTERVAL;
+        $scope.active.total = $scope.active.limit;
         $scope.topNewsItemIndex = 0;
         $scope.functions.removeLinks();
         newsEventData = [];
@@ -275,7 +271,7 @@ angular.module('neonDemo.controllers').controller('newsFeedController', ['$scope
         if($scope.functions.isFieldValid($scope.active.secondaryTitleField)) {
             fields.push($scope.active.secondaryTitleField.columnName);
         }
-        query.withFields(fields).sortBy($scope.active.dateField.columnName, $scope.active.sortDirection).limit($scope.active.limit);
+        query.withFields(fields).sortBy($scope.active.dateField.columnName, $scope.active.sortDirection).limit($scope.active.total);
         return query;
     };
 

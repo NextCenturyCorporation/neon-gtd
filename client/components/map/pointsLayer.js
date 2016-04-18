@@ -404,7 +404,7 @@ coreMap.Map.Layer.PointsLayer.prototype.updateFeatures = function() {
     var mapData = [];
     var me = this;
 
-    _.each(this.data, function(element, index) {
+    _.each(this.data, function(element) {
         var longitude = me.getValueFromDataElement(me.longitudeMapping, element);
         var latitude = me.getValueFromDataElement(me.latitudeMapping, element);
 

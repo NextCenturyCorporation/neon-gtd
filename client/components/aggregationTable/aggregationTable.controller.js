@@ -22,7 +22,7 @@
  * @class aggregationTableController
  * @constructor
  */
-angular.module('neonDemo.controllers').controller('aggregationTableController', ['$scope', '$timeout', function($scope, $timeout) {
+angular.module('neonDemo.controllers').controller('aggregationTableController', ['$scope', function($scope) {
     // Unique field name used for the SlickGrid column containing the URLs for the external apps.
     // This name should be one that is highly unlikely to be a column name in a real database.
     var EXTERNAL_APP_FIELD_NAME = "neonExternalApps";
@@ -211,7 +211,7 @@ angular.module('neonDemo.controllers').controller('aggregationTableController', 
      * @param {String} value
      * @method removeFilter
      */
-    $scope.removeFilter = function(value) {
+    $scope.removeFilter = function() {
         $scope.functions.removeNeonFilter();
     };
 

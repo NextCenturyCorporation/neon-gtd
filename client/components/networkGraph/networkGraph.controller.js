@@ -23,8 +23,6 @@
  * @constructor
  */
 angular.module('neonDemo.controllers').controller('networkGraphController', ['$scope', '$timeout', '$filter', function($scope, $timeout, $filter) {
-    var TIMEOUT_MS = 250;
-
     $scope.dataIsLimited = false;
     $scope.bucketizer = dateBucketizer();
     $scope.mediator = undefined;
@@ -264,7 +262,7 @@ angular.module('neonDemo.controllers').controller('networkGraphController', ['$s
         // TODO Log user button click
         $scope.functions.queryAndUpdate({
             addToQuery: function(query) {
-                query.withFields([$scope.active.nodeField.columnName]).groupBy($scope.active.nodeField).aggregate(neon.query.COUNT, '*', 'count');
+                query.withFields([$scope.active.nodeField.columnName]).groupBy($scope.active.nodeField.columnName).aggregate(neon.query.COUNT, '*', 'count');
                 return query;
             },
             updateData: updateNodeListData
@@ -275,9 +273,9 @@ angular.module('neonDemo.controllers').controller('networkGraphController', ['$s
         if(data) {
             $scope.runQuery = false;
         }
-
-        (data || []).forEach(function(item) {
-            var nodeId = item[i][$scope.active.nodeField.columnName];
+        var items = data || [];
+        _.each(items, function(item) {
+            var nodeId = item[$scope.active.nodeField.columnName];
             if($scope.existingNodeIds.indexOf(nodeId) < 0) {
                 $scope.existingNodeIds.push(nodeId);
             }
@@ -482,19 +480,19 @@ angular.module('neonDemo.controllers').controller('networkGraphController', ['$s
                 query: $scope.active.linkedNodeField.columnName,
                 pretty: $scope.active.linkedNodeField.prettyName
             }];
-            query.groupBy($scope.active.nodeField, $scope.active.linkedNodeField);
+            query.groupBy($scope.active.nodeField.columnName, $scope.active.linkedNodeField);
         } else if($scope.functions.isFieldValid($scope.active.nodeField)) {
             fields = [{
                 query: $scope.active.nodeField.columnName,
                 pretty: $scope.active.nodeField.prettyName
             }];
-            query.groupBy($scope.active.nodeField);
+            query.groupBy($scope.active.nodeField.columnName);
         } else if($scope.functions.isFieldValid($scope.active.linkedNodeField)) {
             fields = [{
                 query: $scope.active.linkedNodeField.columnName,
                 pretty: $scope.active.linkedNodeField.prettyName
             }];
-            query.groupBy($scope.active.linkedNodeField);
+            query.groupBy($scope.active.linkedNodeField.columnName);
         }
 
         var finalObject = {

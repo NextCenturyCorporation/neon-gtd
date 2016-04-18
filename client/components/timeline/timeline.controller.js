@@ -548,11 +548,12 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
     };
 
     $scope.functions.createNeonFilterClause = function(databaseAndTableName, fieldName) {
+        var clauses = [];
         if($scope.active.showInvalidDatesFilter) {
             var lowerBoundFilterClause = neon.query.where(fieldName, '<', new Date("1970-01-01T00:00:00.000Z"));
             var upperBoundFilterClause = neon.query.where(fieldName, '>', new Date("2025-01-01T00:00:00.000Z"));
             var nullFilterClause = neon.query.where(fieldName, '=', null);
-            var clauses = [lowerBoundFilterClause, upperBoundFilterClause, nullFilterClause];
+            clauses = [lowerBoundFilterClause, upperBoundFilterClause, nullFilterClause];
             return neon.query.or.apply(this, clauses);
         }
 
@@ -560,7 +561,7 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
         var endDate = getFilterEndDate();
         var startFilterClause = neon.query.where(fieldName, '>=', startDate);
         var endFilterClause = neon.query.where(fieldName, '<', endDate);
-        var clauses = [startFilterClause, endFilterClause];
+        clauses = [startFilterClause, endFilterClause];
         return neon.query.and.apply(this, clauses);
     };
 
@@ -827,7 +828,7 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
                 addToQuery: function(query) {
                     query.sortBy($scope.active.dateField.columnName, neon.query.ASCENDING).limit(1).ignoreFilters();
                     return query;
-                }, 
+                },
                 executeQuery: function(connection, query) {
                     return connection.executeQuery(query);
                 },
@@ -1169,10 +1170,10 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
         // The timelineSelector always asks for count and date, so it's fine to hard-code these in.
         // GroupBy clauses will always be added to the query in the same order, so this takes advantage
         // of that to add the pretty names of the clauses in the same order for as many as were added.
-        var counter = 0;
-        var prettyNames = ["Year", "Month", "Day", "Hour"];
         // TODO NEON-1973
         /*
+        var counter = 0;
+        var prettyNames = ["Year", "Month", "Day", "Hour"];
         query.groupByClauses.forEach(function(field) {
             finalObject.data[0].fields.push({
                 query: field.name,

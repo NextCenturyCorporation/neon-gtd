@@ -431,6 +431,9 @@ function($location, datasetService, filterService, connectionService, errorNotif
             // Copied from map.js
             var latitudeFieldName = fieldNames[0];
             var longitudeFieldName = fieldNames[1];
+            var rightDateLine = {};
+            var leftDateLine = {};
+            var datelineClause = {};
 
             var leftClause = neon.query.where(longitudeFieldName, ">=", minimumLongitude);
             var rightClause = neon.query.where(longitudeFieldName, "<=", maximumLongitude);
@@ -451,9 +454,9 @@ function($location, datasetService, filterService, connectionService, errorNotif
 
             if(maximumLongitude > 180) {
                 rightClause = neon.query.where(longitudeFieldName, "<=", maximumLongitude - 360);
-                var rightDateLine = neon.query.where(longitudeFieldName, ">=", -180);
-                var leftDateLine = neon.query.where(longitudeFieldName, "<=", 180);
-                var datelineClause = neon.query.or(neon.query.and(leftClause, leftDateLine), neon.query.and(rightClause, rightDateLine));
+                rightDateLine = neon.query.where(longitudeFieldName, ">=", -180);
+                leftDateLine = neon.query.where(longitudeFieldName, "<=", 180);
+                datelineClause = neon.query.or(neon.query.and(leftClause, leftDateLine), neon.query.and(rightClause, rightDateLine));
                 return neon.query.and(topClause, bottomClause, datelineClause);
             }
 
