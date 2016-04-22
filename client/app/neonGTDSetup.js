@@ -1,9 +1,32 @@
-var XDATA = {};
-var NeonGTDSetup = (function(){
+'use strict';
+/*
+ * Copyright 2016 Next Century Corporation
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
 
+var XDATA = {};
+
+/*
+ * NeonGTDSetup collects a number of helper functions used to setup the single page Neon GTD app and the OWF widgets that
+ * break NeonGTD into individual OWF-compliant widgets.
+ * @class neonDemo.services.ConnectionService
+ * @constructor
+ */
+var NeonGTDSetup = {};
+NeonGTDSetup = (function() {
     var NeonGTDSetup = function(angularApp) {
         this.angularApp = angularApp;
-        //this.bootstrapFunction = bootstrapFunction;
     };
 
     NeonGTDSetup.prototype.createExternalService = function(args, argsMappings) {
@@ -21,7 +44,6 @@ var NeonGTDSetup = (function(){
 
         return service;
     };
-
 
     /**
      * @example of external.services
@@ -135,7 +157,7 @@ var NeonGTDSetup = (function(){
             var appName = data[appType][nameProperty];
 
             // Ignore linking to the Neon Dashboard itself.
-            if(!(appName.toLowerCase().indexOf("neon") === 0)) {
+            if(appName.toLowerCase().indexOf("neon") !== 0) {
                 neonServiceMappings.forEach(function(neonServiceMapping) {
                     var argsMappings = config.argsMappings[neonServiceMapping];
                     if(!argsMappings) {
@@ -149,7 +171,7 @@ var NeonGTDSetup = (function(){
                         });
                     }
 
-                    services[neonServiceMapping] = services[neonServiceMapping] || createExternalService(serviceType.split(","), argsMappings);
+                    services[neonServiceMapping] = services[neonServiceMapping] || this.createExternalService(serviceType.split(","), argsMappings);
 
                     services[neonServiceMapping].apps[appName] = {
                         image: (config.imageDirectory || ".") + "/" + data[appType][imageProperty],
@@ -180,7 +202,6 @@ var NeonGTDSetup = (function(){
         readConfig(config.configList);
     };
 
-
     NeonGTDSetup.prototype.saveLayouts = function(layouts) {
         this.angularApp.constant('layouts', layouts);
     };
@@ -195,7 +216,7 @@ var NeonGTDSetup = (function(){
                     layouts[layoutConfig.name] = layoutConfig.layout;
                 }
                 me.readLayoutFilesAndSaveLayouts($http, layouts, layoutFiles, callback);
-            }, function(response) {
+            }, function() {
                 me.readLayoutFilesAndSaveLayouts($http, layouts, layoutFiles, callback);
             });
         } else {
@@ -220,7 +241,7 @@ var NeonGTDSetup = (function(){
                     datasets.push(datasetConfig.dataset);
                 }
                 me.readDatasetFilesAndSaveDatasets($http, datasets, datasetFiles, callback);
-            }, function(response) {
+            }, function() {
                 me.readDatasetFilesAndSaveDatasets($http, datasets, datasetFiles, callback);
             });
         } else {
@@ -251,7 +272,7 @@ var NeonGTDSetup = (function(){
         XDATA.userALE = new userale(aleConfig);
         XDATA.userALE.register();
         // Disable user ale log polling or widget demos.
-        clearInterval(timerId)
+        clearInterval(timerId);
     };
 
     NeonGTDSetup.prototype.saveOpenCpu = function(config) {
@@ -321,28 +342,12 @@ var NeonGTDSetup = (function(){
             visualization.minSizeY = Math.floor(dashboardConfig.gridsterColumns * visualization.minSizePercentageY);
         });
 
-        neonDemo.constant('visualizations', visualizations);
+        this.angularApp.constant('visualizations', visualizations);
     };
 
     NeonGTDSetup.prototype.saveVisualizations = function(config) {
         var visualizations = (config.visualizations || []);
         this.angularApp.constant('visualizations', visualizations);
-    };
-
-    NeonGTDSetup.prototype.createExternalService = function(args, argsMappings) {
-        var service = {
-            apps: {},
-            args: []
-        };
-
-        args.forEach(function(argName) {
-            service.args.push({
-                variable: argName,
-                mappings: argsMappings[argName]
-            });
-        });
-
-        return service;
     };
 
     NeonGTDSetup.prototype.saveExternal = function(services) {
@@ -352,31 +357,5 @@ var NeonGTDSetup = (function(){
         });
     };
 
-
-    // NeonGTDSetup.prototype.saveNeonConfig = function($http, config, widgetState) {
-    //     var me = this;
-    //     this.saveUserAle(config);
-    //     this.saveOpenCpu(config);
-    //     this.saveDashboards(config);
-    //     this.saveVisualizations(config);
-    //     this.angularApp.value('widgetState', widgetState);
-
-    //     var files = (config.files || []);
-    //     var layouts = (config.layouts || {});
-    //     if(!(layouts.default)) {
-    //         layouts.default = [];
-    //     }
-    //     var datasets = (config.datasets || []);
-
-    //     // Read the external application services config file and create the services, then read each layout config file and add the layouts,
-    //     // then read each dataset config file and add the datasets, then start angular.
-    //     this.readAndSaveExternalServices((config.externalServices || {}), function() {
-    //         me.readLayoutFilesAndSaveLayouts($http, layouts, (files.layouts || []), function() {
-    //             me.readDatasetFilesAndSaveDatasets($http, datasets, (files.datasets || []), me.bootstrapFunction);
-    //         });
-    //     });
-    // };
-
     return NeonGTDSetup;
-
 })();

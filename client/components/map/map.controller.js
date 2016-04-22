@@ -258,7 +258,7 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
         };
         $scope.active.layers.forEach(function(layer) {
             if(!layer.new && (layer.type === $scope.NODE_AND_ARROW_LAYER || layer.type === $scope.POINT_LAYER)) {
-                layer.olLayer.setDateFilter(message);
+                layer.olLayer.setDateFilter(bounds);
             }
         });
     };

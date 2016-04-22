@@ -102,8 +102,11 @@ module.exports = function(grunt) {
                 files: {
                     "client/index.html": [
                         "client/app/namespaces.js",
+                        "client/app/neonUtilities.js",
+                        "client/app/neonGTDSetup.js",
                         "client/app/app.js",
                         "client/app/*.service.js",
+                        "client/app/main/main.controller.js",
                         "client/{app,components}/**/*.js"
                     ]
                 }
