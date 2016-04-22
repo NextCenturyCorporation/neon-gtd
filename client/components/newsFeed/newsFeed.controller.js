@@ -86,7 +86,7 @@ angular.module('neonDemo.controllers').controller('newsFeedController', ['$scope
         $scope.functions.subscribe("news", onNews);
         $scope.functions.subscribe("news_highlights", onNewsHighlights);
         $scope.functions.subscribe("date_selected", function(message) {
-            $scope.selectedDate = message.end;
+            $scope.selectedDate = _.isNumber(message.end) ? new Date(message.end) : undefined;
         });
         $scope.functions.getElement(".newsfeed").scroll(updateNewsfeedOnScroll);
     };

@@ -109,7 +109,8 @@ angular.module('neonDemo.controllers').controller('lineChartController', ['$scop
     var handleDateSelected = function(message) {
         if($scope.chart) {
             if(message.start && message.end) {
-                $scope.chart.selectDate(message.start, message.end);
+                $scope.chart.selectDate(_.isNumber(message.start) ? new Date(message.start) : undefined,
+                    _.isNumber(message.end) ? new Date(message.end) : undefined);
             } else {
                 $scope.chart.deselectDate();
             }
@@ -642,8 +643,8 @@ angular.module('neonDemo.controllers').controller('lineChartController', ['$scop
     var onHover = function(startDate, endDate) {
         $scope.$apply(function() {
             $scope.functions.publish("date_selected", {
-                start: startDate,
-                end: endDate
+                start: (startDate !== undefined) ? startDate.getTime() : undefined,
+                end: (endDate !== undefined) ? endDate.getTime() : undefined
             });
         });
     };

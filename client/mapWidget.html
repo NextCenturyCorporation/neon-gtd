@@ -39,7 +39,7 @@
 
         <!-- Including neon before angular here as neon has lodash and jquery wrapped into it.  If this is
              loaded first, angular should pick up the included jQuery. -->
-        <script src="assets/vendor/owf-widget-debug.js"></script>
+        <script src="assets/vendor/owf-widget-min.js"></script>
 
         <!-- Including neon before angular here as neon has lodash and jquery wrapped into it.  If this is
              loaded first, angular should pick up the included jQuery. -->
@@ -81,6 +81,8 @@
         <!-- build:js(client) app/app.min.js -->
         <!-- injector:js -->
         <script src="app/namespaces.js"></script>
+        <script src="app/neonUtilities.js"></script>
+        <script src="app/neonGTDSetup.js"></script>
          <!-- Setup our widget's OWF handlers and trigger the angular code -->
         <script type="text/javascript">
         var WidgetConfig = {

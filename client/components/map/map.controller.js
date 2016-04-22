@@ -252,6 +252,10 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
      * @private
      */
     var handleDateSelected = function(message) {
+        var bounds = {
+            start: _.isNumber(message.start) ? new Date(message.start) : undefined,
+            end: _.isNumber(message.end) ? new Date(message.end) : undefined
+        };
         $scope.active.layers.forEach(function(layer) {
             if(!layer.new && (layer.type === $scope.NODE_AND_ARROW_LAYER || layer.type === $scope.POINT_LAYER)) {
                 layer.olLayer.setDateFilter(message);

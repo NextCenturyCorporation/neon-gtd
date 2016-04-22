@@ -17,7 +17,7 @@
 
         <!-- Including neon before angular here as neon has lodash and jquery wrapped into it.  If this is
              loaded first, angular should pick up the included jQuery. -->
-        <script src="assets/vendor/owf-widget-debug.js"></script>
+        <script src="assets/vendor/owf-widget-min.js"></script>
 
         <!-- Including neon before angular here as neon has lodash and jquery wrapped into it.  If this is
              loaded first, angular should pick up the included jQuery. -->
@@ -39,7 +39,6 @@
                 OWF.notifyWidgetReady();
 
                 neon.ready(function() {
-                    console.log("clearing filters");
                     var messenger = new neon.eventing.Messenger();
                     messenger.clearFilters();
                 });
