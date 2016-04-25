@@ -25,7 +25,7 @@ module.exports = function(config){
     // items that are not explicitly pulled in here.
     files : [
         'client/bower_components/jquery/dist/jquery.min.js',
-        'client/bower_components/angular/angular.min.js',
+        'client/bower_components/angular/angular.js',
         'client/bower_components/angular-route/angular-route.min.js',
         'client/bower_components/angular-mocks//angular-mocks.js',
         'client/bower_components/angular-gridster/dist/angular-gridster.min.js',
@@ -46,9 +46,9 @@ module.exports = function(config){
         'client/bower_components/mergesort/merge-sort.js',
         'client/bower_components/bootstrap/dist/js/bootstrap.min.js',
         'client/bower_components/ngDraggable/ngDraggable.js',
-        //'client/app/**/*.js',
         'client/app/namespaces.js',
         'client/app/test.js',
+        'client/app/*.service.js',
         'client/components/**/*.js',
         'client/components/**/*.html'
     ],
@@ -60,7 +60,8 @@ module.exports = function(config){
     reporters: ['progress', 'junit'],
 
     ngHtml2JsPreprocessor: {
-      stripPrefix: 'app/'
+      stripPrefix: 'client/',
+      moduleName: 'neonTemplates'
     },
 
     singleRun : true,

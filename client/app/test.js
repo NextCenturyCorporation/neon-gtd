@@ -27,6 +27,12 @@ var neonDemo = angular.module('neonDemo', [
     'ngRoute'
 ]);
 
+neonDemo.constant('external', {
+    active: 0,
+    services: {}
+});
+neonDemo.value('datasets', []);
+
 angular.module('neonDemo.directives', []);
 angular.module('neonDemo.controllers', []);
 angular.module('neonDemo.services', []);
@@ -49,5 +55,26 @@ angular.module('neonDemo.filters', [])
             }
         }
         return number;
+    };
+});
+
+// Create the main controller for the application.
+angular.module('neonDemo.controllers')
+.controller('neonDemoController', ['$scope', '$compile', '$timeout', '$location', 'config', 'layouts', 'datasets', 'ThemeService', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'VisualizationService', 'widgetState',
+function($scope) {
+    $scope.theme = {};
+
+    $scope.element = $("body");
+
+    $scope.element = $(window);
+
+    $scope.bindings = {};
+}]);
+
+// AngularJS filter for reversing the order of an array.
+// http://stackoverflow.com/questions/15266671/angular-ng-repeat-in-reverse
+neonDemo.filter("reverse", function() {
+    return function(items) {
+        return items ? items.slice().reverse() : items;
     };
 });
