@@ -460,50 +460,47 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
                 // Only use elements up to the limit of this layer; other layers for this database/table may have a higher limit.
                 var layerData = data ? data.slice(0, layer.limit) : [];
 
-                // Only set data and update features if all attributes exist in data
-                if($scope.map.doAttributesExist(layerData, layer.olLayer)) {
-                    layer.error = undefined;
-                    var colorMappings  = layer.olLayer.setData(angular.copy(layerData));
+                // Set the data and update features. The layers check for valid points, thus empty layers are possible
+                // outcomes of Neon queries.
+                layer.error = undefined;
+                var colorMappings  = layer.olLayer.setData(angular.copy(layerData));
 
-                    // Update the legend
-                    var index = _.findIndex($scope.active.legend.layers, {
-                        olLayerId: layer.olLayer.id
-                    });
-                    if(layer.type === $scope.NODE_AND_ARROW_LAYER && _.keys(colorMappings).length) {
-                        if(index >= 0) {
-                            $scope.active.legend.layers[index].nodeColorMappings = colorMappings.nodeColors;
-                            $scope.active.legend.layers[index].lineColorMappings = colorMappings.lineColors;
-                            delete $scope.active.legend.layers[index].colorMappings;
-                        } else {
-                            $scope.active.legend.layers.push({
-                                name: layer.name,
-                                olLayerId: layer.olLayer.id,
-                                show: true,
-                                nodeColorMappings: colorMappings.nodeColors,
-                                lineColorMappings: colorMappings.lineColors
-                            });
-                        }
-                    } else if(_.keys(colorMappings).length) {
-                        if(index >= 0) {
-                            $scope.active.legend.layers[index].colorMappings = colorMappings;
-                            delete $scope.active.legend.layers[index].nodeColorMappings;
-                            delete $scope.active.legend.layers[index].lineColorMappings;
-                        } else {
-                            $scope.active.legend.layers.push({
-                                name: layer.name,
-                                olLayerId: layer.olLayer.id,
-                                show: true,
-                                colorMappings: colorMappings
-                            });
-                        }
+                // Update the legend
+                var index = _.findIndex($scope.active.legend.layers, {
+                    olLayerId: layer.olLayer.id
+                });
+                if(layer.type === $scope.NODE_AND_ARROW_LAYER && _.keys(colorMappings).length) {
+                    if(index >= 0) {
+                        $scope.active.legend.layers[index].nodeColorMappings = colorMappings.nodeColors;
+                        $scope.active.legend.layers[index].lineColorMappings = colorMappings.lineColors;
+                        delete $scope.active.legend.layers[index].colorMappings;
+                    } else {
+                        $scope.active.legend.layers.push({
+                            name: layer.name,
+                            olLayerId: layer.olLayer.id,
+                            show: true,
+                            nodeColorMappings: colorMappings.nodeColors,
+                            lineColorMappings: colorMappings.lineColors
+                        });
                     }
+                } else if(_.keys(colorMappings).length) {
+                    if(index >= 0) {
+                        $scope.active.legend.layers[index].colorMappings = colorMappings;
+                        delete $scope.active.legend.layers[index].nodeColorMappings;
+                        delete $scope.active.legend.layers[index].lineColorMappings;
+                    } else {
+                        $scope.active.legend.layers.push({
+                            name: layer.name,
+                            olLayerId: layer.olLayer.id,
+                            show: true,
+                            colorMappings: colorMappings
+                        });
+                    }
+                }
 
-                    if(layer.type !== $scope.NODE_AND_ARROW_LAYER) {
-                        layer.olLayer.linksSource = generatePointLinksSource(layer.database.name, layer.table.name);
-                        createExternalLinks(layerData, layer.olLayer.linksSource, layer.latitudeField.columnName, layer.longitudeField.columnName);
-                    }
-                } else if(layerData.length) {
-                    layer.error = "Error - cannot create layer due to missing fields in data";
+                if(layer.type !== $scope.NODE_AND_ARROW_LAYER) {
+                    layer.olLayer.linksSource = generatePointLinksSource(layer.database.name, layer.table.name);
+                    createExternalLinks(layerData, layer.olLayer.linksSource, layer.latitudeField.columnName, layer.longitudeField.columnName);
                 }
             }
         });
