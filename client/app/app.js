@@ -50,22 +50,22 @@ neon.helpers = {
      * @return {Array} The data contained within the field using the given name in an array, or an empty array if the data or field with the given name does not exist.
      */
     getNestedValues: function(data, name) {
-        var fields = _.isArray(name) ? name : name.split(".");
-        var values = data[fields[0]] === undefined ? [] : data[fields[0]];
+        var fields = name.split(".");
+        var values = data[name] === undefined ? data[fields[0]] : data[name];
 
         if(_.isArray(values)) {
             values = [].concat.apply([], values.map(function(item) {
-                return ((_.isArray(item) || _.isObject(item)) && fields.length > 1) ? neon.helpers.getNestedValues(item, fields.slice(1)) : item;
+                return ((_.isArray(item) || _.isObject(item)) && fields.length > 1) ? neon.helpers.getNestedValues(item, fields.slice(1).join(".")) : item;
             }));
         }
 
         // Check for additional fields because the object might be a string wrapped by an angular $sce trusted object.
         // Use typeof to check for false booleans.
-        if(_.isObject(values) && fields.length > 1 && typeof values[fields[1]] !== "undefined") {
-            values = neon.helpers.getNestedValues(values, fields.slice(1));
+        if(_.isObject(values) && fields.length > 1 && values[fields[1]] !== undefined) {
+            values = neon.helpers.getNestedValues(values, fields.slice(1).join("."));
         }
 
-        return _.isArray(values) ? values : [values];
+        return values === undefined ? [] : (_.isArray(values) ? values : [values]);
     },
 
     /**

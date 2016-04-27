@@ -868,7 +868,7 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
      * @private
      */
     var getDateFields = function(data) {
-        return neon.helpers.getNestedValues(data, $scope.active.dateField.columnName.split(".")).sort(function(a, b) {
+        return neon.helpers.getNestedValues(data, $scope.active.dateField.columnName).sort(function(a, b) {
             return new Date(a).getTime() - new Date(b).getTime();
         });
     };
