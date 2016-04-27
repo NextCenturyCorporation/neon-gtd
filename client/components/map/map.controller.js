@@ -615,7 +615,7 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
         });
     };
 
-    $scope.functions.addToQuery = function(query, layers) {
+    $scope.functions.addToQuery = function(query, unsharedFilterWhereClause, layers) {
         var queryFields = {
             _id: true
         };

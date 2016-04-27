@@ -107,14 +107,13 @@ angular.module('neonDemo.controllers').controller('opsClockController', ['$scope
         return $scope.functions.isFieldValid($scope.active.dateField);
     };
 
-    $scope.functions.createNeonQueryWhereClause = function() {
-        return neon.query.and(
+    $scope.functions.addToQuery = function(query, unsharedFilterWhereClause) {
+        var whereClause = neon.query.and(
             neon.query.where($scope.active.dateField.columnName, '>=', new Date("1970-01-01T00:00:00.000Z")),
             neon.query.where($scope.active.dateField.columnName, '<=', new Date("2025-01-01T00:00:00.000Z"))
         );
-    };
+        query.where(unsharedFilterWhereClause ? neon.query.and(whereClause, unsharedFilterWhereClause) : whereClause);
 
-    $scope.functions.addToQuery = function(query) {
         //TODO: NEON-603 Add support for dayOfWeek to query API
         query.groupBy(new neon.query.GroupByFunctionClause('dayOfWeek', $scope.active.dateField.columnName, 'day'),
                 new neon.query.GroupByFunctionClause(neon.query.HOUR, $scope.active.dateField.columnName, 'hour'));

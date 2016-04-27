@@ -52,11 +52,10 @@ angular.module('neonDemo.controllers').controller('scatterPlotController', ['$sc
         return $scope.functions.isFieldValid($scope.active.xAxisField) && $scope.functions.isFieldValid($scope.active.yAxisField);
     };
 
-    $scope.functions.createNeonQueryWhereClause = function() {
-        return neon.query.where($scope.active.xAxisField.columnName, "!=", null);
-    };
+    $scope.functions.addToQuery = function(query, unsharedFilterWhereClause) {
+        var whereClause = neon.query.where($scope.active.xAxisField.columnName, "!=", null);
+        query.where(unsharedFilterWhereClause ? neon.query.and(whereClause, unsharedFilterWhereClause) : whereClause);
 
-    $scope.functions.addToQuery = function(query) {
         var fields = [$scope.active.xAxisField.columnName, $scope.active.yAxisField.columnName];
         if($scope.functions.isFieldValid($scope.active.textField)) {
             fields.push($scope.active.textField.columnName);

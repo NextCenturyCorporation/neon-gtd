@@ -1,0 +1,49 @@
+<div class="document-list">
+    <div class="document" ng-repeat="document in active.documents">
+        <div>
+            <!-- Either show the document text as a single element or, if populated, each part in the list of parts as its own element. -->
+            <span ng-show="!document.parts.length" ng-bind="document.text"></span>
+            <span ng-repeat="part in document.parts" title="{{part.desc}}" ng-bind="part.text" ng-click="handleSelectAnnotation(part)"
+                ng-class="part.mentions.length > 0 ? (filter.text === part.text ? 'annotation selected' : 'annotation') : ''"></span>
+        </div>
+
+        <div class="options">
+            <span class="toggle" title="{{(document.showAnnotationsLegend ? 'Hide' : 'Show') + ' Annotations Legend'}}" ng-show="document.parts.length" ng-click="toggleShowAnnotationsLegend(document)">
+                <span class="glyphicon" ng-class="{true: 'glyphicon-chevron-up', false: 'glyphicon-chevron-down'}[document.showAnnotationsLegend]"></span>
+                Annotations
+            </span>
+            <span class="toggle" title="{{(document.showDetailsList ? 'Hide' : 'Show') + ' Details List'}}" ng-click="toggleShowDetailsList(document)">
+                <span class="glyphicon" ng-class="{true: 'glyphicon-chevron-up', false: 'glyphicon-chevron-down'}[document.showDetailsList]"></span>
+                Details
+            </span>
+            <span class="toggle" ng-class="{true: 'selected', false: ''}[isFilterSetOnDocument(document)]" title="{{(isFilterSetOnDocument(document) ? 'Remove' : 'Add') + ' Filter on Full Document Text'}}" ng-click="toggleFilterOnDocument(document)">
+                <span class="glyphicon glyphicon-filter"></span>
+                Filter on Document
+            </span>
+        </div>
+
+        <div class="well document-well" ng-show="document.showAnnotationsLegend">
+            <div>Annotations Legend:</div>
+            <div ng-repeat="annotation in document.annotations">
+                <input type="checkbox" ng-model="annotation.shown" ng-change="toggleShowAnnotation(document, annotation)">
+                <span ng-bind="annotation.label"></span>
+                <div class="indent" ng-repeat="type in annotation.types">
+                    <input type="checkbox" ng-model="type.shown" ng-change="toggleShowAnnotationType(document)">
+                    <span ng-bind="type.label"></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="well document-well" ng-show="document.showDetailsList">
+            <div>Details List:</div>
+            <div ng-bind="'Number of Data Records:  ' + document.count"></div>
+            <div ng-repeat="detail in document.details">
+                <div ng-bind="detail.label"></div>
+                <div ng-repeat="value in detail.values">
+                    <span ng-bind="value"></span>
+                    <span ng-bind="'(' + detail.valuesToNumbers[value] + ')'"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

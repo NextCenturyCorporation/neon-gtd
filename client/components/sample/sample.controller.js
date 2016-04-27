@@ -75,14 +75,11 @@ angular.module('neonDemo.controllers').controller('sampleController', ['$scope',
         $scope.active.dataField = $scope.functions.findFieldObject("dataField");
     };
 
-    // Create and return the default where clause for queries for  this visualization.
-    $scope.functions.createNeonQueryWhereClause = function() {
-        return neon.query.where($scope.active.dataField.columnName, "!=", null);
-    };
-
     // Add to the given Neon query object to build the default data query for this visualization.
-    $scope.functions.addToQuery = function(query) {
+    $scope.functions.addToQuery = function(query, unsharedFilterWhereClause) {
         // TODO Replace the follwing code with your own query properties.
+        var dataExistsWhereClause = neon.query.where($scope.active.dataField.columnName, "!=", null);
+        query.where(unsharedFilterWhereClause ? neon.query.and(dataExistsWhereClause, unsharedFilterWhereClause) : dataExistsWhereClause);
         query.groupBy($scope.active.dataField);
         query.aggregate(neon.query.COUNT, '*', 'count');
         query.sortBy('count', neon.query.DESCENDING);

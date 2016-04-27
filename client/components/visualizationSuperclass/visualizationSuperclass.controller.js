@@ -64,6 +64,14 @@ function($scope, external, connectionService, datasetService, errorNotificationS
     $scope.active.displayOverlapsHeaders = false;
 
     /**
+     * Whether this visualization should escape the data from its queries (like replacing & with &amp;).  This should only be disabled if this visualization handles escaping the data itself!
+     * @property escapeData
+     * @type Boolean
+     * @default true
+     */
+    $scope.active.escapeData = true;
+
+    /**
      * Whether this visualization should query for data in all data layers with the same database and table with a single query instead of querying for data in each data layer with an individual query.
      * @property $scope.active.queryByTable
      * @type Boolean
@@ -126,6 +134,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
      * Adds properties to the given Neon query and returns the updated query for the given layers.
      * @method $scope.functions.addToQuery
      * @param {neon.query.Query} query
+     * @param {neon.query.WhereClause} unsharedFilterWhereClause
      * @param {Array} layers
      * @return {neon.query.Query}
      */
@@ -190,16 +199,6 @@ function($scope, external, connectionService, datasetService, errorNotificationS
      */
     $scope.functions.createNeonFilterClause = function(databaseAndTableName, fieldName) {
         return neon.query.where(fieldName, "!=", null);
-    };
-
-    /**
-     * Creates and returns the Neon where clause for queries for the given layers (or returns undefined).
-     * @method $scope.functions.createNeonQueryWhereClause
-     * @param {Array} layers
-     * @return {neon.query.WhereClause}
-     */
-    $scope.functions.createNeonQueryWhereClause = function() {
-        return undefined;
     };
 
     /**
@@ -445,6 +444,15 @@ function($scope, external, connectionService, datasetService, errorNotificationS
     };
 
     /**
+     * Creates and returns a blank field object.
+     * @method createBlankField
+     * @return {Object}
+     */
+    $scope.functions.createBlankField = function() {
+        return datasetService.createBlankField();
+    };
+
+    /**
      * Creates a new data layer for this visualization using the dataset defaults and set in new & edit mode.
      * @method $scope.functions.createLayer
      */
@@ -652,6 +660,16 @@ function($scope, external, connectionService, datasetService, errorNotificationS
      */
     $scope.functions.getNumberOfFilterClauses = function(neonFilter) {
         return filterService.hasSingleClause(neonFilter) ? 1 : filterService.getMultipleClausesLength(neonFilter);
+    };
+
+    /**
+     * Returns the list of sorted fields for the database and table in the given layer (in alphabetical order).
+     * @method $scope.functions.getSortedFields
+     * @param {Object} layer
+     * @return {Array}
+     */
+    $scope.functions.getSortedFields = function(layer) {
+        return datasetService.getSortedFields(layer.database.name, layer.table.name);
     };
 
     /**
@@ -1376,8 +1394,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
             });
 
             $scope.$apply(function() {
-                // The response for an array-counts query is an array and the response for other queries is an object containing a data array.
-                updateDataFunction(neon.helpers.escapeDataRecursively(response.data || response), item.layers);
+                updateDataFunction($scope.active.escapeData ? neon.helpers.escapeDataRecursively(response.data) : response.data, item.layers);
                 queryAndUpdate(data, ++index, addToQueryFunction, executeQueryFunction, updateDataFunction);
             });
 
@@ -1444,7 +1461,6 @@ function($scope, external, connectionService, datasetService, errorNotificationS
      */
     var buildQuery = function(layers, databaseName, tableName, addToQueryFunction) {
         var query = new neon.query.Query().selectFrom(databaseName, tableName);
-        var whereClause = $scope.functions.createNeonQueryWhereClause(layers);
 
         var unsharedFilterField;
         var unsharedFilterValue;
@@ -1456,21 +1472,21 @@ function($scope, external, connectionService, datasetService, errorNotificationS
             }
         });
 
+        var unsharedFilterWhereClause;
         if(unsharedFilterField && unsharedFilterValue) {
             var operator = "contains";
             if($.isNumeric(unsharedFilterValue)) {
                 operator = "=";
                 unsharedFilterValue = parseFloat(unsharedFilterValue);
             }
-            var unsharedFilterWhereClause = neon.query.where(unsharedFilterField.columnName, operator, unsharedFilterValue);
-            whereClause = whereClause ? neon.query.and(whereClause, unsharedFilterWhereClause) : unsharedFilterWhereClause;
+            unsharedFilterWhereClause = neon.query.where(unsharedFilterField.columnName, operator, unsharedFilterValue);
         }
 
-        if(whereClause) {
-            query.where(whereClause);
+        if(unsharedFilterWhereClause) {
+            query.where(unsharedFilterWhereClause);
         }
 
-        return addToQueryFunction ? addToQueryFunction(query, layers) : $scope.functions.addToQuery(query, layers);
+        return addToQueryFunction ? addToQueryFunction(query, unsharedFilterWhereClause, layers) : $scope.functions.addToQuery(query, unsharedFilterWhereClause, layers);
     };
 
     /**
