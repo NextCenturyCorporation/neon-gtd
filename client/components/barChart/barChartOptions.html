@@ -30,3 +30,16 @@
         </div>
     </div>
 </div>
+
+<div class="form-group">
+    <label>Aggregate Arrays</label>
+    <div class="btn-group">
+        <label class="btn btn-default" ng-class="{true: 'active', false: ''}[active.aggregateArraysByElement]">
+            <input type="radio" style="display:none" ng-model="active.aggregateArraysByElement" ng-value="true" ng-change="handleChangeAggregateArraysByElement()">By Element
+        </label>
+        <label class="btn btn-default" ng-class="{true: '', false: 'active'}[active.aggregateArraysByElement]">
+            <input type="radio" style="display:none" ng-model="active.aggregateArraysByElement" ng-value="false" ng-change="handleChangeAggregateArraysByElement()">By Set
+        </label>
+    </div>
+    <div class="clearfix"></div>
+</div>

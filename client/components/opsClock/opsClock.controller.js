@@ -119,9 +119,7 @@ angular.module('neonDemo.controllers').controller('opsClockController', ['$scope
         query.groupBy(new neon.query.GroupByFunctionClause('dayOfWeek', $scope.active.dateField.columnName, 'day'),
                 new neon.query.GroupByFunctionClause(neon.query.HOUR, $scope.active.dateField.columnName, 'hour'));
 
-        query.aggregate(neon.query.COUNT, '*', 'count');
-
-        return query;
+        return query.aggregate(neon.query.COUNT, '*', 'count').enableAggregateArraysByElement();
     };
 
     $scope.functions.updateData = function(data) {

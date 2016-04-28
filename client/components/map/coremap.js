@@ -54,7 +54,6 @@ coreMap.Map = function(elementId, opts) {
     this.selector = $("#" + elementId);
     this.onZoomRect = opts.onZoomRect;
     this.responsive = opts.responsive;
-    this.getNestedValue = opts.getNestedValue;
     this.queryForMapPopupDataFunction = opts.queryForMapPopupDataFunction || function(database, table, id, callback) {
         callback({});
     };
@@ -404,22 +403,14 @@ coreMap.Map.prototype.createSelectControl =  function(layer) {
 
                 for(i = 0; i < data.length; i++) {
                     text += '<tr>';
-
-                    for(var j = 0; j < feature.layer.clusterPopupFields.length; j++) {
-                        var field = feature.layer.clusterPopupFields[j];
-                        var fieldValue = me.getNestedValue(data[i], field);
-                        if(fieldValue) {
-                            text += '<td>' + fieldValue + '</td>';
-                        } else {
-                            text += '<td></td>';
-                        }
-                    }
-
+                    feature.layer.clusterPopupFields.forEach(function(popupField) {
+                        text += '<td>' + neon.helpers.getNestedValues(data[i], popupField).join(",") + '</td>';
+                    });
                     text += '</tr>';
                 }
                 text += '</table></div>';
             } else {
-                text = '<div><table class="table table-striped table-condensed">' + getNestedFields(feature.cluster ? feature.attributes : data[0]) + '</table></div>';
+                text = '<div><table class="table table-striped table-condensed">' + getPointPopupText(feature.cluster ? feature.attributes : data[0]) + '</table></div>';
             }
 
             me.featurePopup = new OpenLayers.Popup.FramedCloud("Data",
@@ -436,10 +427,9 @@ coreMap.Map.prototype.createSelectControl =  function(layer) {
             $(".olFramedCloudPopupContent td").linky(feature.layer.linkyConfig);
 
             if(me.linksPopupService && feature.layer.linksSource) {
-                var latitudeValue = me.getNestedValue(data[0], feature.layer.latitudeMapping);
-                var longitudeValue = me.getNestedValue(data[0], feature.layer.longitudeMapping);
-                var key = me.linksPopupService.generatePointKey(latitudeValue, longitudeValue);
-                var tooltip = "latitude " + longitudeValue + ", longitude " + longitudeValue;
+                // Use the latitude and longitude values of the point itself as set by the layer during feature creation.
+                var key = me.linksPopupService.generatePointKey(feature.lat, feature.lon);
+                var tooltip = "latitude " + feature.lat + ", longitude " + feature.lon;
                 var link = me.linksPopupService.createLinkHtml(feature.layer.linksSource, key, tooltip);
 
                 // Position the button below the 'close box' which can have one of a few different 'top' values depending on the location of the point on the layer.
@@ -451,15 +441,15 @@ coreMap.Map.prototype.createSelectControl =  function(layer) {
         };
 
         // Creates and returns table rows in data, recursively
-        var getNestedFields = function(data, fieldName) {
+        var getPointPopupText = function(data, prefix) {
             var text = "";
-            Object.keys(data).forEach(function(datum) {
-                if(datum.indexOf(".") === -1) {
-                    var name = fieldName ? fieldName + "." + datum : datum;
-                    if(typeof data[datum] === "object" && data[datum] && !data[datum].length) {
-                        text += getNestedFields(data[datum], name);
+            Object.keys(data).forEach(function(property) {
+                if(property.indexOf(".") < 0) {
+                    var name = prefix ? prefix + "." + property : property;
+                    if(_.isObject(data[property])) {
+                        text += getPointPopupText(data[property], name);
                     } else {
-                        text += '<tr><th>' + _.escape(name) + '</th><td>' + data[datum] + '</td>';
+                        text += '<tr><th>' + _.escape(name) + '</th><td>' + data[property] + '</td>';
                     }
                 }
             });

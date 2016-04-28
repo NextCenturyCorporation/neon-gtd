@@ -42,35 +42,123 @@ neon.safeApply = function($scope, func) {
 
 neon.helpers = {
     /**
-     * Finds and returns the field value in data. If field contains '.', representing that the field is in an object within data, it will
-     * find the nested field value.
+     * Finds and returns the array of field values using the given name and the given data.  If the name contains one or more periods, representing that the field is in an object,
+     * the function will find the nested field values.
+     * @method getNestedValues
      * @param {Object} data
-     * @param {String} field
-     * @method getNestedValue
+     * @param {String} name
+     * @return {Array} The data contained within the field using the given name in an array, or an empty array if the data or field with the given name does not exist.
      */
-    getNestedValue: function(data, field) {
-        var fieldArray = field.split(".");
-        var dataValue = data;
-        fieldArray.forEach(function(field) {
-            if(dataValue) {
-                dataValue = dataValue[field];
+    getNestedValues: function(data, name) {
+        var fields = name.split(".");
+        var values = data[name] === undefined ? data[fields[0]] : data[name];
+
+        if(_.isArray(values)) {
+            values = [].concat.apply([], values.map(function(item) {
+                return ((_.isArray(item) || _.isObject(item)) && fields.length > 1) ? neon.helpers.getNestedValues(item, fields.slice(1).join(".")) : item;
+            }));
+        }
+
+        // Check for additional fields because the object might be a string wrapped by an angular $sce trusted object.
+        // Use typeof to check for false booleans.
+        if(_.isObject(values) && fields.length > 1 && values[fields[1]] !== undefined) {
+            values = neon.helpers.getNestedValues(values, fields.slice(1).join("."));
+        }
+
+        return values === undefined ? [] : (_.isArray(values) ? values : [values]);
+    },
+
+    /**
+     * Finds and returns the array of field values using the given function or property and the given data.
+     * @method getValues
+     * @param {Object} data
+     * @param {Function | String} functionOrProperty
+     * @return {Array}
+     */
+    getValues: function(data, functionOrProperty) {
+        if(_.isFunction(functionOrProperty)) {
+            return functionOrProperty(data);
+        }
+        return neon.helpers.getNestedValues(data, functionOrProperty);
+    },
+
+    /**
+     * Finds and returns the arrays of X & Y coordinates in the given data using the given fields.
+     * @method getPoints
+     * @param {Array} data
+     * @param {Function | String} xField
+     * @param {Function | String} yField
+     * @param {Object} extraFields Mapping {String} key to a {Function | String} field.  Please note that keys cannot be "x", "y", or "data".
+     * @return {Array} The array of {Object} points each containing {Number} x, {Number} y, {Object} data, and properties for each of the given extra fields.
+     */
+    getPoints: function(data, xField, yField, extraFields) {
+        var points = [];
+        data.forEach(function(item) {
+            // Get the arrays of values for the X & Y fields and all the extra fields.  Fields that contain only a single number/string will be wrapped in an array by getValues.
+            var values = {
+                x: neon.helpers.getValues(item, xField),
+                y: neon.helpers.getValues(item, yField)
+            };
+            Object.keys(extraFields || {}).forEach(function(key) {
+                if(extraFields[key] && key !== "x" && key !== "y" && key !== "data") {
+                    values[key] = neon.helpers.getValues(item, extraFields[key]);
+                }
+            });
+
+            var pushToPoints = function(xIndex, yIndex, extraFieldIndex) {
+                var point = {
+                    x: values.x[xIndex],
+                    y: values.y[yIndex],
+                    data: item
+                };
+                Object.keys(extraFields || {}).forEach(function(key) {
+                    if(values[key] && values[key].length) {
+                        if(typeof extraFieldIndex !== "undefined" && values[key].length > 1) {
+                            // Set the key to the value in the data at the given index, or undefined if that index does not exist.
+                            point[key] = values[key].length > extraFieldIndex ? values[key][extraFieldIndex] : undefined;
+                        } else {
+                            // Set the key to the array of all values in the data since we don't know how to choose the "best" data.
+                            point[key] = values[key].length > 1 ? values[key] : values[key][0];
+                        }
+                    }
+                });
+                points.push(point);
+            };
+
+            // If multiple X & Y values exist, create points for each common index of the arrays for the X, Y, and extra fields.
+            // If a single X or Y value exists, create points for each combination of it and the other coordinate(s).
+            if(values.x.length > 1 && values.y.length > 1) {
+                for(var i = 0; i < Math.min(values.x.length, values.y.length); ++i) {
+                    pushToPoints(i, i, i);
+                }
+            } else if(values.x.length === 1) {
+                for(var i = 0; i < values.y.length; ++i) {
+                    pushToPoints(0, i);
+                }
+            } else if(values.y.length === 1) {
+                for(var i = 0; i < values.x.length; ++i) {
+                    pushToPoints(i, 0);
+                }
             }
         });
-        return dataValue;
+
+        return points;
     },
+
     /**
      * Escapes all values in the given data, recursively.
      * @param {Object|Array} data
      * @method escapeDataRecursively
      */
     escapeDataRecursively: function(data) {
+        var i = 0;
         if(_.isArray(data)) {
-            for(var i = 0; i < data.length; i++) {
+            for(i = 0; i < data.length; i++) {
                 data[i] = neon.helpers.escapeDataRecursively(data[i]);
             }
         } else if(_.keys(data).length) {
             var keys = _.keys(data);
-            for(var i = 0; i < keys.length; i++) {
+            for(i = 0; i < keys.length; i++) {
                 data[keys[i]] = neon.helpers.escapeDataRecursively(data[keys[i]]);
             }
         } else if(_.isString(data)) {
@@ -154,12 +242,16 @@ var startAngular = function() {
 };
 
 var saveUserAle = function(config) {
-    if(!config.user_ale || !config.user_ale.enable) {
+    // If there's a user_ale section, then assume that userALE should be enabled
+    // unless it is explicitly disabled.
+    if(!config.user_ale || config.user_ale.enable === false) {
         // timerId is the global variable that the UserALE code creates for the
         // one second time. If UserALE is disabled, then clear that timer.
-        clearInterval(timerId);
+        clearInterval(timerId);  // jshint ignore:line
         // Create a dummy logger
-        XDATA.userALE = { log: function() {}};
+        XDATA.userALE = {
+            log: function() {}
+        };
     } else {
         // Configure the user-ale logger.
         var aleConfig = (config.user_ale || {
@@ -405,7 +497,7 @@ var readAndSaveExternalServices = function(config, callback) {
         var appName = data[appType][nameProperty];
 
         // Ignore linking to the Neon Dashboard itself.
-        if(!(appName.toLowerCase().indexOf("neon") === 0)) {
+        if(appName.toLowerCase().indexOf("neon") !== 0) {
             neonServiceMappings.forEach(function(neonServiceMapping) {
                 var argsMappings = config.argsMappings[neonServiceMapping];
                 if(!argsMappings) {
@@ -463,7 +555,7 @@ var readLayoutFilesAndSaveLayouts = function($http, layouts, layoutFiles, callba
                 layouts[layoutConfig.name] = layoutConfig.layout;
             }
             readLayoutFilesAndSaveLayouts($http, layouts, layoutFiles, callback);
-        }, function(response) {
+        }, function() {
             readLayoutFilesAndSaveLayouts($http, layouts, layoutFiles, callback);
         });
     } else {
@@ -487,7 +579,7 @@ var readDatasetFilesAndSaveDatasets = function($http, datasets, datasetFiles, ca
                 datasets.push(datasetConfig.dataset);
             }
             readDatasetFilesAndSaveDatasets($http, datasets, datasetFiles, callback);
-        }, function(response) {
+        }, function() {
             readDatasetFilesAndSaveDatasets($http, datasets, datasetFiles, callback);
         });
     } else {

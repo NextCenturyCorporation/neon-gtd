@@ -41,6 +41,7 @@ coreMap.Map.Layer.PointsLayer = OpenLayers.Class(OpenLayers.Layer.Vector, {
     defaultColor: '',
     categoryMapping: '',
     dateMapping: '',
+    applyTransientDateFilter: false,
     gradient: false,
     cluster: false,
     linkyConfig: {
@@ -66,10 +67,10 @@ coreMap.Map.Layer.PointsLayer = OpenLayers.Class(OpenLayers.Layer.Vector, {
             this.ClusterClass = new OpenLayers.Class(OpenLayers.Strategy.Cluster, {
                 attribute: null,
                 shouldCluster: function(cluster, feature) {
-                    var clusterVal = me.getValueFromDataElement(me.categoryMapping, cluster.cluster[0].attributes);
-                    var featureVal = me.getValueFromDataElement(me.categoryMapping, feature.attributes);
+                    var clusterValue = neon.helpers.getValues(cluster.cluster[0].attributes, me.categoryMapping);
+                    var featureValue = neon.helpers.getValues(feature.attributes, me.categoryMapping);
                     var superProto = OpenLayers.Strategy.Cluster.prototype;
-                    return (clusterVal === featureVal && superProto.shouldCluster.apply(this, arguments));
+                    return (_.isEqual(clusterValue, featureValue) && superProto.shouldCluster.apply(this, arguments));
                 },
                 CLASS_NAME: "OpenLayers.Strategy.AttributeCluster"
             });
@@ -103,7 +104,6 @@ coreMap.Map.Layer.PointsLayer = OpenLayers.Class(OpenLayers.Layer.Vector, {
 
         this.visibility = true;
         this.colorScale = d3.scale.ordinal().range(neonColors.LIST);
-        this.getNestedValue = neon.helpers.getNestedValue;
     },
 
     createClusterStyle: function() {
@@ -220,7 +220,8 @@ coreMap.Map.Layer.PointsLayer = OpenLayers.Class(OpenLayers.Layer.Vector, {
  * @method calculateColor
  */
 coreMap.Map.Layer.PointsLayer.prototype.calculateColor = function(element) {
-    var category = this.getValueFromDataElement(this.categoryMapping, element);
+    // TODO How should we handle array fields that contain multiple colors?
+    var category = neon.helpers.getValues(element, this.categoryMapping)[0];
     var color;
 
     if(this.colors[category]) {
@@ -251,8 +252,9 @@ coreMap.Map.Layer.PointsLayer.prototype.calculateColor = function(element) {
  */
 coreMap.Map.Layer.PointsLayer.prototype.calculateMaxRadius = function() {
     var me = this;
-    return d3.max(me.data, function(el) {
-        return me.getValueFromDataElement(me.sizeMapping, el);
+    return d3.max(me.data, function(item) {
+        var values = neon.helpers.getValues(item, me.sizeMapping).sort();
+        return values.length ? values[values.length-1] : null;
     });
 };
 
@@ -263,8 +265,9 @@ coreMap.Map.Layer.PointsLayer.prototype.calculateMaxRadius = function() {
  */
 coreMap.Map.Layer.PointsLayer.prototype.calculateMinRadius = function() {
     var me = this;
-    return d3.min(me.data, function(el) {
-        return me.getValueFromDataElement(me.sizeMapping, el);
+    return d3.min(me.data, function(item) {
+        var values = neon.helpers.getValues(item, me.sizeMapping).sort();
+        return values.length ? values[0] : null;
     });
 };
 
@@ -277,10 +280,11 @@ coreMap.Map.Layer.PointsLayer.prototype.calculateMinRadius = function() {
  */
 coreMap.Map.Layer.PointsLayer.prototype.calculateRadius = function(element) {
     var zoomLevel = this.map.zoom;
-    var dataVal = this.getValueFromDataElement(this.sizeMapping, element);
+    // If the size field contains an array of numbers, arbitrarily take the smallest.
+    var size = neon.helpers.getValues(element, this.sizeMapping);
+    var dataVal = _.isArray(size) ? size.sort()[0] : size;
     var percentOfDataRange = (dataVal - this.minRadius) / this._dataRadiusDiff;
     var radius = coreMap.Map.Layer.PointsLayer.MIN_RADIUS + (percentOfDataRange * this._baseRadiusDiff) || coreMap.Map.Layer.PointsLayer.MIN_RADIUS;
-
     return radius * (zoomLevel / 2);
 };
 
@@ -308,41 +312,26 @@ coreMap.Map.Layer.PointsLayer.prototype.createPoint = function(element, longitud
 };
 
 /**
- * Gets a value from a data element using a mapping string or function.
- * @param {String | Function} mapping The mapping from data element object to value.
- * @param {Object} element An element of the data array.
- * @return The value in the data element.
- * @method getValueFromDataElement
- */
-coreMap.Map.Layer.PointsLayer.prototype.getValueFromDataElement = function(mapping, element) {
-    if(typeof mapping === 'function') {
-        return mapping.call(this, element);
-    }
-    return this.getNestedValue(element, mapping);
-};
-
-/**
  * Checks if the mappings exist in the data element
  * @param {Object} element An element of the data array.
  * @return {Boolean} True if element contains all the mappings, false otherwise
  * @method areValuesInDataElement
  */
 coreMap.Map.Layer.PointsLayer.prototype.areValuesInDataElement = function(element) {
-    if(this.getValueFromDataElement(this.latitudeMapping, element) !== undefined &&
-        this.getValueFromDataElement(this.longitudeMapping, element) !== undefined) {
+    if(neon.helpers.getValues(element, this.latitudeMapping).length && neon.helpers.getValues(element, this.longitudeMapping).length) {
         return true;
     }
 
     return false;
 };
 
-coreMap.Map.Layer.PointsLayer.prototype.setData = function(data) {
+coreMap.Map.Layer.PointsLayer.prototype.setData = function(data, limit) {
     this.data = data;
     if(this.gradient) {
         this.updateGradient();
     }
     this.updateRadii();
-    this.updateFeatures();
+    this.updateFeatures(limit);
     if(this.dateFilterStrategy) {
         this.dateFilterStrategy.setFilter();
     }
@@ -350,7 +339,7 @@ coreMap.Map.Layer.PointsLayer.prototype.setData = function(data) {
 };
 
 coreMap.Map.Layer.PointsLayer.prototype.setDateFilter = function(filterBounds) {
-    if(this.dateMapping && filterBounds && filterBounds.start && filterBounds.end) {
+    if(this.dateMapping && this.applyTransientDateFilter && filterBounds && filterBounds.start && filterBounds.end) {
         // Update the filter
         this.dateFilter.lowerBoundary = filterBounds.start;
         this.dateFilter.upperBoundary = filterBounds.end;
@@ -366,64 +355,70 @@ coreMap.Map.Layer.PointsLayer.prototype.setDateFilter = function(filterBounds) {
  * @method updateGradient
  */
 coreMap.Map.Layer.PointsLayer.prototype.updateGradient = function() {
-    var me = this;
-
     this.rainbow = new Rainbow();
 
     // Check if category mapping is valid date before creating gradient
+    if(_.isString(this.categoryMapping) && this.data.length) {
+        var category = neon.helpers.getValues(this.data[0], this.categoryMapping);
+        if(category.length && !isNaN(new Date(category[0]))) {
+            var startDate = new Date(category[0]);
+            var endDate = new Date(category[0]);
 
-    if(_.isString(me.categoryMapping) && this.data.length) {
-        var value = this.getValueFromDataElement(this.categoryMapping, this.data[0]);
+            var categoryMapping = this.categoryMapping;
 
-        if(value && !isNaN(new Date(value))) {
-            var minData = _.min(this.data, function(datum) {
-                var date = new Date(me.getValueFromDataElement(me.categoryMapping, datum));
-                return date.getTime();
+            this.data.forEach(function(item) {
+                var dates = neon.helpers.getValues(item, categoryMapping).sort(function(a, b) {
+                    return new Date(a).getTime() - new Date(b).getTime();
+                });
+                if(dates.length) {
+                    startDate = startDate.getTime() < dates[0].getTime() ? startDate : dates[0];
+                    endDate = endDate.getTime() > dates[dates.length - 1].getTime() ? endDate : dates[dates.length - 1];
+                }
             });
-            var maxData = _.max(this.data, function(datum) {
-                var date = new Date(me.getValueFromDataElement(me.categoryMapping, datum));
-                return date.getTime();
-            });
 
-            var startDate = new Date(this.getValueFromDataElement(this.categoryMapping, minData));
-            var endDate = new Date(this.getValueFromDataElement(this.categoryMapping, maxData));
-            startDate = startDate.getTime();
-            endDate = endDate.getTime();
-
-            if(startDate === endDate) {
-                endDate += 1;
-            }
-
-            this.rainbow.setNumberRange(startDate, endDate);
+            this.rainbow.setNumberRange(startDate.getTime(), endDate.getTime() + (startDate.getTime() === endDate.getTime() ? 1 : 0));
         }
     }
 };
 
-coreMap.Map.Layer.PointsLayer.prototype.updateFeatures = function() {
+coreMap.Map.Layer.PointsLayer.prototype.updateFeatures = function(limit) {
     var mapData = [];
+
+    // Extra fields to collect in addition to the longitude & latitude (X & Y) fields.
+    var fields = {
+        date: this.dateMapping || coreMap.Map.Layer.PointsLayer.DEFAULT_DATE_MAPPING
+    };
+
+    var points = neon.helpers.getPoints(this.data, this.longitudeMapping, this.latitudeMapping, fields);
+    this.pointTotal = points.length;
+    this.pointLimit = limit;
+
     var me = this;
 
-    _.each(this.data, function(element, index) {
-        var longitude = me.getValueFromDataElement(me.longitudeMapping, element);
-        var latitude = me.getValueFromDataElement(me.latitudeMapping, element);
+    // Use the helper function to collect the longitude & latitude (X & Y) coordinates from the data for the points.
+    points.slice(0, limit).forEach(function(point) {
+        if($.isNumeric(point.x) && $.isNumeric(point.y)) {
+            // If the date field contains an array of dates, arbitrarily take the earliest.
+            var date = _.isArray(point.date) && point.date.length ? point.date.sort(function(a, b) {
+                return new Date(a).getTime() - new Date(b).getTime();
+            })[0] : (point.date || "none");
 
-        if($.isNumeric(latitude) && $.isNumeric(longitude)) {
-            var pointFeature = me.createPoint(element, longitude, latitude);
-
-            var date = 'none';
-            var dateMapping = me.dateMapping || coreMap.Map.Layer.PointsLayer.DEFAULT_DATE_MAPPING;
-            if(me.getValueFromDataElement(dateMapping, element)) {
-                date = new Date(me.getValueFromDataElement(dateMapping, element));
-            }
+            var pointFeature = me.createPoint(point.data, point.x, point.y);
 
             // Note: The date mapping must be on the top level of attributes in order for filtering to work.
             // This means even if the date is in to.date, keep the date at the top level with key "to.date" instead
             // of in the object "to".
-            pointFeature.attributes[dateMapping] = date;
+            pointFeature.attributes[fields.date] = new Date(date);
+
+            // Save the latitude and longitude of the point in the feature itself because the latitude and longitude in the feature attributes may be arrays of multiple values.
+            // Used in the point's popup.
+            pointFeature.lon = point.x;
+            pointFeature.lat = point.y;
 
             mapData.push(pointFeature);
         }
     });
+
     this.destroyFeatures();
     this.addFeatures(mapData);
 };
@@ -453,6 +448,6 @@ coreMap.Map.Layer.PointsLayer.DEFAULT_SELECT_COLOR = "#88d292";
 coreMap.Map.Layer.PointsLayer.DEFAULT_SIZE_MAPPING = "count_";
 coreMap.Map.Layer.PointsLayer.DEFAULT_STROKE_WIDTH = 0;
 coreMap.Map.Layer.PointsLayer.DEFAULT_STROKE_COLOR = "#ffffff";
-coreMap.Map.Layer.PointsLayer.MIN_RADIUS = 1;
-coreMap.Map.Layer.PointsLayer.MAX_RADIUS = 5;
+coreMap.Map.Layer.PointsLayer.MIN_RADIUS = 2;
+coreMap.Map.Layer.PointsLayer.MAX_RADIUS = 8;
 coreMap.Map.Layer.PointsLayer.DEFAULT_CURSOR = "pointer";

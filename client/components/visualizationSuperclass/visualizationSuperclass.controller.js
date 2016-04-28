@@ -108,7 +108,7 @@ function($scope, external, legends, connectionService, datasetService, errorNoti
      * @param {Object} layer
      * @return {Object}
      */
-    $scope.functions.addToLayerBindings = function(bindings, layer) {
+    $scope.functions.addToLayerBindings = function(bindings) {
         return bindings;
     };
 
@@ -139,7 +139,7 @@ function($scope, external, legends, connectionService, datasetService, errorNoti
      * @param {Array} layers
      * @return {Boolean}
      */
-    $scope.functions.areDataFieldsValid = function(layers) {
+    $scope.functions.areDataFieldsValid = function() {
         return true;
     };
 
@@ -264,7 +264,7 @@ function($scope, external, legends, connectionService, datasetService, errorNoti
      * @method $scope.functions.onDeleteLayer
      * @param {Object} layer
      */
-    $scope.functions.onDeleteLayer = function(layer) {
+    $scope.functions.onDeleteLayer = function() {
         // Do nothing by default.
     };
 
@@ -337,7 +337,7 @@ function($scope, external, legends, connectionService, datasetService, errorNoti
      * @method $scope.functions.onToggleShowLayer
      * @param {Object} layer
      */
-    $scope.functions.onToggleShowLayer = function(layer) {
+    $scope.functions.onToggleShowLayer = function() {
         // Do nothing by default.
     };
 
@@ -400,7 +400,7 @@ function($scope, external, legends, connectionService, datasetService, errorNoti
      * @method $scope.functions.updateLayerDisplay
      * @param {Object} layer
      */
-    $scope.functions.updateLayerDisplay = function(layer) {
+    $scope.functions.updateLayerDisplay = function() {
         // Do nothing by default.
     };
 
@@ -469,7 +469,7 @@ function($scope, external, legends, connectionService, datasetService, errorNoti
         var mappings = datasetService.getMappings(databaseName, tableName);
         var links = linksPopupService.createAllServiceLinkObjects(external.services, mappings, field.columnName, value);
         var key = linksPopupService.generateKey(field, value);
-        linksPopupService.addLinks($scope.visualizationId, linksPopupService.generateKey(field, value), links);
+        linksPopupService.addLinks($scope.visualizationId, key, links);
         return !!(links.length);
     };
 
@@ -837,7 +837,7 @@ function($scope, external, legends, connectionService, datasetService, errorNoti
                         databaseName: layer.database.name,
                         tableName: layer.table.name,
                         queryAfterFilter: true
-                    })
+                    });
                 } else {
                     $scope.functions.removeNeonFilter({
                         databaseName: layer.database.name,
@@ -1068,7 +1068,7 @@ function($scope, external, legends, connectionService, datasetService, errorNoti
     var resizeTitle = function() {
         // Set the width of the title to the width of this visualization minus the width of the options button/text and margin/padding.
         var titleWidth = $scope.element.width() - $scope.element.find(".options-menu").outerWidth(true) - 20;
-        $scope.element.find(".header").css("maxWidth", Math.max(0, titleWidth));
+        $scope.element.find(".header").css("max-width", Math.max(0, titleWidth));
     };
 
     /**
@@ -1377,7 +1377,7 @@ function($scope, external, legends, connectionService, datasetService, errorNoti
             return;
         }
 
-        $scope.outstandingDataQuery[item.database][item.table].always(function(response) {
+        $scope.outstandingDataQuery[item.database][item.table].always(function() {
             $scope.outstandingDataQuery[item.database][item.table] = undefined;
         });
 
@@ -1726,7 +1726,6 @@ function($scope, external, legends, connectionService, datasetService, errorNoti
             tags: ["options", $scope.type, "export"]
         });
 
-
         return $scope.createExportData(buildQuery, exportService);
     };
 
@@ -1921,8 +1920,7 @@ function($scope, external, legends, connectionService, datasetService, errorNoti
                 other.unsharedFilterField = $scope.functions.findFieldObject(layer.unsharedFilterField.columnName, "", other);
                 other.unsharedFilterValue = layer.unsharedFilterValue;
                 other.filterable = layer.filterable;
-            };
+            }
         });
-
     };
 }]);

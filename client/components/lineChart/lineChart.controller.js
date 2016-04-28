@@ -194,7 +194,7 @@ angular.module('neonDemo.controllers').controller('lineChartController', ['$scop
             query.aggregate(neon.query.MAX, layer.aggregationField.columnName, COUNT_FIELD_NAME);
         }
 
-        query.aggregate(neon.query.MIN, layer.dateField.columnName, 'date').sortBy('date', neon.query.ASCENDING);
+        query.aggregate(neon.query.MIN, layer.dateField.columnName, 'date').sortBy('date', neon.query.ASCENDING).enableAggregateArraysByElement();
 
         if(!layer.filter && $scope.functions.isFilterSet()) {
             var filterClause = $scope.functions.createNeonFilterClause({
@@ -501,7 +501,7 @@ angular.module('neonDemo.controllers').controller('lineChartController', ['$scop
             elementSub: "linechart",
             elementGroup: "chart_group",
             source: "system",
-            tags: ["render", "linechart", chart.name]
+            tags: ["render", "linechart", layer.name]
         });
     };
 
@@ -809,7 +809,7 @@ angular.module('neonDemo.controllers').controller('lineChartController', ['$scop
     };
 
     $scope.functions.createFilterTrayText = function(databaseName, tableName, fieldNames) {
-        databaseName + " - " + tableName + " - " + fieldNames[0] + " = " + getDateString($scope.extent[0]) + " to " + getDateString($scope.extent[1]);
+        return databaseName + " - " + tableName + " - " + fieldNames[0] + " = " + getDateString($scope.extent[0]) + " to " + getDateString($scope.extent[1]);
     };
 
     /**

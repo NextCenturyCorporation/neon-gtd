@@ -35,15 +35,16 @@ angular.module("neonDemo.services")
         accentColor: "#39B54A",
         backgroundColor: "#1B313D",
         textColor: "#85949C"
-    /*
+    }];
+    /*  Add purple back in if/when we get matching icons.
     }, {
         name: "Dark Purple",
         file: "dark-purple",
         type: "dark",
         accentColor: "#A654A1",
         backgroundColor: "#1B313D"
+    }
     */
-    }];
 
     var theme = _.find(themes, function(theme) {
         return theme.name === config.theme;

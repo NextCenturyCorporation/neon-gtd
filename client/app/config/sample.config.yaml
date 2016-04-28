@@ -408,6 +408,7 @@ layouts:
             database: test
             table: earthquakes
             type: points
+            applyTransientDateFilter: false
           -
             name: Vendors To Pops
             database: uscontracts
@@ -418,6 +419,7 @@ layouts:
             targetLatitudeField: popLatitude
             targetLongitudeField: popLongitude
             lineSizeField: annualRev
+            applyTransientDateFilter: false
     -
       sizeX: 12
       type: lineChart

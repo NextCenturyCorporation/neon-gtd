@@ -368,7 +368,7 @@ neonWizard.visualizationBindings["timeline-selector"] = [
     }
 ];
 
-var neonVisualizations = [{
+var neonVisualizations = [{   // jshint ignore:line
     name: "Aggregation Table",
     minSizePercentageX: 0.25,
     minSizePercentageY: 0.20,

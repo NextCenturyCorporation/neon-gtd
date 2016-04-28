@@ -22,7 +22,7 @@
  * @class aggregationTableController
  * @constructor
  */
-angular.module('neonDemo.controllers').controller('aggregationTableController', ['$scope', '$timeout', function($scope, $timeout) {
+angular.module('neonDemo.controllers').controller('aggregationTableController', ['$scope', function($scope) {
     // Unique field name used for the SlickGrid column containing the URLs for the external apps.
     // This name should be one that is highly unlikely to be a column name in a real database.
     var EXTERNAL_APP_FIELD_NAME = "neonExternalApps";
@@ -31,6 +31,7 @@ angular.module('neonDemo.controllers').controller('aggregationTableController', 
     $scope.active.aggregationField = {};
     $scope.active.groupField = {};
     $scope.active.limit = $scope.bindings.limit || 100;
+    $scope.active.aggregateArraysByElement = false;
 
     var handleRowClick = function(cell) {
         if($scope.active.gridOptions.api.getSelectedNodes()[0] && $scope.active.gridOptions.api.getSelectedNodes()[0].id === cell.rowIndex) {
@@ -138,6 +139,10 @@ angular.module('neonDemo.controllers').controller('aggregationTableController', 
             query.limit($scope.active.limit);
         }
 
+        if($scope.active.aggregateArraysByElement) {
+            query.enableAggregateArraysByElement();
+        }
+
         return query.groupBy($scope.active.groupField.columnName);
     };
 
@@ -211,7 +216,7 @@ angular.module('neonDemo.controllers').controller('aggregationTableController', 
      * @param {String} value
      * @method removeFilter
      */
-    $scope.removeFilter = function(value) {
+    $scope.removeFilter = function() {
         $scope.functions.removeNeonFilter();
     };
 
@@ -287,6 +292,10 @@ angular.module('neonDemo.controllers').controller('aggregationTableController', 
 
     $scope.handleChangeLimit = function() {
         $scope.functions.logChangeAndUpdate("limit", $scope.active.limit, "button");
+    };
+
+    $scope.handleChangeAggregateArraysByElement = function() {
+        $scope.functions.logChangeAndUpdate("aggregateArraysByElement", $scope.active.aggregateArraysByElement, "button");
     };
 
     $scope.functions.createMenuText = function() {

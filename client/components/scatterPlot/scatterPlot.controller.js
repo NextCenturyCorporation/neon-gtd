@@ -25,6 +25,8 @@
 angular.module('neonDemo.controllers').controller('scatterPlotController', ['$scope', function($scope) {
     $scope.backgroundColor = "#fff";
     $scope.textColor = "#777";
+    $scope.data = [];
+    $scope.pointCount = 0;
 
     $scope.active.type = $scope.bindings.type;
     $scope.active.limit = $scope.bindings.limit;
@@ -70,17 +72,21 @@ angular.module('neonDemo.controllers').controller('scatterPlotController', ['$sc
 
     $scope.functions.updateData = function(data) {
         $scope.data = data || [];
-        drawGraph();
+        if($scope.data.length) {
+            drawGraph();
+        }
     };
 
     var drawGraph = function() {
-        if(!$scope.data) {
+        if(!$scope.data.length) {
+            if($scope.graph) {
+                $scope.graph.empty();
+            }
             return;
         }
 
         var dataObject = buildDataConfig($scope.data);
         var layout = buildGraphLayout();
-
         //This can be swapped out with Plotly.deleteTrace and Plotly.plot if we add a way to track traces.
         $scope.graph.empty();
         Plotly.newPlot($scope.graph[0], [dataObject], layout);
@@ -98,79 +104,44 @@ angular.module('neonDemo.controllers').controller('scatterPlotController', ['$sc
         return buildScatterConfig(data);
     };
 
-    var buildScatterConfig = function(data, markerType) {
-        var x = [];
-        var y = [];
-        var text = [];
-
-        var minx;
-        var maxx;
-        var miny;
-        var maxy;
-
-        _.each(data, function(row) {
-            var xValue = neon.helpers.getNestedValue(row, $scope.active.xAxisField.columnName);
-            x.push(xValue);
-
-            if(xValue < minx) {
-                minx = xValue;
-            }
-
-            if(xValue > maxx) {
-                maxx = xValue;
-            }
-
-            var yValue = neon.helpers.getNestedValue(row, $scope.active.yAxisField.columnName);
-            y.push(yValue);
-
-            if(yValue < miny) {
-                miny = yValue;
-            }
-
-            if(yValue > maxy) {
-                maxy = yValue;
-            }
-
-            if($scope.functions.isFieldValid($scope.active.textField)) {
-                var textVal = row[$scope.active.textField.columnName] || "";
-                if(textVal.length > 50) {
-                    textVal = textVal.substring(0, 51) + '...';
-                }
-
-                text.push(textVal);
-            }
-        });
-
-        var dataConfig = {
-            x: x,
-            y: y,
-            mode: ($scope.bindings.subType || 'markers'),
-            type: 'scatter',
-            hoverinfo: 'text'
+    var buildScatterConfig = function(data) {
+        // Extra fields to collect in addition to the X & Y fields.
+        var fields = {
+            text: $scope.functions.isFieldValid($scope.active.textField) ? $scope.active.textField.columnName : undefined
         };
 
-        if(text.length > 0) {
-            dataConfig.text = text;
-        }
+        // Use the helper function to collect the X & Y coordinates from the data for the points.
+        var points = neon.helpers.getPoints(data, $scope.active.xAxisField.columnName, $scope.active.yAxisField.columnName, fields);
+        $scope.pointCount = points.length;
 
-        return dataConfig;
-    };
-
-    var buildHybridConfig = function(data) {
-        var x = [];
-        var y = [];
-
-        _.each(data, function(row) {
-            x.push(neon.helpers.getNestedValue(row, $scope.active.xAxisField.columnName));
-            y.push(neon.helpers.getNestedValue(row, $scope.active.yAxisField.columnName));
+        // Collect the X, Y, and text data.
+        var xArray = [];
+        var yArray = [];
+        var textArray = [];
+        points.forEach(function(point) {
+            xArray.push(point.x);
+            yArray.push(point.y);
+            var textValue = (_.isArray(point.text) ? point.text.join(",") : point.text) || "";
+            textArray.push(textValue.length > 50 ? textValue.substring(0, 50) + "..." : textValue);
         });
 
         return {
-            x: x,
-            y: y,
-            showscale: true,
-            hoverinfo: 'z'
+            x: xArray,
+            y: yArray,
+            hoverinfo: 'text',
+            mode: ($scope.bindings.subType || 'markers'),
+            text: textArray.length > 0 ? textArray : undefined,
+            type: 'scatter'
         };
+    };
+
+    var buildHybridConfig = function(data) {
+        var config = buildScatterConfig(data);
+        config.hoverinfo = 'z';
+        config.mode = undefined;
+        config.type = undefined;
+        config.showscale = true;
+        return config;
     };
 
     var buildHistogramHybridConfig = function(data) {
@@ -265,14 +236,14 @@ angular.module('neonDemo.controllers').controller('scatterPlotController', ['$sc
             $scope.functions.removeNeonFilter();
         } else {
             $scope.functions.updateNeonFilter();
-        };
+        }
     };
 
     $scope.functions.getFilterFields = function() {
         return [$scope.active.xAxisField, $scope.active.yAxisField];
     };
 
-    $scope.functions.updateFilterValues = function(neonFilter) {
+    $scope.functions.updateFilterValues = function() {
         // TODO NEON-1939
     };
 
@@ -367,5 +338,13 @@ angular.module('neonDemo.controllers').controller('scatterPlotController', ['$sc
 
     $scope.handleChangeLimit = function() {
         $scope.functions.logChangeAndUpdate("limit", $scope.active.limit, "button");
+    };
+
+    $scope.functions.createMenuText = function() {
+        return ($scope.pointCount || "No") + " Point" + ($scope.pointCount === 1 ? "" : "s");
+    };
+
+    $scope.functions.showMenuText = function() {
+        return true;
     };
 }]);
