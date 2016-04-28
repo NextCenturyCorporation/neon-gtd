@@ -305,19 +305,24 @@ html {
 
     .filter-reset {
         border: @main-border;
+        line-height: 18px;
         margin-left: 5px;
         padding: 5px;
 
         .filter-label {
             color: @main-text-color;
+            display: inline-block;
             max-width: 100px;
+            overflow: hidden;
+            position: relative;
+            text-overflow: ellipsis;
+            top: 2px;
+            white-space: nowrap;
         }
 
         .glyphicon {
             color: @mid-text-color;
             font-size: 16px;
-            vertical-align: middle;
-            margin-top: -3px;
 
             &:hover {
                 cursor: pointer;
@@ -475,7 +480,7 @@ html {
 
 .neon-datetimepicker {
     .dropdown-menu {
-        overflow-y: scroll;
+        overflow: auto;
         padding: 10px;
 
         .table-responsive {

@@ -235,7 +235,7 @@ angular.module('neonDemo.controllers').controller('dataTableController', ['$scop
                     return query;
                 },
                 updateData: function(data) {
-                    $scope.active.total = data && data.length ? data[0].count : 0
+                    $scope.active.total = data && data.length ? data[0].count : 0;
                 }
             });
 

@@ -50,7 +50,7 @@ angular.module('neonDemo.directives')
                 });
             };
 
-            $scope.onOpen = function(event) {
+            $scope.onOpen = function() {
                 XDATA.userALE.log({
                     activity: "show",
                     action: "click",

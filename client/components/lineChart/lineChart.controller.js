@@ -501,7 +501,7 @@ angular.module('neonDemo.controllers').controller('lineChartController', ['$scop
             elementSub: "linechart",
             elementGroup: "chart_group",
             source: "system",
-            tags: ["render", "linechart", chart.name]
+            tags: ["render", "linechart", layer.name]
         });
     };
 
@@ -809,7 +809,7 @@ angular.module('neonDemo.controllers').controller('lineChartController', ['$scop
     };
 
     $scope.functions.createFilterTrayText = function(databaseName, tableName, fieldNames) {
-        databaseName + " - " + tableName + " - " + fieldNames[0] + " = " + getDateString($scope.extent[0]) + " to " + getDateString($scope.extent[1]);
+        return databaseName + " - " + tableName + " - " + fieldNames[0] + " = " + getDateString($scope.extent[0]) + " to " + getDateString($scope.extent[1]);
     };
 
     /**

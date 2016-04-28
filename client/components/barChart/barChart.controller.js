@@ -136,7 +136,7 @@ angular.module('neonDemo.controllers').controller('barChartController', ['$scope
      * @param {String} value
      * @method removeFilter
      */
-    $scope.removeFilter = function(value) {
+    $scope.removeFilter = function() {
         $scope.functions.removeNeonFilter();
     };
 
