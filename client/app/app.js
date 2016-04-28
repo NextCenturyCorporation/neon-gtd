@@ -151,13 +151,14 @@ neon.helpers = {
      * @method escapeDataRecursively
      */
     escapeDataRecursively: function(data) {
+        var i = 0;
         if(_.isArray(data)) {
-            for(var i = 0; i < data.length; i++) {
+            for(i = 0; i < data.length; i++) {
                 data[i] = neon.helpers.escapeDataRecursively(data[i]);
             }
         } else if(_.keys(data).length) {
             var keys = _.keys(data);
-            for(var i = 0; i < keys.length; i++) {
+            for(i = 0; i < keys.length; i++) {
                 data[keys[i]] = neon.helpers.escapeDataRecursively(data[keys[i]]);
             }
         } else if(_.isString(data)) {
@@ -246,9 +247,11 @@ var saveUserAle = function(config) {
     if(!config.user_ale || config.user_ale.enable === false) {
         // timerId is the global variable that the UserALE code creates for the
         // one second time. If UserALE is disabled, then clear that timer.
-        clearInterval(timerId);
+        clearInterval(timerId);  // jshint ignore:line
         // Create a dummy logger
-        XDATA.userALE = { log: function() {}};
+        XDATA.userALE = {
+            log: function() {}
+        };
     } else {
         // Configure the user-ale logger.
         var aleConfig = (config.user_ale || {
@@ -476,7 +479,7 @@ var readAndSaveExternalServices = function(config, callback) {
         var appName = data[appType][nameProperty];
 
         // Ignore linking to the Neon Dashboard itself.
-        if(!(appName.toLowerCase().indexOf("neon") === 0)) {
+        if(appName.toLowerCase().indexOf("neon") !== 0) {
             neonServiceMappings.forEach(function(neonServiceMapping) {
                 var argsMappings = config.argsMappings[neonServiceMapping];
                 if(!argsMappings) {
@@ -534,7 +537,7 @@ var readLayoutFilesAndSaveLayouts = function($http, layouts, layoutFiles, callba
                 layouts[layoutConfig.name] = layoutConfig.layout;
             }
             readLayoutFilesAndSaveLayouts($http, layouts, layoutFiles, callback);
-        }, function(response) {
+        }, function() {
             readLayoutFilesAndSaveLayouts($http, layouts, layoutFiles, callback);
         });
     } else {
@@ -558,7 +561,7 @@ var readDatasetFilesAndSaveDatasets = function($http, datasets, datasetFiles, ca
                 datasets.push(datasetConfig.dataset);
             }
             readDatasetFilesAndSaveDatasets($http, datasets, datasetFiles, callback);
-        }, function(response) {
+        }, function() {
             readDatasetFilesAndSaveDatasets($http, datasets, datasetFiles, callback);
         });
     } else {

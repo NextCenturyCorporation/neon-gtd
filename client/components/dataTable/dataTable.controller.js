@@ -102,6 +102,8 @@ angular.module('neonDemo.controllers').controller('dataTableController', ['$scop
      * @private
      */
     var updateColumns = function() {
+        var OBJECT = "{...}";
+
         // Based on neon.helpers.getNestedValues
         var getCellText = function(data, fields) {
             var values = data[fields[0]];
@@ -111,7 +113,7 @@ angular.module('neonDemo.controllers').controller('dataTableController', ['$scop
                     if((_.isArray(item) || _.isObject(item)) && fields.length > 1) {
                         return getCellText(item, fields.slice(1));
                     }
-                    return _.isArray(item) ? item.join(",") : (_.isObject(item) ? "{...}" : item);
+                    return _.isArray(item) ? item.join(",") : (_.isObject(item) ? OBJECT : item);
                 })).join(",") + "]";
             }
 
@@ -119,7 +121,7 @@ angular.module('neonDemo.controllers').controller('dataTableController', ['$scop
                 return getCellText(values, fields.slice(1));
             }
 
-            return "" + values;
+            return _.isObject(values) ? OBJECT : ("" + values);
         };
 
         // Use the fields in the order they are defined in the Neon dashboard configuration (so we can't use sorted $scope.active.fields) for the order of the columns.
@@ -233,7 +235,7 @@ angular.module('neonDemo.controllers').controller('dataTableController', ['$scop
                     return query;
                 },
                 updateData: function(data) {
-                    $scope.active.total = data && data.length ? data[0].count : 0
+                    $scope.active.total = data && data.length ? data[0].count : 0;
                 }
             });
 

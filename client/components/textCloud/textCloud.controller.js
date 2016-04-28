@@ -62,7 +62,7 @@ angular.module('neonDemo.controllers').controller('textCloudController', ['$scop
 
     $scope.functions.areDataFieldsValid = function() {
         return $scope.functions.isFieldValid($scope.active.dataField);
-    }
+    };
 
     $scope.functions.addToQuery = function(query, unsharedFilterWhereClause) {
         var whereClause = neon.query.where($scope.active.dataField.columnName, "!=", null);
@@ -103,7 +103,6 @@ angular.module('neonDemo.controllers').controller('textCloudController', ['$scop
      */
     var updateTextStyle = function() {
         $timeout(function() {
-            var text = $scope.element.find('.text');
             $scope.element.find('.text').tagcloud();
         });
     };
@@ -258,7 +257,7 @@ angular.module('neonDemo.controllers').controller('textCloudController', ['$scop
         }
     };
 
-    $scope.functions.createExportDataObject = function(exportId, query) {
+    $scope.functions.createExportDataObject = function(exportId) {
         var finalObject = {
             name: "Text_Cloud",
             data: [{

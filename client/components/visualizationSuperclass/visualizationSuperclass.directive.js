@@ -42,7 +42,7 @@ angular.module('neonDemo.directives').directive('visualizationSuperclass', funct
             // Returns the angular directive link function.
             return function($scope, $element) {
                 $scope.element = $element.find(".visualization");
-            }
+            };
         },
         controller: "visualizationSuperclassController"
     };

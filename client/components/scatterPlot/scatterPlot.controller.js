@@ -235,14 +235,14 @@ angular.module('neonDemo.controllers').controller('scatterPlotController', ['$sc
             $scope.functions.removeNeonFilter();
         } else {
             $scope.functions.updateNeonFilter();
-        };
+        }
     };
 
     $scope.functions.getFilterFields = function() {
         return [$scope.active.xAxisField, $scope.active.yAxisField];
     };
 
-    $scope.functions.updateFilterValues = function(neonFilter) {
+    $scope.functions.updateFilterValues = function() {
         // TODO NEON-1939
     };
 

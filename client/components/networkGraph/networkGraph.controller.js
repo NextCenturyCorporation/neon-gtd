@@ -277,8 +277,8 @@ angular.module('neonDemo.controllers').controller('networkGraphController', ['$s
             // Reset runQuery on a response containing data (as opposed to a reset in which the data is null).
             $scope.runQuery = false;
         }
-
-        (data || []).forEach(function(item) {
+        var items = data || [];
+        _.each(items, function(item) {
             var nodeId = item[$scope.active.nodeField.columnName];
             if($scope.active.existingNodeIds.indexOf(nodeId) < 0) {
                 $scope.active.existingNodeIds.push(nodeId);
