@@ -16,9 +16,9 @@
                 <span class="glyphicon" ng-class="{true: 'glyphicon-chevron-up', false: 'glyphicon-chevron-down'}[document.showDetailsList]"></span>
                 Details
             </span>
-            <span class="toggle" ng-class="{true: 'selected', false: ''}[isFilterSetOnDocument(document)]" title="{{(isFilterSetOnDocument(document) ? 'Remove' : 'Add') + ' Filter on Full Document Text'}}" ng-click="toggleFilterOnDocument(document)">
+            <span class="toggle" ng-class="{true: 'selected', false: ''}[isFilterSetOnDocument(document)]" title="{{(isFilterSetOnDocument(document) ? 'Remove' : 'Add') + ' Filter on This Document Text'}}" ng-click="toggleFilterOnDocument(document)">
                 <span class="glyphicon glyphicon-filter"></span>
-                Filter on Document
+                Filter
             </span>
         </div>
 
@@ -41,7 +41,7 @@
                 <div ng-bind="detail.label"></div>
                 <div ng-repeat="value in detail.values">
                     <span ng-bind="value"></span>
-                    <span ng-bind="'(' + detail.valuesToNumbers[value] + ')'"></span>
+                    <span ng-bind="'(' + detail.valuesToCounts[value] + ')'"></span>
                 </div>
             </div>
         </div>

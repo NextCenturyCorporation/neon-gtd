@@ -347,16 +347,16 @@ angular.module('neonDemo.controllers').controller('documentViewerController', ['
             if(index < 0) {
                 // A detail object contains a label string (specific to the field), a mapping of distinct values to
                 // the count of records in which they occur, and a list of the distinct values.
-                document.detail.push({
+                document.details.push({
                     label: detail.label,
                     valuesToCounts: {},
                     values: []
                 });
-                index = document.detail.length - 1;
+                index = document.details.length - 1;
             }
-            document.detail[index].valuesToCounts[value] = (document.detail[index].valuesToCounts[value] || 0) + 1;
+            document.details[index].valuesToCounts[value] = (document.details[index].valuesToCounts[value] || 0) + 1;
             // Save the values from the values-to-counts mapping in another property so angular can iterate over them with ng-repeat.
-            document.detail[index].values = Object.keys(document.detail[index].valuesToCounts).sort();
+            document.details[index].values = Object.keys(document.details[index].valuesToCounts).sort();
         });
     };
 
