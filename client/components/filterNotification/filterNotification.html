@@ -1,4 +1,4 @@
-<div class="header-item filter-reset pull-right" ng-repeat="value in getData()">
+<div class="filter-reset pull-right" ng-repeat="value in getData()">
     <links-popup-button key="{{getLinksPopupKey(value)}}" json="{{getLinksPopupJson(value)}}" source="{{visualizationId}}" tooltip="{{value}}"
         is-disabled="{{isLinksPoupButtonDisabled}}"></links-popup-button>
     <span class="filter-label" title="{{getDesc(value)}}" ng-bind="getText(value)"></span>
