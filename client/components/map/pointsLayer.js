@@ -37,6 +37,7 @@ coreMap.Map.Layer.PointsLayer = OpenLayers.Class(OpenLayers.Layer.Vector, {
     table: '',
     latitudeMapping: '',
     longitudeMapping: '',
+    idMapping: '',
     sizeMapping: '',
     defaultColor: '',
     categoryMapping: '',

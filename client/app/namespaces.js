@@ -66,6 +66,7 @@ neonColors.DEFAULT = neonColors.GRAY;
 
 // Mappings used in the JSON configuration file.
 var neonMappings = neonMappings || {};
+neonMappings.ID = "id";
 neonMappings.DATE = "date";
 neonMappings.TAGS = "tags";
 neonMappings.URLS = "url";
