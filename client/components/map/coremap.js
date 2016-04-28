@@ -426,17 +426,20 @@ coreMap.Map.prototype.createSelectControl =  function(layer) {
 
             $(".olFramedCloudPopupContent td").linky(feature.layer.linkyConfig);
 
-            if(me.linksPopupService && feature.layer.linksSource) {
+            if(!feature.cluster && me.linksPopupService && feature.layer.linksSource) {
                 // Use the latitude and longitude values of the point itself as set by the layer during feature creation.
                 var key = me.linksPopupService.generatePointKey(feature.lat, feature.lon);
-                var tooltip = "latitude " + feature.lat + ", longitude " + feature.lon;
-                var link = me.linksPopupService.createLinkHtml(feature.layer.linksSource, key, tooltip);
 
-                // Position the button below the 'close box' which can have one of a few different 'top' values depending on the location of the point on the layer.
-                var topCss = $(".olPopupCloseBox").css("top");
-                topCss = Number(topCss.substring(0, topCss.length - 2)) + 25;
+                if(me.linksPopupService.hasLinks(feature.layer.linksSource, key)) {
+                    var tooltip = "latitude " + feature.lat + ", longitude " + feature.lon;
+                    var link = me.linksPopupService.createLinkHtml(feature.layer.linksSource, key, tooltip);
 
-                $("#" + me.elementId).find(".olPopupCloseBox").after("<div class='btn btn-default links-popup-button' style='top: " + topCss + "px;'>" + link + "</div>");
+                    // Position the button below the 'close box' which can have one of a few different 'top' values depending on the location of the point on the layer.
+                    var topCss = $(".olPopupCloseBox").css("top");
+                    topCss = Number(topCss.substring(0, topCss.length - 2)) + 25;
+
+                    $("#" + me.elementId).find(".olPopupCloseBox").after("<div class='btn btn-default links-popup-button' style='top: " + topCss + "px;'>" + link + "</div>");
+                }
             }
         };
 
