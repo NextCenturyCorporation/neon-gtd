@@ -927,7 +927,7 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
             // Fill our data into the appropriate interval buckets.
             var resultDate;
             for(i = 0; i < rawLength; i++) {
-                resultDate = new Date(data[i].year, (data[i].month || 1) - 1, data[i].day || 1, data[i].hour || 0);
+                resultDate = new Date(Date.UTC(data[i].year, (data[i].month || 1) - 1, data[i].day || 1, data[i].hour || 0));
                 var bucketIndex = $scope.bucketizer.getBucketIndex(resultDate);
                 if(queryData[bucketIndex]) {
                     queryData[bucketIndex].value += data[i].count;
