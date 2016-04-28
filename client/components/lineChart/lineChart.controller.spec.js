@@ -41,7 +41,107 @@ describe('Controller: lineChart', function() {
         $rootScope.$digest();
     }));
 
-    it('initializes correctly', function() {
+    it('initializes', function() {
+        expect(widgetContainer.find('.lineChartDirective').length).toBe(1);
+        expect(widgetContainer.find('.lineChartDirective').scope()).not.toBeUndefined();
         expect(widgetContainer.find('div.legend-details').length).toBe(1);
+    });
+
+    describe('legend', function() {
+        var scope;
+        var layerId = 'foo';
+
+        beforeEach(inject(function(_DatasetService_) {
+            var DatasetService = _DatasetService_;
+            DatasetService.setActiveDataset({
+                name: 'thedataset'
+            });
+
+            scope = widgetContainer.find('.lineChartDirective').scope();
+            scope.active.layers.push({
+                name: 'FOO',
+                id: layerId,
+                aggregationType: 'count',
+                dateField: {
+                    columnName: 'date',
+                    prettyName: 'date'
+                },
+                aggregationField: 'value',
+                groupField: {
+                    columnName: 'cat',
+                    prettyName: 'cat'
+                },
+                database: {
+                    name: 'thedatabase'
+                },
+                table: {
+                    name: 'thetable'
+                }
+            });
+        }));
+
+        it('creates labels', function() {
+            var layers = [{
+                id: layerId
+            }];
+            var data = [
+                {
+                    date: "2014-04-01T00:01:00Z",
+                    month: 4,
+                    day: 1,
+                    year: 2014,
+                    cat: "Category One",
+                    value: 9
+                },
+                {
+                    date: "2014-04-01T00:01:00Z",
+                    month: 4,
+                    day: 1,
+                    year: 2014,
+                    cat: "Category Two",
+                    value: 42
+                }
+            ];
+            scope.$apply(function() {
+                scope.functions.updateData(data, layers);
+                scope.functions.onDoneQueryAndUpdate(data, layers);
+            });
+
+            // The legend should include the label text
+            expect(widgetContainer.find('.legend-details').text()).toContain(data[0].cat);
+            expect(widgetContainer.find('.legend-details').text()).toContain(data[1].cat);
+        });
+
+        it('escapes HTML in labels', function() {
+            var layers = [{
+                id: layerId
+            }];
+            var data = [
+                {
+                    date: "2014-04-01T00:01:00Z",
+                    month: 4,
+                    day: 1,
+                    year: 2014,
+                    cat: "<b>BOLD</b>",
+                    value: 9
+                },
+                {
+                    date: "2014-04-01T00:01:00Z",
+                    month: 4,
+                    day: 1,
+                    year: 2014,
+                    cat: "This & That",
+                    value: 42
+                }
+            ];
+            scope.$apply(function() {
+                scope.functions.updateData(data, layers);
+                scope.functions.onDoneQueryAndUpdate(data, layers);
+            });
+
+            // Check html() because text() will unescape the characters
+            expect(widgetContainer.find('.legend-details').html()).toContain(_.escape(data[0].cat));
+            expect(widgetContainer.find('.legend-details').html()).toContain(_.escape(data[1].cat));
+        });
     });
 });

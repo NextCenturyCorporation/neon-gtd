@@ -78,3 +78,11 @@ neonDemo.filter("reverse", function() {
         return items ? items.slice().reverse() : items;
     };
 });
+
+// Create dummy logger
+var XDATA = {
+    userALE: {
+        log: function() {
+        }
+    }
+};
