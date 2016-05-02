@@ -1,11 +1,10 @@
 <div class="legend-display">
-    <label ng-show="active.legend.length" ng-bind="'Legend (Click to Toggle Filter):'"></label>
     <label ng-show="!active.legend.length" ng-bind="'No legend defined in the dashboard configuration file for the chosen table.'"></label>
     <ul>
-        <li ng-repeat="item in active.legend">
+        <li ng-if="!!item.field" ng-repeat="item in active.legend">
             <label class="item" ng-class="{true: 'filtered', false: ''}[item.on]" ng-bind="item.label" title="{{'Toggle Filter on ' + item.label}}" ng-click="addOrRemoveFilter(item)"></label>
-            <ul>
-                <li ng-repeat="type in item.types">
+            <ul class="padded-list">
+                <li ng-if="!!type.field" ng-repeat="type in item.types">
                     <label class="type" ng-class="{true: 'filtered', false: ''}[type.on]" ng-bind="type.label" title="{{'Toggle Filter on ' + type.label + ' ' + item.label}}" ng-click="addOrRemoveFilter(type)"></label>
                 </li>
             </ul>

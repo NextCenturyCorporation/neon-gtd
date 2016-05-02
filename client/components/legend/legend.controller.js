@@ -69,11 +69,18 @@ angular.module('neonDemo.controllers').controller('legendController', ['$scope',
 
     $scope.functions.updateFilterValues = function(neonFilter) {
         var filters = {};
+        var addFilter = function(whereClause) {
+            filters[whereClause.lhs] = {
+                operator: whereClause.operator,
+                value: whereClause.rhs
+            };
+        };
+
         if($scope.functions.getNumberOfFilterClauses(neonFilter) === 1) {
-            filters[neonFilter.filter.whereClause.lhs] = neonFilter.filter.whereClause.rhs;
+            addFilter(neonFilter.filter.whereClause);
         } else {
             neonFilter.filter.whereClause.whereClauses.forEach(function(whereClause) {
-                filters[whereClause.lhs] = whereClause.rhs;
+                addFilter(whereClause);
             });
         }
 
@@ -81,7 +88,8 @@ angular.module('neonDemo.controllers').controller('legendController', ['$scope',
             $scope.active.legend.forEach(function(item) {
                 item.on = (filters[item.field] !== undefined);
                 item.types.forEach(function(type) {
-                    type.on = (filters[item.field + "." + type.field] !== undefined && filters[item.field + "." + type.field] === type.value);
+                    type.on = (filters[item.field + "." + type.field] !== undefined && filters[item.field + "." + type.field].operator === type.operator &&
+                        filters[item.field + "." + type.field].value === type.value);
                 });
             });
         }
@@ -111,9 +119,7 @@ angular.module('neonDemo.controllers').controller('legendController', ['$scope',
             $scope.functions.updateNeonFilter({
                 fields: [itemOrType.fieldObject],
                 createNeonFilterClause: function(databaseAndTableName, fieldName) {
-                    // If the object is a type of legend item, it will have a value; the filter clause must test that the field is equal to that value.
-                    // If the object is a legend item, it will not have a value; the filter clause must test that the field is not null.
-                    return neon.query.where(fieldName, itemOrType.value ? "=" : "!=", itemOrType.value || null);
+                    return neon.query.where(fieldName, itemOrType.operator, itemOrType.value);
                 }
             });
         } else {
