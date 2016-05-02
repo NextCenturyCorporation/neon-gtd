@@ -386,6 +386,49 @@
         }]
     },
 
+    "legends": {
+        "test": {
+            "earthquakes": [{
+                "label": "Earthquake",
+                "field": "type",
+                "value": "earthquake"
+            }, {
+                "label": "Explosion",
+                "field": "type",
+                "value": "explosion"
+            }, {
+                "label": "Landslide",
+                "field": "type",
+                "value": "landslide"
+            }, {
+                "label": "Mining Explosion",
+                "field": "type",
+                "value": "mining_explosion"
+            }, {
+                "label": "Quarry",
+                "field": "type",
+                "value": "quarry"
+            }, {
+                "label": "Quarry Blast",
+                "field": "type",
+                "value": "quarry_blast"
+            }, {
+                "label": "Sonicboom",
+                "field": "type",
+                "value": "sonicboom"
+            }],
+            "myTable": [{
+                "label": "My Object",
+                "field": "myObject",
+                "types": [{
+                    "label": "My Object Field",
+                    "field": "myObjectField",
+                    "value": "myValue"
+                }]
+            }]
+        }
+    },
+
     "files": {
         "datasets": [
             "./app/config/sample.dataset.config.json"
