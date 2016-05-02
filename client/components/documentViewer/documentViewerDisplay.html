@@ -3,7 +3,7 @@
         <div>
             <!-- Either show the document text as a single element or, if populated, each part in the list of parts as its own element. -->
             <span ng-show="!document.parts.length" ng-bind="document.text"></span>
-            <span ng-repeat="part in document.parts" title="{{part.desc}}" ng-bind="part.text" ng-click="handleSelectAnnotation(part)"
+            <span ng-repeat="part in document.parts" title="{{part.desc}}" ng-bind="part.text" ng-style="{'background-color':part.highlightColor}" ng-click="handleSelectAnnotation(part)"
                 ng-class="part.mentions.length > 0 ? (filter.text === part.text ? 'annotation selected' : 'annotation') : ''"></span>
         </div>
 
@@ -29,6 +29,7 @@
                 <span ng-bind="annotation.label"></span>
                 <div class="indent" ng-repeat="type in annotation.types">
                     <input type="checkbox" ng-model="type.shown" ng-change="toggleShowAnnotationType(document)">
+                    <span class="highlight-color" ng-style="{'background-color':type.color}"></span>
                     <span ng-bind="type.label"></span>
                 </div>
             </div>

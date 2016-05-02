@@ -39,6 +39,22 @@ angular.module('neonDemo.controllers').controller('documentViewerController', ['
     // This visualization will escape the text data itself before the text is shown.
     $scope.active.escapeData = false;
 
+    // Annotation highlight colors.
+    var HIGHLIGHT_COLORS = [
+        neonColors.LIGHT_GREEN,
+        neonColors.LIGHT_RED,
+        neonColors.LIGHT_BLUE,
+        neonColors.LIGHT_ORANGE,
+        neonColors.LIGHT_PURPLE,
+        neonColors.LIGHT_BROWN,
+        neonColors.LIGHT_PINK,
+        neonColors.LIGHT_GRAY,
+        neonColors.LIGHT_YELLOW,
+        neonColors.LIGHT_CYAN
+    ];
+    var DEFAULT_HIGHLIGHT_COLOR = neonColors.LIGHT_GREEN;
+    var OTHER_HIGHLIGHT_COLOR = neonColors.LIGHT_GRAY;
+
     $scope.functions.onUpdateFields = function() {
         $scope.active.documentTextField = $scope.functions.findFieldObject("documentTextField");
         updateAnnotationDatabase();
@@ -287,21 +303,32 @@ angular.module('neonDemo.controllers').controller('documentViewerController', ['
                 var type = types.length > i ? types[i] : (types.length === 1 ? types[0] : "");
 
                 // Add this type to the list of types for this annotation in the list of annotations of this document.
+                var annotationTypeIndex;
                 if(type && annotationIndex >= 0) {
-                    addAnnotationTypeToDocumentAnnotation(type, document.annotations[annotationIndex]);
+                    annotationTypeIndex = addAnnotationTypeToDocumentAnnotation(type, document.annotations[annotationIndex]);
                 }
 
                 if(start < end && document.letters.length > Math.max(start, end)) {
-                    // A mention object contains an annotation label string, an annotation field object, the text for this mention taken
-                    // from the document text, the type for this mention, and the index at which the mention ends.
+                    // A mention object contains an annotation label string, an annotation field object, the highlight color for this mention based on the type
+                    // of annotation, the text for this mention taken from the document text, the type for this mention, and the index at which the mention ends.
                     document.letters[start].mentions.push({
                         label: annotation.label,
                         field: $scope.functions.isFieldValid(annotation.textField) ? annotation.textField : $scope.active.documentTextField,
+                        color: DEFAULT_HIGHLIGHT_COLOR,
                         text: text,
                         type: type,
                         end: end
                     });
                 }
+            }
+
+            if(annotationIndex >= 0) {
+                // Sort the annotation types alphabetically.
+                document.annotations[annotationIndex].types.sort(function(a, b) {
+                    return a.label < b.label ? -1 : (a.label > b.label ? 1 : 0);
+                });
+
+                updateDocumentAnnotationColors(annotation.typeField, document.annotations[annotationIndex], document.letters);
             }
         });
     };
@@ -331,12 +358,46 @@ angular.module('neonDemo.controllers').controller('documentViewerController', ['
         if(index < 0) {
             annotation.types.push({
                 label: type,
-                shown: true
+                shown: true,
+                color: _.isEmpty(annotation.colors) ? DEFAULT_HIGHLIGHT_COLOR : (annotation.colors[type] || OTHER_HIGHLIGHT_COLOR)
             });
         }
 
         return index;
     };
+
+    var updateDocumentAnnotationColors = function(typeField, annotation, letters) {
+        // After all annotation types have been added, update the colors of the annotation types.
+        var typesToHighlightColors = {};
+
+        // Get any color mappings defined in the dashboard configuration file for this annotation.
+        var colors = $scope.functions.isFieldValid(typeField) ? $scope.functions.getColorMaps(typeField.columnName) : undefined;
+
+        // Use the color mappings for this annotation if they were defined.
+        if(!_.isEmpty(colors)) {
+            annotation.types.forEach(function(type) {
+                type.color = colors[type.label] || OTHER_HIGHLIGHT_COLOR;
+                typesToHighlightColors[type.label] = type.color;
+            });
+        }
+
+        // Use the default highlight color palette if no color mappings were defined.
+        if(_.isEmpty(colors) && annotation.types.length <= HIGHLIGHT_COLORS.length) {
+            annotation.types.forEach(function(type, index) {
+                type.color = HIGHLIGHT_COLORS[index];
+                typesToHighlightColors[type.label] = type.color;
+            });
+        }
+
+        // Update the highlight colors for the annotation mentions.
+        if(Object.keys(typesToHighlightColors).length) {
+            letters.forEach(function(letter) {
+                letter.mentions.forEach(function(mention) {
+                    mention.color = typesToHighlightColors[mention.type];
+                });
+            });
+        }
+    }
 
     var saveDetails = function(dataItem, document) {
         getValidDetails().forEach(function(detail) {
@@ -365,6 +426,7 @@ angular.module('neonDemo.controllers').controller('documentViewerController', ['
 
         var endIndex;
         var partText = "";
+        var partHighlightColor = undefined;
         var partMentions = [];
         var addPart = function() {
             if(partText) {
@@ -374,9 +436,11 @@ angular.module('neonDemo.controllers').controller('documentViewerController', ['
                     desc: partMentions.map(function(partMention) {
                         return (partMention.text || partText) + " (" + partMention.label + (partMention.type ? " " + partMention.type : "") + ")";
                     }).join(", "),
+                    highlightColor: partHighlightColor,
                     mentions: partMentions
                 });
                 partText = "";
+                partHighlightColor = undefined;
                 // Always create a reference to a new (empty) list.
                 partMentions = [];
             }
@@ -411,6 +475,8 @@ angular.module('neonDemo.controllers').controller('documentViewerController', ['
                     });
                     if(index < 0) {
                         partMentions.push(mention);
+                        // If this part is already using a different highlight color, use the "other" highlight color instead; otherwise use the highlight color for this mention.
+                        partHighlightColor = partHighlightColor ? (partHighlightColor === mention.color ? partHighlightColor : OTHER_HIGHLIGHT_COLOR) : mention.color;
                     }
                 });
             } else {
