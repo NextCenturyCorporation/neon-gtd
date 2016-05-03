@@ -140,7 +140,8 @@ angular.module('neonDemo.controllers').controller('documentViewerController', ['
                 // A document object contains a text string, a count, a list of letter objects, a list of part objects (both annotations and
                 // non-annotations) that form the full annotated text, and a list of detail objects.
                 var document = {
-                    text: findDocumentText(item),
+                    raw: findDocumentRawText(item),
+                    content: findDocumentContent(item),
                     count: item.count,
                     annotations: [],
                     details: [],
@@ -148,7 +149,7 @@ angular.module('neonDemo.controllers').controller('documentViewerController', ['
                     parts: []
                 };
 
-                document.text.split('').forEach(function(letter) {
+                document.content.split('').forEach(function(letter) {
                     // A letter object contains a letter and a list of annotation objects (different from $scope.active.annotations).
                     document.letters.push({
                         letter: letter,
@@ -163,9 +164,14 @@ angular.module('neonDemo.controllers').controller('documentViewerController', ['
         }
     };
 
-    var findDocumentText = function(item) {
-        // If the document text field contains an array, arbitrarily join the elements of the array to create the text.
+    var findDocumentRawText = function(item) {
         var text = neon.helpers.getNestedValues(item, $scope.active.documentTextField.columnName);
+        return text.length > 1 ? text : text[0];
+    };
+
+    var findDocumentContent = function(item) {
+        var text = neon.helpers.getNestedValues(item, $scope.active.documentTextField.columnName);
+        // If the document text field contains an array, arbitrarily join the elements of the array to create the text.
         return text.length > 1 ? text.join('') : text[0];
     };
 
@@ -197,8 +203,14 @@ angular.module('neonDemo.controllers').controller('documentViewerController', ['
             return neon.query.and(neon.query.where(annotation.startField.columnName, "!=", null), neon.query.where(annotation.endField.columnName, "!=", null));
         });
 
-        var whereClause = (filterClauses.length > 1 ? neon.query.or.apply(neon.query, filterClauses) : filterClauses[0]);
-        query.where(unsharedFilterWhereClause ? neon.query.and(whereClause, unsharedFilterWhereClause) : whereClause);
+        var documentClauses = $scope.active.documents.map(function(document) {
+            return neon.query.where($scope.active.documentTextField.columnName, "=", document.raw);
+        });
+
+        var filterWhereClause = (filterClauses.length > 1 ? neon.query.or.apply(neon.query, filterClauses) : filterClauses[0]);
+        var documentWhereClause = (documentClauses.length > 1 ? neon.query.or.apply(neon.query, documentClauses) : documentClauses[0]);
+        query.where(unsharedFilterWhereClause ? neon.query.and(filterWhereClause, documentWhereClause, unsharedFilterWhereClause) :
+                neon.query.and(filterWhereClause, documentWhereClause));
 
         var fields = $scope.active.annotationsInAnotherTable ? [$scope.active.documentIdFieldInAnnotationTable.columnName] : [$scope.active.documentTextField.columnName];
         annotations.forEach(function(annotation) {
@@ -276,9 +288,9 @@ angular.module('neonDemo.controllers').controller('documentViewerController', ['
         if($scope.active.annotationsInAnotherTable) {
             // TODO Handle coreferencing documents and annotations in different tables.
         } else {
-            var text = findDocumentText(dataItem);
+            var text = findDocumentContent(dataItem);
             document = _.find($scope.active.documents, function(document) {
-                return document.text === text;
+                return document.content === text;
             });
         }
         return document;
@@ -694,9 +706,9 @@ angular.module('neonDemo.controllers').controller('documentViewerController', ['
                 data: [{
                     field: $scope.active.documentTextField,
                     operator: "=",
-                    value: document.text
+                    value: document.content
                 }],
-                text: document.text
+                text: document.content
             };
             $scope.functions.updateNeonFilter();
         }
@@ -704,7 +716,7 @@ angular.module('neonDemo.controllers').controller('documentViewerController', ['
 
     $scope.isFilterSetOnDocument = function(document) {
         return $scope.filter && $scope.filter.data.length === 1 && $scope.filter.data[0].field === $scope.active.documentTextField && $scope.filter.data[0].operator === "=" &&
-            $scope.filter.data[0].value === document.text;
+            $scope.filter.data[0].value === document.content;
     };
 
     $scope.toggleShowAnnotation = function(document, annotation) {

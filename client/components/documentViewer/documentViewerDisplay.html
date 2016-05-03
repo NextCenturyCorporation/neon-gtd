@@ -1,8 +1,8 @@
 <div class="document-list">
     <div class="document" ng-repeat="document in active.documents">
         <div>
-            <!-- Either show the document text as a single element or, if populated, each part in the list of parts as its own element. -->
-            <span ng-show="!document.parts.length" ng-bind="document.text"></span>
+            <!-- Either show the document content as a single element or, if populated, each part in the list of document parts as its own element. -->
+            <span ng-show="!document.parts.length" ng-bind="document.content"></span>
             <span ng-repeat="part in document.parts" title="{{part.desc}}" ng-bind="part.text" ng-style="{'background-color':part.highlightColor}" ng-click="handleSelectAnnotation(part)"
                 ng-class="part.mentions.length > 0 ? (filter.text === part.text ? 'annotation selected' : 'annotation') : ''"></span>
         </div>
