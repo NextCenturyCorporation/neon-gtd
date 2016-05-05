@@ -427,35 +427,35 @@ angular.module('neonDemo.controllers').controller('networkGraphController', ['$s
     };
 
     $scope.handleChangeNameField = function() {
-        $scope.functions.logChangeAndUpdate("nameField", $scope.active.nameField.columnName);
+        $scope.functions.logChangeAndUpdate("nameField", $scope.active.nameField ? $scope.active.nameField.columnName : undefined);
     };
 
     $scope.handleChangeSizeField = function() {
-        $scope.functions.logChangeAndUpdate("sizeField", $scope.active.sizeField.columnName);
+        $scope.functions.logChangeAndUpdate("sizeField", $scope.active.sizeField ? $scope.active.sizeField.columnName : undefined);
     };
 
     $scope.handleChangeLinkedNodeField = function() {
-        $scope.functions.logChangeAndUpdate("linkedNodeField", $scope.active.linkedNodeField.columnName);
+        $scope.functions.logChangeAndUpdate("linkedNodeField", $scope.active.linkedNodeField ? $scope.active.linkedNodeField.columnName : undefined);
     };
 
     $scope.handleChangeLinkedNameField = function() {
-        $scope.functions.logChangeAndUpdate("linkedNameField", $scope.active.linkedNameField.columnName);
+        $scope.functions.logChangeAndUpdate("linkedNameField", $scope.active.linkedNameField ? $scope.active.linkedNameField.columnName : undefined);
     };
 
     $scope.handleChangeLinkedSizeField = function() {
-        $scope.functions.logChangeAndUpdate("linkedSizeField", $scope.active.linkedSizeField.columnName);
+        $scope.functions.logChangeAndUpdate("linkedSizeField", $scope.active.linkedSizeField ? $scope.active.linkedSizeField.columnName : undefined);
     };
 
     $scope.handleChangeDateField = function() {
-        $scope.functions.logChangeAndUpdate("dateField", $scope.active.dateField.columnName);
+        $scope.functions.logChangeAndUpdate("dateField", $scope.active.dateField ? $scope.active.dateField.columnName : undefined);
     };
 
     $scope.handleChangeFlagField = function() {
-        $scope.functions.logChangeAndUpdate("flagField", $scope.active.flagField.columnName);
+        $scope.functions.logChangeAndUpdate("flagField", $scope.active.flagField ? $scope.active.flagField.columnName : undefined);
     };
 
     $scope.handleChangeTextField = function() {
-        $scope.functions.logChangeAndUpdate("textField", $scope.active.textField.columnName);
+        $scope.functions.logChangeAndUpdate("textField", $scope.active.textField ? $scope.active.textField.columnName : undefined);
     };
 
     $scope.handleChangeLimit = function() {
@@ -487,7 +487,7 @@ angular.module('neonDemo.controllers').controller('networkGraphController', ['$s
                 query: $scope.active.linkedNodeField.columnName,
                 pretty: $scope.active.linkedNodeField.prettyName
             }];
-            query.groupBy($scope.active.nodeField.columnName, $scope.active.linkedNodeField);
+            query.groupBy($scope.active.nodeField.columnName, $scope.active.linkedNodeField.columnName);
         } else if($scope.functions.isFieldValid($scope.active.nodeField)) {
             fields = [{
                 query: $scope.active.nodeField.columnName,
@@ -520,15 +520,15 @@ angular.module('neonDemo.controllers').controller('networkGraphController', ['$s
     $scope.functions.addToBindings = function(bindings) {
         bindings.feedName = $scope.bindFeedName ? $scope.bindFeedName : undefined;
         bindings.feedType = $scope.bindFeedType ? $scope.bindFeedType : undefined;
-        bindings.nodeField = $scope.functions.isFieldValid($scope.active.nodeField) ? $scope.active.nodeField : undefined;
-        bindings.nameField = $scope.functions.isFieldValid($scope.active.nameField) ? $scope.active.nameField : undefined;
-        bindings.sizeField = $scope.functions.isFieldValid($scope.active.sizeField) ? $scope.active.sizeField : undefined;
-        bindings.dateField = $scope.functions.isFieldValid($scope.active.dateField) ? $scope.active.dateField : undefined;
-        bindings.flagField = $scope.functions.isFieldValid($scope.active.flagField) ? $scope.active.flagField : undefined;
-        bindings.textField = $scope.functions.isFieldValid($scope.active.textField) ? $scope.active.textField : undefined;
-        bindings.linkedNodeField = $scope.functions.isFieldValid($scope.active.linkedNodeField) ? $scope.active.linkedNodeField : undefined;
-        bindings.linkedNameField = $scope.functions.isFieldValid($scope.active.linkedNameField) ? $scope.active.linkedNameField : undefined;
-        bindings.linkedSizeField = $scope.functions.isFieldValid($scope.active.linkedSizeField) ? $scope.active.linkedSizeField : undefined;
+        bindings.nodeField = $scope.functions.isFieldValid($scope.active.nodeField) ? $scope.active.nodeField.columnName : undefined;
+        bindings.nameField = $scope.functions.isFieldValid($scope.active.nameField) ? $scope.active.nameField.columnName : undefined;
+        bindings.sizeField = $scope.functions.isFieldValid($scope.active.sizeField) ? $scope.active.sizeField.columnName : undefined;
+        bindings.dateField = $scope.functions.isFieldValid($scope.active.dateField) ? $scope.active.dateField.columnName : undefined;
+        bindings.flagField = $scope.functions.isFieldValid($scope.active.flagField) ? $scope.active.flagField.columnName : undefined;
+        bindings.textField = $scope.functions.isFieldValid($scope.active.textField) ? $scope.active.textField.columnName : undefined;
+        bindings.linkedNodeField = $scope.functions.isFieldValid($scope.active.linkedNodeField) ? $scope.active.linkedNodeField.columnName : undefined;
+        bindings.linkedNameField = $scope.functions.isFieldValid($scope.active.linkedNameField) ? $scope.active.linkedNameField.columnName : undefined;
+        bindings.linkedSizeField = $scope.functions.isFieldValid($scope.active.linkedSizeField) ? $scope.active.linkedSizeField.columnName : undefined;
         bindings.flagMode = $scope.active.flagMode || undefined;
         bindings.tooltipIdLabel = $scope.tooltip.idLabel || undefined;
         bindings.tooltipDataLabel = $scope.tooltip.dataLabel || undefined;

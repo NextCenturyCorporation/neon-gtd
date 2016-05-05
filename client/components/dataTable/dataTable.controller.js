@@ -336,7 +336,7 @@ angular.module('neonDemo.controllers').controller('dataTableController', ['$scop
 
     $scope.handleChangeSortField = function() {
         updateSort();
-        $scope.functions.logChangeAndUpdate("sortField", $scope.active.sortByField.name);
+        $scope.functions.logChangeAndUpdate("sortField", $scope.active.sortByField.columnName);
     };
 
     $scope.handleChangeSortDirection = function() {

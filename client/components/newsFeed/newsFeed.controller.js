@@ -455,19 +455,19 @@ angular.module('neonDemo.controllers').controller('newsFeedController', ['$scope
     };
 
     $scope.handleChangePrimaryTitleField = function() {
-        $scope.functions.logChangeAndUpdate("primaryTitleField", $scope.active.primaryTitleField);
+        $scope.functions.logChangeAndUpdate("primaryTitleField", $scope.active.primaryTitleField ? $scope.active.primaryTitleField.columnName : undefined);
     };
 
     $scope.handleChangeSecondaryTitleField = function() {
-        $scope.functions.logChangeAndUpdate("secondaryTitleField", $scope.active.secondaryTitleField);
+        $scope.functions.logChangeAndUpdate("secondaryTitleField", $scope.active.secondaryTitleField ? $scope.active.secondaryTitleField.columnName : undefined);
     };
 
     $scope.handleChangeDateField = function() {
-        $scope.functions.logChangeAndUpdate("dateField", $scope.active.dateField);
+        $scope.functions.logChangeAndUpdate("dateField", $scope.active.dateField.columnName);
     };
 
     $scope.handleChangeContentField = function() {
-        $scope.functions.logChangeAndUpdate("contentField", $scope.active.contentField);
+        $scope.functions.logChangeAndUpdate("contentField", $scope.active.contentField.columnName);
     };
 
     /**
