@@ -233,6 +233,8 @@ angular.module('neonDemo.filters', [])
 
 var XDATA = {};
 
+var VISUALIZATIONS = neonVisualizations || [];
+
 // Start angular once all of the configuration variables have been read from the JSON file(s) and set in the module.
 var startAngular = function() {
     angular.bootstrap(document, ['neonDemo'], {
@@ -319,30 +321,30 @@ var saveDashboards = function(config) {
         });
     }
 
-    var visualizations = neonVisualizations || [];
     (config.visualizations || []).forEach(function(visualization) {
-        var index = _.findIndex(visualizations, {
+        var index = _.findIndex(VISUALIZATIONS, {
             type: visualization.type
         });
         if(index < 0) {
-            visualizations.push(visualization);
+            VISUALIZATIONS.push(visualization);
         } else if(visualization.exclude) {
-            visualizations.splice(index, 1);
+            VISUALIZATIONS.splice(index, 1);
         } else {
-            visualizations[index] = visualization;
+            VISUALIZATIONS[index] = visualization;
         }
     });
 
-    // Most visualizations should have a minimum size of about 300px square to have space for their UI elements.
-    // TODO Use the browser width to determine the minimum size for visualizations and update it on browser resize.
-    visualizations.forEach(function(visualization) {
-        visualization.sizeX = visualization.sizeX || Math.floor(dashboardConfig.gridsterColumns * visualization.minSizePercentageX);
-        visualization.sizeY = visualization.sizeY || Math.floor(dashboardConfig.gridsterColumns * visualization.minSizePercentageY);
-        visualization.minSizeX = Math.floor(dashboardConfig.gridsterColumns * visualization.minSizePercentageX);
-        visualization.minSizeY = Math.floor(dashboardConfig.gridsterColumns * visualization.minSizePercentageY);
+    // Note that minimum sizes of visualizations will be updated automatically in the main controller whenever gridster is resized or new visualizations are added to the layout.
+    VISUALIZATIONS.forEach(function(visualization) {
+        visualization.sizeX = visualization.sizeX || Math.floor(dashboardConfig.gridsterColumns * 0.25);
+        visualization.sizeY = visualization.sizeY || Math.floor(dashboardConfig.gridsterColumns * 0.20);
+        visualization.minPixelX = visualization.minPixelX || neonVisualizationMinPixelX;
+        visualization.minPixelY = visualization.minPixelY || neonVisualizationMinPixelY;
+        visualization.minSizeX = 1;
+        visualization.minSizeY = 1;
     });
 
-    neonDemo.constant('visualizations', visualizations);
+    neonDemo.constant('visualizations', VISUALIZATIONS);
 };
 
 var createExternalService = function(args, argsMappings) {
@@ -525,6 +527,20 @@ var readAndSaveExternalServices = function(config, callback) {
 };
 
 var saveLayouts = function(layouts) {
+    Object.keys(layouts).forEach(function(layout) {
+        layouts[layout].forEach(function(visualization) {
+            var visualizationConfig = _.find(VISUALIZATIONS, function(visualizationConfig) {
+                return visualizationConfig.type === visualization.type;
+            });
+            visualization.sizeX = visualization.sizeX || visualizationConfig.sizeX;
+            visualization.sizeY = visualization.sizeY || visualizationConfig.sizeY;
+            visualization.minSizeX = visualization.minSizeX || visualizationConfig.minSizeX;
+            visualization.minSizeY = visualization.minSizeY || visualizationConfig.minSizeY;
+            visualization.minPixelX = visualization.minPixelX || visualizationConfig.minPixelX;
+            visualization.minPixelY = visualization.minPixelY || visualizationConfig.minPixelY;
+        });
+    });
+
     neonDemo.constant('layouts', layouts);
 };
 

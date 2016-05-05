@@ -290,4 +290,34 @@ function($scope, $timeout, $location, config, datasets, themeService, connection
     $('.select-theme').click(function(e) {
         e.stopPropagation();
     });
+
+    // Update the minimum sizes of the visualizations based on the size of gridster in order to avoid unwanted styling and UX due to very small visualizations.
+    // Note that changing the minimum sizes of the visualizations may cause reordering of the gridster layout.
+    var updateVisualizationMinSizes = function() {
+        var gridsterWidth = $("#gridster-div").width();
+        var gridsterPixelsPerUnit = gridsterWidth / config.gridsterColumns;
+        $scope.visualizations.forEach(function(visualization) {
+            var minSizeX = 1;
+            var visualizationMinWidth = minSizeX * gridsterPixelsPerUnit;
+            while(visualizationMinWidth < (visualization.minPixelX)) {
+                visualizationMinWidth = ++minSizeX * gridsterPixelsPerUnit;
+            }
+            visualization.minSizeX = minSizeX;
+
+            var minSizeY = 1;
+            var visualizationMinHeight = minSizeY * gridsterPixelsPerUnit;
+            while(visualizationMinHeight < (visualization.minPixelY)) {
+                visualizationMinHeight = ++minSizeY * gridsterPixelsPerUnit;
+            }
+            visualization.minSizeY = minSizeY;
+        });
+    };
+
+    $scope.$watch("visualizations", function() {
+        updateVisualizationMinSizes();
+    })
+
+    $scope.$on('gridster-resized', function() {
+        updateVisualizationMinSizes();
+    })
 }]);

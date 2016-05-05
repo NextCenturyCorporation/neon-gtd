@@ -365,92 +365,75 @@ neonWizard.visualizationBindings["timeline-selector"] = [
                 prettyName: "Hour"
             }
         ]
-
     }
 ];
 
+var neonVisualizationMinPixelX = 320;
+var neonVisualizationMinPixelY = 240;
+
 var neonVisualizations = [{   // jshint ignore:line
     name: "Aggregation Table",
-    minSizePercentageX: 0.25,
-    minSizePercentageY: 0.20,
     type: "aggregationTable",
     icon: "Count64"
 }, {
     name: "Bar Chart",
-    minSizePercentageX: 0.25,
-    minSizePercentageY: 0.20,
     type: "barChart",
     icon: "BarChart64"
 }, {
     name: "Data Table",
-    minSizePercentageX: 0.25,
-    minSizePercentageY: 0.20,
     type: "dataTable",
     icon: "ViewData64"
 }, {
+    name: "Document Viewer",
+    type: "documentViewer",
+    icon: "DocumentViewer64"
+}, {
+    minPixelX: 480,
     name: "Filter Builder",
-    minSizePercentageX: 0.50,
-    minSizePercentageY: 0.20,
     type: "filterBuilder",
     icon: "CreateFilter64"
 }, {
     name: "Gantt Chart",
-    minSizePercentageX: 0.25,
-    minSizePercentageY: 0.20,
     type: "ganttChart",
     icon: "Gantt64"
 }, {
+    name: "Legend",
+    type: "legend",
+    icon: "Legend64"
+}, {
     name: "Line Chart",
-    minSizePercentageX: 0.25,
-    minSizePercentageY: 0.20,
     type: "lineChart",
     icon: "LineChart64"
 }, {
     name: "Map",
-    minSizePercentageX: 0.25,
-    minSizePercentageY: 0.20,
     type: "map",
     icon: "Map64"
 }, {
     name: "Network Graph",
-    minSizePercentageX: 0.25,
-    minSizePercentageY: 0.20,
     type: "networkGraph",
     icon: "Graph64"
 }, {
     name: "Newsfeed",
-    minSizePercentageX: 0.25,
-    minSizePercentageY: 0.20,
     type: "newsFeed",
     icon: "News64"
 }, {
     name: "Ops Clock",
-    minSizePercentageX: 0.25,
-    minSizePercentageY: 0.20,
     type: "opsClock",
     icon: "OpsClock64"
 }, {
     name: "Scatter Plot",
-    minSizePercentageX: 0.25,
-    minSizePercentageY: 0.20,
     type: "scatterPlot",
     icon: "ScatterPlot64"
 }, {
     name: "Sunburst Chart",
-    minSizePercentageX: 0.25,
-    minSizePercentageY: 0.20,
     type: "sunburstChart",
     icon: "Sunburst64"
 }, {
     name: "Text Cloud",
-    minSizePercentageX: 0.25,
-    minSizePercentageY: 0.20,
     type: "textCloud",
     icon: "TagCloud64"
 }, {
     name: "Timeline",
-    minSizePercentageX: 0.25,
-    minSizePercentageY: 0.20,
     type: "timeline",
     icon: "Timeline64"
 }];
