@@ -1049,7 +1049,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
     var resizeTitle = function() {
         // Set the width of the title to the width of this visualization minus the width of the options button/text and margin/padding.
         var titleWidth = $scope.element.width() - $scope.element.find(".options-menu").outerWidth(true) - 20;
-        $scope.element.find(".header").css("maxWidth", Math.max(0, titleWidth));
+        $scope.element.find(".header").css("max-width", Math.max(0, titleWidth));
     };
 
     /**

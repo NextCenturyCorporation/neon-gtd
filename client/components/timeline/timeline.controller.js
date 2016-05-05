@@ -22,7 +22,7 @@
  * @class timelineController
  * @constructor
  */
-angular.module('neonDemo.controllers').controller('timelineController', ['$scope', '$interval', '$filter', 'opencpu', function($scope, $interval, $filter, opencpu) {
+angular.module('neonDemo.controllers').controller('timelineController', ['$scope', '$timeout', '$interval', '$filter', 'opencpu', function($scope, $timeout, $interval, $filter, opencpu) {
     $scope.active.OPENCPU = opencpu;
     $scope.active.YEAR = "year";
     $scope.active.MONTH = "month";
@@ -436,6 +436,13 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
         $scope.functions.getElement(".neon-datetimepicker").on("hide.bs.dropdown", function() {
             return false;
         });
+
+        $scope.$watch("functions.isFilterSet()", function() {
+            // Use a timeout with a delay so the resize is called after angular displays the date filter notification.
+            $timeout(function() {
+                resizeDateTimePickerDropdownToggle($scope.functions.getElement().width());
+            }, 250);
+        });
     };
 
     /**
@@ -454,7 +461,10 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
     };
 
     $scope.functions.onResize = function(elementHeight, elementWidth, titleHeight, headersHeight) {
-        $scope.functions.getElement(".neon-datetimepicker .dropdown-menu").css("max-height", (elementHeight - headersHeight) + "px");
+        var dateTimePickerDropdownMenu = $scope.functions.getElement(".neon-datetimepicker .dropdown-menu");
+        dateTimePickerDropdownMenu.css("max-height", (elementHeight - headersHeight) + "px");
+        dateTimePickerDropdownMenu.css("max-width", (elementWidth) + "px");
+        resizeDateTimePickerDropdownToggle(elementWidth);
 
         if($scope.chart) {
             // TODO Fix size calculations in the timeline selector chart so we don't have to add/subtract these values to make the chart fit the visualization.
@@ -467,6 +477,12 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
                 $scope.chart.toggleFocus(false);
             }
         }
+    };
+
+    var resizeDateTimePickerDropdownToggle = function(elementWidth) {
+        var animationControlsWidth = $scope.functions.getElement(".animation-controls").outerWidth(true);
+        var filterWidth = $scope.functions.getElement(".filter-reset").outerWidth(true);
+        $scope.functions.getElement(".neon-datetimepicker .dropdown-toggle").css("max-width", (elementWidth - animationControlsWidth - filterWidth - 5) + "px");
     };
 
     $scope.handleChangeGranularity = function() {
@@ -513,6 +529,10 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
         if($scope.showFocus === "on_filter") {
             $scope.chart.toggleFocus($scope.extent.length);
         }
+
+        // Resize the dropdown toggle to an arbitrary small value to stop the date filter notification from wrapping in small timeline
+        // visualizations.  It will be automatically resized based on the visualization width after a short delay.
+        $scope.functions.getElement(".neon-datetimepicker .dropdown-toggle").css("max-width", "40px");
     };
 
     $scope.handleChangeShowFocus = function() {
@@ -552,6 +572,11 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
             setDateTimePickerEnd($scope.bucketizer.getEndDate());
         }
         $scope.functions.updateNeonFilter(true);
+    };
+
+    $scope.handleToggleShowAnimationControls = function() {
+        // TODO Logging
+        resizeDateTimePickerDropdownToggle($scope.functions.getElement().width());
     };
 
     $scope.functions.createNeonFilterClause = function(databaseAndTableName, fieldName) {
