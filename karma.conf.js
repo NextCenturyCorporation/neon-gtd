@@ -28,7 +28,7 @@ module.exports = function(config){
         'client/bower_components/angular/angular.js',
         'client/bower_components/angular-route/angular-route.min.js',
         'client/bower_components/angular-mocks//angular-mocks.js',
-        'client/bower_components/angular-gridster/dist/angular-gridster.min.js',
+        'client/bower_components/ag-grid/dist/ag-grid.js',
         '../neon/neon-server/build/js/neon.js',
         'client/bower_components/javascript-detect-element-resize/jquery.resize.js',
         'client/bower_components/opencpu/opencpu-0.5.js',

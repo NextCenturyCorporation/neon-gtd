@@ -22,10 +22,50 @@ var neonDemo = angular.module('neonDemo', [
     'neonDemo.services',
     'neonDemo.directives',
     'neonDemo.filters',
-    'gridster',
+    'agGrid',
     'ngDraggable',
     'ngRoute'
 ]);
+
+neon.helpers = {
+    /**
+     * Finds and returns the field value in data. If field contains '.', representing that the field is in an object within data, it will
+     * find the nested field value.
+     * @param {Object} data
+     * @param {String} field
+     * @method getNestedValue
+     */
+    getNestedValue: function(data, field) {
+        var fieldArray = field.split(".");
+        var dataValue = data;
+        fieldArray.forEach(function(field) {
+            if(dataValue) {
+                dataValue = dataValue[field];
+            }
+        });
+        return dataValue;
+    },
+    /**
+     * Escapes all values in the given data, recursively.
+     * @param {Object|Array} data
+     * @method escapeDataRecursively
+     */
+    escapeDataRecursively: function(data) {
+        if(_.isArray(data)) {
+            for(var i = 0; i < data.length; i++) {
+                data[i] = neon.helpers.escapeDataRecursively(data[i]);
+            }
+        } else if(_.keys(data).length) {
+            var keys = _.keys(data);
+            for(var i = 0; i < keys.length; i++) {
+                data[keys[i]] = neon.helpers.escapeDataRecursively(data[keys[i]]);
+            }
+        } else if(_.isString(data)) {
+            data = _.escape(data);
+        }
+        return data;
+    }
+};
 
 neonDemo.constant('external', {
     active: 0,
@@ -86,3 +126,34 @@ var XDATA = {
         }
     }
 };
+
+
+// Polyfill Function.bind() since it isn't available in PhantomJS until version 2.
+if (!Function.prototype.bind) {
+  Function.prototype.bind = function(oThis) {
+    if (typeof this !== 'function') {
+      // closest thing possible to the ECMAScript 5
+      // internal IsCallable function
+      throw new TypeError('Function.prototype.bind - what is trying to be bound is not callable');
+    }
+
+    var aArgs   = Array.prototype.slice.call(arguments, 1),
+        fToBind = this,
+        fNOP    = function() {},
+        fBound  = function() {
+          return fToBind.apply(this instanceof fNOP
+                 ? this
+                 : oThis,
+                 aArgs.concat(Array.prototype.slice.call(arguments)));
+        };
+
+    if (this.prototype) {
+      // Function.prototype doesn't have a prototype property
+      fNOP.prototype = this.prototype; 
+    }
+    fBound.prototype = new fNOP();
+
+    return fBound;
+  };
+}
+
