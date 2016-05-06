@@ -107,7 +107,11 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
         $scope.map = new coreMap.Map($scope.visualizationId, {
             responsive: false,
             getNestedValue: neon.helpers.getNestedValue,
-            queryForMapPopupDataFunction: queryForMapPopupData
+            queryForMapPopupDataFunction: queryForMapPopupData,
+            mapBaseLayer: {
+                color: $scope.active.baseLayerColor || 'light',
+                protocol: $scope.active.baseLayerProtocol || 'http'
+            }
         });
         $scope.map.linksPopupService = $scope.functions.getLinksPopupService();
         $scope.setDefaultView();
@@ -248,9 +252,13 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
      * @private
      */
     var handleDateSelected = function(message) {
+        var bounds = {
+            start: _.isNumber(message.start) ? new Date(message.start) : undefined,
+            end: _.isNumber(message.end) ? new Date(message.end) : undefined
+        };
         $scope.active.layers.forEach(function(layer) {
             if(!layer.new && (layer.type === $scope.NODE_AND_ARROW_LAYER || layer.type === $scope.POINT_LAYER)) {
-                layer.olLayer.setDateFilter(message);
+                layer.olLayer.setDateFilter(bounds);
             }
         });
     };

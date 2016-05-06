@@ -41,129 +41,16 @@
     <body class="ng-hide" ng-controller="neonDemoController" ng-show="displayDashboard">
         <link rel="stylesheet" type="text/css" ng-href="app/themes/{{theme.selected.file}}.css">
 
-        <!-- Help Video Modal -->
-        <div class="modal fade neon-popup" id="videoModal" tabindex="-1" role="dialog" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                        <h4 class="modal-title">Neon Dashboard Demo Video</h4>
-                    </div>
-                    <div class="modal-body">
-                        <video id="helpVideo" ng-src="{{help.localVideo}}" controls>
-                            Your browser does not support the video tag.
-                        </video>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <!-- Database Config -->
+        <database-config gridster-configs="visualizations"></database-config>
+        <div id="tooltip-container"></div>
+        <!-- In production use:
+        <script src="//ajax.googleapis.com/ajax/libs/angularjs/x.x.x/angular.min.js"></script>
+        -->
 
-        <!-- Header -->
-        <!-- This could be made into either a directive or a partial -->
-        <nav role="navigation" class="navbar">
-            <div class="navbar-default navbar-fixed-top" ng-class="{true: '', false: 'affix'}[hideNavbarItems == true]">
-                <div class="pull-left" ng-show="hideNavbarItems">
-                    <span class="navbar-text navbar-title-text" ng-bind="navbarTitle"></span>
-                </div>
-
-                <div class="container" ng-hide="hideNavbarItems">
-                    <div powered-by-neon class="pull-right"></div>
-
-                    <!-- Help Button -->
-                    <div class="dropdown pull-right" ng-show="(help.guide || help.webVideo || help.localVideo)">
-                        <a class="dropdown-toggle navbar-text" data-toggle="dropdown" href="#" role="button">
-                            <span class="icon-Help_34x34 neon-sprite"></span>
-                            <span>Help</span>
-                            <span class="caret"></span>
-                        </a>
-                        <ul class="dropdown-menu">
-                            <li ng-show="(help.guide)"><a href="{{help.guide}}" target="guide" title="User Guide (Opens in a New Tab)">
-                                User Guide
-                            </a></li>
-                            <li ng-show="(help.webVideo)"><a href="{{help.webVideo}}" target="video" title="Demo Video (Opens in a New Tab)">
-                                Demo Video
-                            </a></li>
-                            <li ng-show="(help.localVideo)"><a href="#" data-toggle="modal" data-target="#videoModal" title="Demo Video (Opens in a Popup)">
-                                Demo Video
-                            </a></li>
-                        </ul>
-                    </div>
-
-                    <!-- Options Button -->
-                    <div class="dropdown pull-right" ng-show="!(hideAdvancedOptions) && (showImport || showExport)">
-                        <a class="dropdown-toggle navbar-text" data-toggle="dropdown" href="#" role="button">
-                            <span class="icon-Options_34x34 neon-sprite"></span>
-                            <span>Options</span>
-                            <span class="caret"></span>
-                        </a>
-                        <ul class="dropdown-menu">
-                            <li ng-show="showExport"><a href="#" class="unselectable">Export Format:</a></li>
-                            <li file-formats gridster-configs="visualizations" ng-show="showExport"></li>
-                            <li export-widgets gridster-configs="visualizations" ng-show="showExport"></li>
-                            <li class="divider" ng-show="showExport && showImport"></li>
-                            <li ng-show="showImport">
-                                <button class="btn btn-default" data-toggle="modal" data-target="#importModal" ng-show="canImport">Import File</button>
-                                <a href="#" class="unselectable" ng-show="!canImport">This browser does not support data import</a>
-                            </li>
-                            <li ng-show="showImport">
-                                <button class="btn btn-default" data-toggle="modal" data-target="#removeDatasetModal" ng-show="canImport">Drop Dataset</button>
-                            </li>
-                            <li class="divider" ng-show="showExport || showImport"></li>
-                            <li>
-                                <a href="#" class="unselectable">Theme:</a>
-                            </li>
-                            <li>
-                                <select class="select-theme form-control navbar-indented" ng-options="item.name for item in theme.list" ng-model="theme.selected" ng-change="updateTheme()"></select>
-                            </li>
-                            <li class="divider"></li>
-                            <li>
-                                <a href="#" ng-click="openStateModal()">Save Current State</a>
-                                <a href="#" data-toggle="modal" data-target="#loadStateModal">Load State</a>
-                                <a href="#" data-toggle="modal" data-target="#deleteStateModal">Delete State</a>
-                            </li>
-                        </ul>
-                    </div>
-
-                    <!-- Import and Remove Dataset Popups -->
-                    <div import-file gridster-configs="visualizations" ng-show="showImport"></div>
-                    <div remove-dataset gridster-configs="visualizations" ng-show="showImport"></div>
-
-                    <!-- Save and Load States Popups -->
-                    <div saved-states gridster-configs="visualizations" loaded-state-name="loadedStateName"></div>
-
-                    <div class="clearfix visible-xs"></div>
-
-                    <!-- Database Config -->
-                    <database-config gridster-configs="visualizations" hide-advanced-options="hideAdvancedOptions" ng-show="!hideNavbarItems"></database-config>
-
-                    <!-- Add visualization control -->
-                    <div add-visualization gridster-configs="visualizations" ng-show="!hideNavbarItems && !hideAddVisualizationsButton"></div>
-
-                    <!-- FILTER STATUS TRAY -->
-                    <div filter-tray bound-parent="'nav.navbar'" include-parent-height="!hideNavbarItems" ng-show="!hideFilterStatusTray" class="pull-right"></div>
-                </div>
-            </div>
-        </nav>
-
-        <!-- DASHBOARD CONTENT -->
-        <div class="container">
-
-            <!-- Use gridster to manage visualization layouts. -->
-            <div gridster="gridsterOpts" id="gridster-div">
-                <ul>
-                    <li gridster-item="visualization" ng-repeat="visualization in visualizations track by visualization.id">
-                        <div class="visualization-well visualization-widget" visualization-widget
-                            gridster-configs="visualizations"
-                            gridster-config-index="$index"></div>
-                    </li>
-                </ul>
-            </div>
-
-            <div id="tooltip-container"></div>
-
-        </div>
-
-        <links-popup></links-popup>
+        <!-- Including neon before angular here as neon has lodash and jquery wrapped into it.  If this is
+             loaded first, angular should pick up the included jQuery. -->
+        <script src="assets/vendor/owf-widget-min.js"></script>
 
         <!-- Including neon before angular here as neon has lodash and jquery wrapped into it.  If this is
              loaded first, angular should pick up the included jQuery. -->
@@ -223,12 +110,178 @@
         <script src="bower_components/rainbowvis.js/rainbowvis.js"></script>
         <!-- endbuild -->
 
+       
+
         <!-- build:js(client) app/app.min.js -->
         <!-- injector:js -->
         <script src="app/namespaces.js"></script>
         <script src="app/neon.helpers.js"></script>
         <script src="app/neonGTDSetup.js"></script>
-        <script src="app/app.js"></script>
+         <!-- Setup our widget's OWF handlers and trigger the angular code -->
+        <script type="text/javascript">
+            // -----------------------------------
+            // Initialize the close handlers.
+            // -----------------------------------
+
+            OWF.ready(function () {
+
+                // -----------------------------------
+                // Hide the body when the widget is not visible.
+                // -----------------------------------
+                var widgetState = Ozone.state.WidgetState.getInstance({
+                    onStateEventReceived: function(sender, msg) {
+                        var event = msg.eventName;
+
+                        if(event === 'activate' || event === 'show') {
+                            $(document.body).show();
+                        }
+                        else if(event === 'hide') {
+                            $(document.body).hide();
+                        }
+                    }
+                });
+
+                // listen for  activate and hide events so that we can
+                // hide our body.  Some browsers, specifically Chrome, continues
+                // to render iframes with elments that use specific webkit transforms
+                // even when they are hidden.  This impact many Map packages and some
+                // SVG packages.  The work around for this is to hide our widget body
+                // on hide events.
+                widgetState.addStateEventListeners({
+                    events: ['activate', 'hide', 'show']
+                });
+
+                OWF.notifyWidgetReady();
+            });
+
+            // Defaulting the Neon SERVER_URL to be under the neon context on the same host machine.
+            // Used by neon core server.  Don't delete this or you will probably break everything!
+            neon.SERVER_URL = "/neon";
+
+            /**
+             * Utility that calls the given function in an $apply if the given $scope is not in the apply/digest phase or just calls the given function normally otherwise.
+             * @param {Object} $scope The $scope of an angular directive.
+             * @param {Fucntion} func The function to call.
+             * @method safeApply
+             */
+            neon.safeApply = function($scope, func) {
+                if(!$scope || !func || typeof func !== "function") {
+                    return;
+                }
+
+                var phase = $scope.$root.$$phase;
+                if(phase === "$apply" || phase === "$digest") {
+                    func();
+                } else {
+                    $scope.$apply(func);
+                }
+            };
+
+            neon.helpers = {
+                /**
+                 * Finds and returns the field value in data. If field contains '.', representing that the field is in an object within data, it will
+                 * find the nested field value.
+                 * @param {Object} data
+                 * @param {String} field
+                 * @method getNestedValue
+                 */
+                getNestedValue: function(data, field) {
+                    var fieldArray = field.split(".");
+                    var dataValue = data;
+                    fieldArray.forEach(function(field) {
+                        if(dataValue) {
+                            dataValue = dataValue[field];
+                        }
+                    });
+                    return dataValue;
+                },
+                /**
+                 * Escapes all values in the given data, recursively.
+                 * @param {Object|Array} data
+                 * @method escapeDataRecursively
+                 */
+                escapeDataRecursively: function(data) {
+                    if(_.isArray(data)) {
+                        for(var i = 0; i < data.length; i++) {
+                            data[i] = neon.helpers.escapeDataRecursively(data[i]);
+                        }
+                    } else if(_.keys(data).length) {
+                        var keys = _.keys(data);
+                        for(var i = 0; i < keys.length; i++) {
+                            data[keys[i]] = neon.helpers.escapeDataRecursively(data[keys[i]]);
+                        }
+                    } else if(_.isString(data)) {
+                        data = _.escape(data);
+                    }
+                    return data;
+                }
+            };
+
+            var neonDemo = angular.module('neonDemo', [
+                'neonDemo.controllers',
+                'neonDemo.services',
+                'neonDemo.directives',
+                'neonDemo.filters',
+                'gridster',
+                'ngDraggable',
+                'ngRoute',
+                'ui.bootstrap.datetimepicker',
+                'linkify',
+
+                'agGrid',
+
+                'gantt',
+                'gantt.tooltips',
+                'gantt.tree',
+                'gantt.groups'
+            ]);
+
+            neonDemo.config(["$routeProvider", "$locationProvider", function($routeProvider, $locationProvider) {
+                $routeProvider.when('/', {
+                    templateUrl: 'dataSelectorWidget.html',
+                    controller: 'neonDemoController'
+                });
+                $locationProvider.html5Mode({
+                    enabled: true,
+                    requireBase: false
+                });
+            }]);
+
+
+            // AngularJS filter for reversing the order of an array.
+            // http://stackoverflow.com/questions/15266671/angular-ng-repeat-in-reverse
+            neonDemo.filter("reverse", function() {
+                return function(items) {
+                    return items.slice().reverse();
+                };
+            });
+
+            angular.module('neonDemo.directives', []);
+            angular.module('neonDemo.controllers', []);
+            angular.module('neonDemo.services', []);
+
+            angular.module('neonDemo.filters', [])
+            .filter('numberShort', function() {
+                return function(number) {
+                    if(typeof number !== undefined) {
+                        var abs = Math.abs(number);
+                        if(abs >= Math.pow(10, 12)) {
+                            number = (number / Math.pow(10, 12)).toFixed(1) + "T";
+                        } else if(abs < Math.pow(10, 12) && abs >= Math.pow(10, 9)) {
+                            number = (number / Math.pow(10, 9)).toFixed(1) + "B";
+                        } else if(abs < Math.pow(10, 9) && abs >= Math.pow(10, 6)) {
+                            number = (number / Math.pow(10, 6)).toFixed(1) + "M";
+                        } else if(abs < Math.pow(10, 6) && abs >= Math.pow(10, 3)) {
+                            number = (number / Math.pow(10, 3)).toFixed(1) + "K";
+                        } else {
+                            number = Math.round(number * 100) / 100;
+                        }
+                    }
+                    return number;
+                };
+            });
+        </script>
+        <script src="owf-widgets/js/widget.js"></script>
         <script src="app/connection.service.js"></script>
         <script src="app/dataset.service.js"></script>
         <script src="app/errorNotification.service.js"></script>

@@ -79,14 +79,18 @@ angular.module('neonDemo.controllers').controller('networkGraphController', ['$s
 
     $scope.functions.onInit = function() {
         $scope.functions.subscribe("date_bucketizer", function(message) {
-            $scope.bucketizer = message.bucketizer;
+            $scope.bucketizer = new dateBucketizer();
+            $scope.bucketizer.setStartDate(_.isNumber(message.startdate) ? new Date(message.startDate) : undefined);
+            $scope.bucketizer.setEndDate(_.isNumber(message.endDate) ? new Date(message.endDate) : undefined);
+            $scope.bucketizer.setGranularity(message.granularity);
+
             if($scope.mediator) {
                 $scope.mediator.setBucketizer(message.bucketizer);
             }
         });
         $scope.functions.subscribe("date_selected", function(message) {
             if($scope.mediator) {
-                $scope.mediator.selectDate(message.start);
+                $scope.mediator.selectDate(_.isNumber(message.start) ? new Date(message.start) : undefined);
             }
         });
         $scope.functions.addResizeListener(".legend");

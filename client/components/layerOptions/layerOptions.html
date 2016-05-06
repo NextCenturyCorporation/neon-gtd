@@ -52,12 +52,11 @@
             <div class="layer-options-row">
                 <div class="form-group layer-options-col">
                     <label>Database</label>
-                    <select class="form-control" ng-cancel-drag ng-model="layer.database" ng-options="database.prettyName for database in layer.databases" ng-required="true" ng-disabled="layer.databases.length < 2" ng-change="functions.updateTables(layer)"></select>
+                    <select class="form-control" ng-cancel-drag ng-model="layer.database" ng-options="database.prettyName for database in layer.databases track by database.name" ng-required="true" ng-disabled="layer.databases.length < 2" ng-change="functions.updateTables(layer)"></select>
                 </div>
-
                 <div class="form-group layer-options-col">
                     <label>Table</label>
-                    <select class="form-control" ng-cancel-drag ng-model="layer.table" ng-options="table.prettyName for table in layer.tables" ng-required="true" ng-disabled="layer.tables.length < 2" ng-change="functions.updateFields(layer)"></select>
+                    <select class="form-control" ng-cancel-drag ng-model="layer.table" ng-options="table.prettyName for table in layer.tables track by table.name" ng-required="true" ng-disabled="layer.tables.length < 2" ng-change="functions.updateFields(layer)"></select>
                 </div>
 
                 <div class="form-group layer-options-col layer-options-col-wide">
@@ -70,10 +69,9 @@
                     </div>
                 </div>
             </div>
-
             <visualization-layer-options layer="layer" ng-include="'components/' + type + '/' + type + 'LayerOptions.html'"></visualization-layer-options>
 
-            <div class="layer-options-error" ng-show="layer.error" ng-bind="layer.error"></div>
+            <div class="layer-options-error"  ng-bind="layer.error"></div>
         </div>
     </div>
 </div>
