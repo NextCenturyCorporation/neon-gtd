@@ -102,7 +102,7 @@ module.exports = function(grunt) {
                 files: {
                     "client/index.html": [
                         "client/app/namespaces.js",
-                        "client/app/neonUtilities.js",
+                        "client/app/neon.helpers.js",
                         "client/app/neonGTDSetup.js",
                         "client/app/app.js",
                         "client/app/*.service.js",
