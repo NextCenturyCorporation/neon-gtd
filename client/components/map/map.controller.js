@@ -338,7 +338,7 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
         layer.gradientColorCode3 = config.gradientColorCode3;
         layer.gradientColorCode4 = config.gradientColorCode4;
         layer.gradientColorCode5 = config.gradientColorCode5;
-        layer.applyTransientDateFilter = config.applyTransientDateFilter;
+        layer.applyTransientDateFilter = config.applyTransientDateFilter || false;
         layer.popupFields = config.popupFields || [];
         updateFields(layer, config);
         return layer;
