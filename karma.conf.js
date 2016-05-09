@@ -37,6 +37,7 @@ module.exports = function(config){
         'client/bower_components/d3/d3.min.js',
         'client/bower_components/openlayers/OpenLayers.js',
         'client/bower_components/heatmapjs/build/heatmap.js',
+        'client/bower_components/angular-linkify/angular-linkify.js',
         'client/assets/vendor/openlayers-heatmapjs/heatmap-openlayers.js',
         'client/bower_components/jquery.tagcloud/jquery.tagcloud.js',
         'client/bower_components/threedubmedia.jquery.event/event.drag/jquery.event.drag.js',

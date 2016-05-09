@@ -203,6 +203,7 @@ angular.module('neonDemo.controllers').controller('dataTableController', ['$scop
 
         $scope.active.count = tableData.length;
         $scope.active.total = tableData.length;
+        tableData = neon.helpers.escapeDataRecursively(tableData);
         $scope.active.gridOptions.api.setRowData(tableData);
 
         if(tableData.length) {
@@ -213,7 +214,7 @@ angular.module('neonDemo.controllers').controller('dataTableController', ['$scop
                     return query;
                 },
                 updateData: function(data) {
-                    $scope.active.total = data && data.length ? data[0].count : 0
+                    $scope.active.total = data && data.length ? data[0].count : 0;
                 }
             });
 
@@ -257,11 +258,7 @@ angular.module('neonDemo.controllers').controller('dataTableController', ['$scop
         var linkedData = _.map(data, function(row) {
             _.each(row, function(value, key) {
                 if(value && typeof value === 'string') {
-                    // First, escape the data so that any html in the data doesn't mess with the
-                    // table or create cross-site scripting. Then linkify any links, usernames,
-                    // etc., and then finally trust the resulting HTML so that Angular won't
-                    // re-escape the linkified html.
-                    row[key] = linkify.twitter(_.escape(value));
+                    row[key] = linkify.twitter(value);
                 }
             });
 

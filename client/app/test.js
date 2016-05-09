@@ -24,7 +24,8 @@ var neonDemo = angular.module('neonDemo', [
     'neonDemo.filters',
     'agGrid',
     'ngDraggable',
-    'ngRoute'
+    'ngRoute',
+    'linkify'
 ]);
 
 neon.helpers = {
