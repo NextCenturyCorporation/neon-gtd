@@ -75,8 +75,8 @@ angular.module('neonDemo.filters', [])
 
 // Create the main controller for the application.
 angular.module('neonDemo.controllers')
-.controller('neonDemoController', ['$scope', '$compile', '$timeout', '$location', 'config', 'layouts', 'datasets', 'ThemeService', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'VisualizationService', 'widgetState',
-function($scope, $compile, $timeout, $location, config, layouts, datasets, themeService, connectionService, datasetService, errorNotificationService, visualizationService, widgetState) {
+.controller('neonDemoController', ['$scope', '$compile', '$timeout', '$location', 'config', 'layouts', 'datasets', 'ThemeService', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'VisualizationService', 'widgetBindings',
+function($scope, $compile, $timeout, $location, config, layouts, datasets, themeService, connectionService, datasetService, errorNotificationService, visualizationService, widgetBindings) {
     $scope.messenger = new neon.eventing.Messenger();
 
     themeService.setTheme(WidgetConfig.theme);
@@ -101,14 +101,14 @@ function($scope, $compile, $timeout, $location, config, layouts, datasets, theme
 
     // Load and connect to the first dataset for now.
     // TODO: Need a way to handle switching datasets.
-    $scope.bindings = widgetState || {};
-    // Clear the previous title so it can be determined on the fly as the user selects different databases.
-    $scope.bindings.title = '';
-    $scope.bindings.hideAdvancedOptions = config.hideAdvancedOptions;
-    $scope.bindings.hideHeader = config.hideHeader;
+    $scope.bindings = widgetBindings || {};
+    // // Clear the previous title so it can be determined on the fly as the user selects different databases.
+    // $scope.bindings.title = '';
+    // $scope.bindings.hideAdvancedOptions = config.hideAdvancedOptions;
+    // $scope.bindings.hideHeader = config.hideHeader;
 
-    datasetService.setActiveDataset(datasets[0]);
-    connectionService.createActiveConnection(datasets[0].datastore, datasets[0].hostname);
+    // datasetService.setActiveDataset(datasets[0]);
+    // connectionService.createActiveConnection(datasets[0].datastore, datasets[0].hostname);
 
     // Setup some OWF event handlers to cover when the widget is hidden/shown/closed.
     var eventMonitor = {};
@@ -197,18 +197,53 @@ function($scope, $compile, $timeout, $location, config, layouts, datasets, theme
         $(widgetContainer[0]).append($compile(widget)($scope));
     };
 
-    if(WidgetConfig.loadingFilterBuilder) {
-        addWidgetElement();
-        datasetService.updateDatabases(datasets[0], connectionService.getActiveConnection(), function(dataset) { 
-        }, 0);
-    } else {
-        datasetService.updateDatabases(datasets[0], connectionService.getActiveConnection(), function(dataset) {
-            $scope.$apply(function(dataset) {
-                datasets[0] = dataset;
-                addWidgetElement();
-            });
-        }, 0);
-    }
+    // Get the current widget state.  This will include the ID of the dashboard we're in.  To allow
+    // widgets in multiple dashboards to auto-discover their default settings, we can use the dashboard ID to
+    // fetch the dashboard name and check the 'datasets' array for one with the same name.  If defined,
+    // we can use the visualizations defined therein for default visualization bindings. Once we know
+    // our default state, we can get 
+    eventMonitor.widgetState.getWidgetState({
+        callback: function(state) {
+            OWF.Preferences.getDashboard({dashboardId: state.dashboardGuid, onSuccess: function(dash) {
+                $scope.$apply(function() {
+                    var dataset = _.find(datasets, function(data) { return data.name === dash.name }) || datasets[0];
+                    if (dataset) {
+                        var layout = layouts[dataset.layout];
+                        var visualization = _.find(layout, function(item) { return item.type === WidgetConfig.type; });
+
+                        // If we had bindings from a user preference, use those.  Otherwise, use any defaults.
+                        if (Object.keys(widgetBindings).length > 0) {
+                            $scope.bindings = _.extend({}, widgetBindings);
+                        } else if (visualization && visualization.bindings) {
+                            $scope.bindings = _.extend({}, visualization.bindings);
+                        } else {
+                            $scope.bindings = {};
+                        }
+
+                        // Clear the previous title so it can be determined on the fly as the user selects different databases.
+                        $scope.bindings.title = '';
+                        $scope.bindings.hideAdvancedOptions = config.hideAdvancedOptions;
+                        $scope.bindings.hideHeader = config.hideHeader;
+                        datasetService.setActiveDataset(dataset);
+                        connectionService.createActiveConnection(dataset.datastore, dataset.hostname);
+
+                        if(WidgetConfig.loadingFilterBuilder) {
+                            addWidgetElement();
+                            datasetService.updateDatabases(dataset, connectionService.getActiveConnection(), function(dataset) { 
+                            }, 0);
+                        } else {
+                            datasetService.updateDatabases(dataset, connectionService.getActiveConnection(), function(dataset) {
+                                $scope.$apply(function(dataset) {
+                                    //datasets[0] = dataset;
+                                    addWidgetElement();
+                                });
+                            }, 0);
+                        }
+                    }
+                });
+            }});
+        }
+    });
 
     // Watch for changes to our visualization's configuration and store them as OWF prefs.
     $scope.$watch(function() {
@@ -243,12 +278,12 @@ var startAngular = function() {
 
 var NeonGTDSetup = new NeonGTDSetup(neonDemo);
 
-var saveNeonConfig = function($http, config, widgetState) {
+var saveNeonConfig = function($http, config, widgetBindings) {
     NeonGTDSetup.saveUserAle(config);
     NeonGTDSetup.saveOpenCpu(config);
     NeonGTDSetup.saveVisualizations(config);
     neonDemo.constant('config', config);
-    neonDemo.value('widgetState', widgetState);
+    neonDemo.value('widgetBindings', widgetBindings);
 
     var files = (config.files || []);
     var layouts = (config.layouts || {});
@@ -277,13 +312,13 @@ angular.element(document).ready(function() {
             'namespace': WidgetConfig.namespace + '.' + OWF.getInstanceId(),
             'name': 'Neon Preferences',
             'onSuccess': function (msg) {
-                var widgetState = msg.value ? JSON.parse(msg.value) : {};
+                var widgetBindings = msg.value ? JSON.parse(msg.value) : {};
                 var $http = angular.injector(['ng']).get('$http');
                 $http.get("./app/config/config.yaml").then(function(response) {
-                    saveNeonConfig($http, jsyaml.load(response.data), widgetState);
+                    saveNeonConfig($http, jsyaml.load(response.data), widgetBindings);
                 }, function() {
                     $http.get("./app/config/config.json").then(function(response) {
-                        saveNeonConfig($http, response.data, widgetState);
+                        saveNeonConfig($http, response.data, widgetBindings);
                     });
                 });
             }
