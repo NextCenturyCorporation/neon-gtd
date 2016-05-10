@@ -1,13 +1,27 @@
 <div class="legend-display">
     <label ng-show="!active.legend.length" ng-bind="'No legend defined in the dashboard configuration file for the chosen table.'"></label>
     <ul>
-        <li ng-if="!!item.field" ng-repeat="item in active.legend">
-            <label class="item" ng-class="{true: 'filtered', false: ''}[item.on]" ng-bind="item.label" title="{{'Toggle Filter on ' + item.label}}" ng-click="addOrRemoveFilter(item)"></label>
+        <li ng-if="!!group.label" ng-repeat="group in active.legend">
+            <label ng-bind="group.label"></label>
             <ul class="padded-list">
-                <li ng-if="!!type.field" ng-repeat="type in item.types">
-                    <label class="type" ng-class="{true: 'filtered', false: ''}[type.on]" ng-bind="type.label" title="{{'Toggle Filter on ' + type.label + ' ' + item.label}}" ng-click="addOrRemoveFilter(type)"></label>
+                <li ng-if="!!item.label && !!item.field" ng-repeat="item in group.items">
+                    <label class="item" ng-class="{true: 'filtered', false: ''}[item.on]" ng-bind="item.label" title="{{'Toggle Filter on ' + item.label}}" ng-click="toggleFilterAndAddOrRemove(item)"></label>
                 </li>
             </ul>
         </li>
     </ul>
+    <ul>
+        <li ng-if="!!group.label && !!group.customized.field" ng-repeat="group in active.legend">
+            <label ng-bind="'Add Customized Filter on ' + group.label"></label>
+            <div class="form-group customized">
+                <div class="input-group">
+                    <input type="text" class="form-control" placeholder="{{group.label}}" ng-model="group.customized.value">
+                    <div class="input-group-btn">
+                        <button type="button" class="btn btn-default" title="Add Customized Filter" ng-click="addCustomizedFilter(group)">
+                            <span class="glyphicon glyphicon-plus"></span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </li>
 </div>

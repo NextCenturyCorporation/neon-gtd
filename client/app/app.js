@@ -292,15 +292,13 @@ var saveLegends = function(config) {
 
     Object.keys(legends).forEach(function(database) {
         Object.keys(legends[database]).forEach(function(table) {
-            legends[database][table].forEach(function(item) {
-                item.label = item.label || item.field;
-                item.value = item.value || null;
-                item.operator = item.operator || (item.value === null ? "!=" : "=");
-                item.types = item.types || [];
-                item.types.forEach(function(type) {
-                    type.label = type.label || type.field;
-                    type.value = type.value || null;
-                    type.operator = type.operator || (item.value === null ? "!=" : "=");
+            legends[database][table].forEach(function(group) {
+                group.customized = group.customized || {};
+                group.customized.operator = group.customized.operator || "=";
+                group.items.forEach(function(item) {
+                    item.label = item.field;
+                    item.value = item.value || null;
+                    item.operator = item.operator || (item.value === null ? "!=" : "=");
                 });
             });
         });

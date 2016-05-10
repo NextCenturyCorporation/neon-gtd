@@ -32,13 +32,17 @@ angular.module('neonDemo.controllers').controller('legendController', ['$scope',
     $scope.functions.onUpdateFields = function() {
         $scope.active.legend = $scope.legends[$scope.active.database.name] ? ($scope.legends[$scope.active.database.name][$scope.active.table.name] || []) : [];
 
-        $scope.active.legend.forEach(function(item) {
-            item.fieldObject = _.find($scope.active.fields, function(field) {
-                return item.field === field.columnName;
-            });
-            item.types.forEach(function(type) {
-                type.fieldObject = _.find($scope.active.fields, function(field) {
-                    return item.field + "." + type.field === field.columnName;
+        $scope.active.legend.forEach(function(group) {
+            if(group.customized.field) {
+                group.customized.fieldObject = _.find($scope.active.fields, function(field) {
+                    return group.customized.field === field.columnName;
+                });
+                group.customized.value = "";
+            }
+
+            group.items.forEach(function(item) {
+                item.fieldObject = _.find($scope.active.fields, function(field) {
+                    return item.field === field.columnName;
                 });
             });
         });
@@ -50,9 +54,9 @@ angular.module('neonDemo.controllers').controller('legendController', ['$scope',
     };
 
     $scope.functions.isFilterSet = function() {
-        return $scope.active.legend.some(function(item) {
-            return item.on || item.types.some(function(type) {
-                return type.on;
+        return $scope.active.legend.some(function(group) {
+            return group.items.some(function(item) {
+                return item.on;
             });
         });
     };
@@ -85,21 +89,18 @@ angular.module('neonDemo.controllers').controller('legendController', ['$scope',
         }
 
         if(Object.keys(filters).length) {
-            $scope.active.legend.forEach(function(item) {
-                item.on = (filters[item.field] !== undefined);
-                item.types.forEach(function(type) {
-                    type.on = (filters[item.field + "." + type.field] !== undefined && filters[item.field + "." + type.field].operator === type.operator &&
-                        filters[item.field + "." + type.field].value === type.value);
+            $scope.active.legend.forEach(function(group) {
+                group.items.forEach(function(item) {
+                    item.on = (filters[item.field] !== undefined && filters[item.field].operator === item.operator && filters[item.field].value === item.value);
                 });
             });
         }
     };
 
     $scope.functions.removeFilterValues = function() {
-        $scope.active.legend.forEach(function(item) {
-            item.on = false;
-            item.types.forEach(function(type) {
-                type.on = false;
+        $scope.active.legend.forEach(function(group) {
+            group.items.forEach(function(item) {
+                item.on = false;
             });
         });
     };
@@ -112,40 +113,67 @@ angular.module('neonDemo.controllers').controller('legendController', ['$scope',
         };
     };
 
-    $scope.addOrRemoveFilter = function(itemOrType) {
+    $scope.toggleFilterAndAddOrRemove = function(item) {
         // TODO Logging
-        itemOrType.on = !itemOrType.on;
-        if(itemOrType.on) {
+        item.on = !item.on;
+        $scope.addOrRemoveFilter(item.fieldObject);
+    };
+
+    $scope.addOrRemoveFilter = function(fieldObject) {
+        var filterDataForField = $scope.getFilterData().filter(function(data) {
+            return data.fieldObject.columnName === fieldObject.columnName;
+        });
+        if(filterDataForField.length) {
             $scope.functions.updateNeonFilter({
-                fields: [itemOrType.fieldObject],
+                fields: [fieldObject],
                 createNeonFilterClause: function(databaseAndTableName, fieldName) {
-                    return neon.query.where(fieldName, itemOrType.operator, itemOrType.value);
+                    var filterClauses = filterDataForField.map(function(data) {
+                        return neon.query.where(fieldName, data.operator, data.value);
+                    });
+                    return filterClauses.length > 1 ? neon.query.and.apply(neon.query, filterClauses) : filterClauses[0];
                 }
             });
         } else {
             $scope.functions.removeNeonFilter({
-                fields: [itemOrType.fieldObject]
+                fields: [fieldObject]
             });
         }
     };
 
+    $scope.addCustomizedFilter = function(group) {
+        // TODO Logging
+        if(group.customized.value) {
+            group.items.push({
+                label: group.customized.value,
+                field: group.customized.field,
+                fieldObject: group.customized.fieldObject,
+                operator: group.customized.operator,
+                value: group.customized.value,
+                on: true
+            });
+            group.customized.value = "";
+            $scope.addOrRemoveFilter(group.customized.fieldObject);
+        }
+    };
+
     $scope.getFilterData = function() {
-        // Legend items and types for display in the filter notification directive.
+        // Legend items for display in the filter notification directive.
         var data = [];
-        $scope.active.legend.forEach(function(item) {
-            if(item.on) {
-                data.push(item);
-            }
-            item.types.forEach(function(type) {
-                if(type.on) {
-                    data.push(type);
+        $scope.active.legend.forEach(function(group) {
+            group.items.forEach(function(item) {
+                if(item.on) {
+                    data.push(item);
                 }
             });
         });
         return data;
     };
 
-    $scope.getFilterText = function(itemOrType) {
-        return itemOrType.label;
+    $scope.getFilterDesc = function(item) {
+        return item.field + " " + item.operator + " " + item.value;
+    };
+
+    $scope.getFilterText = function(item) {
+        return item.label;
     };
 }]);
