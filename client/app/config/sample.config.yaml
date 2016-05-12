@@ -654,43 +654,60 @@ layouts:
 legends: 
   test: 
     earthquakes: 
-      - 
-        label: Earthquake
-        field: type
-        value: earthquake
-      - 
-        label: Explosion
-        field: type
-        value: explosion
-      - 
-        label: Landslide
-        field: type
-        value: landslide
-      - 
-        label: Mining Explosion
-        field: type
-        value: mining_explosion
-      - 
-        label: Quarry
-        field: type
-        value: quarry
-      - 
-        label: Quarry Blast
-        field: type
-        value: quarry_blast
-      - 
-        label: Sonicboom
-        field: type
-        value: sonicboom
+      -
+        label: Types
+        items:
+          -
+            label: Earthquake
+            field: type
+            value: earthquake
+          -
+            label: Explosion
+            field: type
+            value: explosion
+          -
+            label: Landslide
+            field: type
+            value: landslide
+          -
+            label: Mining Explosion
+            field: type
+            value: mining_explosion
+          -
+            label: Quarry
+            field: type
+            value: quarry
+          -
+            label: Quarry Blast
+            field: type
+            value: quarry_blast
+          -
+            label: Sonicboom
+            field: type
+            value: sonicboom
+      -
+        label: Networks
+        customized:
+            field: net
     myTable: 
-      - 
-        label: My Object
-        field: myObject
-        types: 
-          - 
-            label: My Object Field
-            field: myObjectField
+      -
+        label: My Group
+        items:
+          -
+            label: Equals My Value
+            field: myField
             value: myValue
+          -
+            label: Contains My Value
+            field: myField
+            operator: contains
+            value: myValue
+          -
+            label: Not Null
+            field: myField
+        customized:
+            field: myField
+            operator: contains
 
 files:
   datasets:
