@@ -116,52 +116,46 @@ mediators.DirectedGraphMediator = (function() {
 
         // Add each unique node from the data to the graph as a node.
         data.forEach(function(item) {
-            neon.helpers.getNestedValues(item, options.nodeField).forEach(function(nodeId) {
+            // The getNestedValues function will return a list of objects containing each combination of the values for the node fields.  If none of the values for the node fields
+            // are lists themselves then getNestedValues will return a list with a single object.
+            neon.helpers.getNestedValues(item, getFields(options)).forEach(function(nodeValue) {
                 // Get the node fields from the data.
-                var names = options.nameField ? neon.helpers.getNestedValues(item, options.nameField) : [];
-                var nodeName = names.length ? names.join(",") : nodeId;
-                var sizes = options.sizeField ? neon.helpers.getNestedValues(item, options.sizeField) : [];
-                var nodeSize = sizes.length ? sizes.sort()[0] : 1;
-                var flags = options.flagField ? neon.helpers.getNestedValues(item, options.flagField) : [];
-                var nodeFlag = flags.length ? flags.some(function(flag) {
-                    return flag;
-                }) : false;
-                var dates = options.dateField ? neon.helpers.getNestedValues(item, options.dateField) : [];
-                var itemDate = dates.length ? new Date(dates.sort(function(a, b) {
-                    return new Date(a).getTime() - new Date(b).getTime();
-                })[0]) : undefined;
+                var nodeId = nodeValue[options.nodeField];
+                if(nodeId) {
+                    var nodeName = (options.nameField ? nodeValue[options.nameField] : undefined) || nodeId;
+                    var nodeSize = (options.sizeField ? nodeValue[options.sizeField] : undefined) || 1;
+                    var nodeFlag = (options.flagField ? nodeValue[options.flagField] : undefined) || false;
+                    var itemDate = (options.dateField && nodeValue[options.dateField]) ? new Date(nodeValue[options.dateField]) : undefined;
 
-                // Create a new node and add its date.
-                var node = addNodeIfUnique(nodes, nodeId, nodeName, nodeSize);
-                if(itemDate) {
-                    node.dates.push(itemDate);
-                }
+                    // Create a new node and add its date.
+                    var node = addNodeIfUnique(nodes, nodeId, nodeName, nodeSize);
+                    if(itemDate) {
+                        node.dates.push(itemDate);
+                    }
 
-                // Add a flag using a boolean field in the data if configured to do so.  The flag defaults to false.
-                node.flag = (options.flagMode === DirectedGraphMediator.FLAG_RESULT || options.flagMode === DirectedGraphMediator.FLAG_ALL) ? nodeFlag : false;
-                mediator.maps.nodeIdsToFlags[node.id] = node.flag;
+                    // Add a flag using a boolean field in the data if configured to do so.  The flag defaults to false.
+                    node.flag = (options.flagMode === DirectedGraphMediator.FLAG_RESULT || options.flagMode === DirectedGraphMediator.FLAG_ALL) ? nodeFlag : false;
+                    mediator.maps.nodeIdsToFlags[node.id] = node.flag;
 
-                // Mark this node as a node created from a data item.
-                node.inData = true;
+                    // Mark this node as a node created from a data item.
+                    node.inData = true;
 
-                // Find the data for the linked nodes (if configured) from the data item.
-                var linkedNodeIds = neon.helpers.getNestedValues(item, options.linkedNodeField);
-                var linkedNodeNames = neon.helpers.getNestedValues(item, options.linkedNameField);
-                var linkedNodeSizes = neon.helpers.getNestedValues(item, options.linkedSizeField);
+                    // Find the data for the linked node (if configured) from the data item.
+                    var linkedNodeId = options.linkedNodeField ? nodeValue[options.linkedNodeField] : undefined;
+                    var linkedNodeName = (options.linkedNameField ? nodeValue[options.linkedNameField] : undefined) || linkedNodeId;
+                    var linkedNodeSize = (options.linkedSizeField ? nodeValue[options.linkedSizeField] : undefined) || 1;
 
-                // Add each linked node to the graph as a node with a link to the original node.
-                linkedNodeIds.forEach(function(linkedNodeId, index) {
+                    // Add the linked node to the graph as a node with a link to the original node.
                     if(linkedNodeId && linkedNodeId !== nodeId) {
                         // Linked nodes have no date because each date is an instance of the node in the data.  Future instances of the linked node in the data will add their dates to
                         // the linked node's date array.  If the linked node is not in the data, it will be styled different based on the inData property.
-                        var linkedNode = addNodeIfUnique(nodes, linkedNodeId, linkedNodeNames.length > index ? linkedNodeNames[index] : undefined,
-                            linkedNodeSizes.length > index ? linkedNodeSizes[index] : undefined);
+                        var linkedNode = addNodeIfUnique(nodes, linkedNodeId, linkedNodeName, linkedNodeSize);
                         // Add a flag using a boolean field in the data if configured to do so.  The flag defaults to false.
                         linkedNode.flag = (options.flagMode === DirectedGraphMediator.FLAG_LINKED || options.flagMode === DirectedGraphMediator.FLAG_ALL) ? nodeFlag : false;
                         mediator.maps.nodeIdsToFlags[linkedNode.id] = mediator.maps.nodeIdsToFlags[linkedNode.id] || linkedNode.flag;
                         addLinkIfUnique(links, linkedNodeId, nodeId, itemDate, mediator.maps);
                     }
-                });
+                }
             });
         });
 
@@ -187,6 +181,38 @@ mediators.DirectedGraphMediator = (function() {
         delete this.maps.targetsToSources;
         delete this.maps.sourcesToTargetsToLinkDates;
         delete this.maps.nodeIdsToClusterIds;
+    };
+
+    /**
+     * Returns the list of fields specified in the given options.
+     * @param {Object} options
+     * @private
+     * @return {Array}
+     */
+    var getFields = function(options) {
+        var fields = [options.nodeField];
+        if(options.nameField) {
+            fields.push(options.nameField);
+        }
+        if(options.sizeField) {
+            fields.push(options.sizeField);
+        }
+        if(options.flagField) {
+            fields.push(options.flagField);
+        }
+        if(options.dateField) {
+            fields.push(options.dateField);
+        }
+        if(options.linkedNodeField) {
+            fields.push(options.linkedNodeField);
+        }
+        if(options.linkedNameField) {
+            fields.push(options.linkedNameField);
+        }
+        if(options.linkedSizeField) {
+            fields.push(options.linkedSizeField);
+        }
+        return fields;
     };
 
     /**

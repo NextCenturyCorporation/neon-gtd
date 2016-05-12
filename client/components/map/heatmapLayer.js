@@ -125,11 +125,8 @@ coreMap.Map.Layer.HeatmapLayer = OpenLayers.Class(OpenLayers.Layer.Heatmap, {
  * @method areValuesInDataElement
  */
 coreMap.Map.Layer.HeatmapLayer.prototype.areValuesInDataElement = function(element) {
-    if(neon.helpers.getValues(element, this.latitudeMapping).length && neon.helpers.getValues(element, this.longitudeMapping).length) {
-        return true;
-    }
-
-    return false;
+    var values = neon.helpers.getNestedValues(element, [this.latitudeMapping, this.longitudeMapping]);
+    return values[0][this.latitudeMapping] !== undefined && values[0][this.longitudeMapping] !== undefined;
 };
 
 coreMap.Map.Layer.HeatmapLayer.prototype.setData = function(data, limit) {
@@ -155,27 +152,23 @@ coreMap.Map.Layer.HeatmapLayer.prototype.createHeatmapDataPoint = function(size,
 };
 
 coreMap.Map.Layer.HeatmapLayer.prototype.updateFeatures = function(limit) {
+    var me = this;
     var mapData = [];
 
-    // Extra fields to collect in addition to the longitude & latitude (X & Y) fields.
-    var fields = {
-        size: this.sizeMapping
-    };
-
-    var points = neon.helpers.getPoints(this.data, this.longitudeMapping, this.latitudeMapping, fields);
-    this.pointTotal = points.length;
+    this.pointTotal = 0;
     this.pointLimit = limit;
 
-    var me = this;
+    var fields = [this.latitudeMapping, this.longitudeMapping, this.sizeMapping];
 
-    // Use the helper function to collect the longitude & latitude (X & Y) coordinates from the data for the points.
-    points.slice(0, limit).forEach(function(point) {
-        if($.isNumeric(point.x) && $.isNumeric(point.y)) {
-            // If the size field contains an array of numbers, arbitrarily take the smallest.
-            // TODO What should be the default value of the size?  Currently it looks like undefined is acceptable.
-            var size = _.isArray(point.size) ? point.size.sort()[0] : point.size;
-            mapData.push(me.createHeatmapDataPoint(size, point.x, point.y));
-        }
+    this.data.forEach(function(item) {
+        var pointValues = neon.helpers.getNestedValues(item, fields);
+        me.pointTotal += pointValues.length;
+        pointValues.slice(0, limit).forEach(function(pointValue) {
+            if($.isNumeric(pointValue[me.latitudeMapping]) && $.isNumeric(pointValue[me.longitudeMapping])) {
+                // TODO What should be the default value of the size?  Currently it looks like undefined is acceptable.
+                mapData.push(me.createHeatmapDataPoint(pointValue[me.sizeMapping], pointValue[me.longitudeMapping], pointValue[me.latitudeMapping]));
+            }
+        });
     });
 
     this.setDataSet({

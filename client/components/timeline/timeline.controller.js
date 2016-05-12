@@ -854,8 +854,8 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
                 },
                 updateData: function(data) {
                     if(data) {
-                        var dateField = getDateFields(data[0]);
-                        $scope.referenceStartDate = new Date(_.isArray(dateField) ? dateField[0] : dateField);
+                        var dates = data.length ? getDates(data[0]) : [];
+                        $scope.referenceStartDate = dates.length ? dates[0] : new Date();
                         queryForMaxDate(callback);
                     }
                 }
@@ -878,8 +878,8 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
                 },
                 updateData: function(data) {
                     if(data) {
-                        var dateField = getDateFields(data[0]);
-                        $scope.referenceEndDate = new Date(_.isArray(dateField) ? dateField[dateField.length - 1] : dateField);
+                        var dates = data.length ? getDates(data[0]) : [];
+                        $scope.referenceEndDate = dates.length ? dates[dates.length - 1] : new Date();
                         callback();
                     }
                 }
@@ -888,16 +888,20 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
     };
 
     /**
-     * Finds and returns the date field in the data. If the date contains '.', representing that the date is in an object
+     * Finds and returns the date(s) in the date field in the data. If the date contains '.', representing that the date is in an object
      * within the data, it will find the nested value.
-     * @method getDateFields
-     * @param {Object} data
+     * @method getDates
+     * @param {Object} dataItem
      * @return {Array}
      * @private
      */
-    var getDateFields = function(data) {
-        return neon.helpers.getNestedValues(data, $scope.active.dateField.columnName).sort(function(a, b) {
-            return new Date(a).getTime() - new Date(b).getTime();
+    var getDates = function(dataItem) {
+        return neon.helpers.getNestedValues(dataItem, [$scope.active.dateField.columnName]).filter(function(value) {
+            return value[$scope.active.dateField.columnName];
+        }).map(function(value) {
+            return new Date(value[$scope.active.dateField.columnName]);
+        }).sort(function(a, b) {
+            return a.getTime() - b.getTime();
         });
     };
 
@@ -929,7 +933,7 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
             // Fill our data into the appropriate interval buckets.
             var resultDate;
             for(i = 0; i < rawLength; i++) {
-                resultDate = new Date(data[i].year, (data[i].month || 1) - 1, data[i].day || 1, data[i].hour || 0);
+                resultDate = new Date(Date.UTC(data[i].year, (data[i].month || 1) - 1, data[i].day || 1, data[i].hour || 0));
                 var bucketIndex = $scope.bucketizer.getBucketIndex(resultDate);
                 if(queryData[bucketIndex]) {
                     queryData[bucketIndex].value += data[i].count;

@@ -191,7 +191,7 @@ html {
         top: 25px;
         margin-top: 0;
         /* Set the width so that the timeline date granularity buttons fit on one row. */
-        min-width: 325px;
+        min-width: 320px;
 
         background: none;
         padding: 10px;
@@ -988,8 +988,11 @@ html {
 }
 
 .layer-options-container {
-    /* Make the width match the width of the layer-options-well element plus a 20px right margin for the scrollbar. */
-    width: 590px;
+    /* Make the width match the width of the layer-options-well element plus its border. */
+    width: 580px;
+    border-color: @visualization-box-background;
+    border-style: dashed;
+    border-width: 5px;
 
     &.drag-enter {
         border-color: @accent-dark;
@@ -1006,6 +1009,7 @@ html {
 
     .layer-options-well {
         cursor: move;
+        margin-bottom: 0px;
         /* Make the width match the width of four columns + the columns' margins + this element's padding + this element's borders. */
         width: 570px;
 
