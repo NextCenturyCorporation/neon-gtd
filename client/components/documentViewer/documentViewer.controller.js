@@ -172,7 +172,7 @@ angular.module('neonDemo.controllers').controller('documentViewerController', ['
     var findDocumentContent = function(item) {
         var text = neon.helpers.getNestedValues(item, $scope.active.documentTextField.columnName);
         // If the document text field contains an array, arbitrarily join the elements of the array to create the text.
-        return text.length > 1 ? text.join('') : text[0];
+        return _.escape(text.length > 1 ? text.join('') : text[0]);
     };
 
     $scope.queryAndUpdateAnnotations = function() {
@@ -184,7 +184,7 @@ angular.module('neonDemo.controllers').controller('documentViewerController', ['
         var validFields = $scope.active.annotationsInAnotherTable ? ($scope.functions.isFieldValid($scope.active.documentIdFieldInAnnotationTable) &&
                 $scope.functions.isFieldValid($scope.active.documentIdFieldInDocumentTable)) : $scope.functions.isFieldValid($scope.active.documentTextField);
 
-        if(validAnnotations && validFields) {
+        if(validAnnotations && validFields && $scope.active.documents.length) {
             $scope.functions.queryAndUpdate({
                 addToQuery: addToAnnotationQuery,
                 updateData: updateAnnotationData
@@ -288,9 +288,9 @@ angular.module('neonDemo.controllers').controller('documentViewerController', ['
         if($scope.active.annotationsInAnotherTable) {
             // TODO Handle coreferencing documents and annotations in different tables.
         } else {
-            var text = findDocumentContent(dataItem);
+            var content = findDocumentContent(dataItem);
             document = _.find($scope.active.documents, function(document) {
-                return document.content === text;
+                return document.content === content;
             });
         }
         return document;
