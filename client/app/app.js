@@ -42,107 +42,68 @@ neon.safeApply = function($scope, func) {
 
 neon.helpers = {
     /**
-     * Finds and returns the array of field values using the given name and the given data.  If the name contains one or more periods, representing that the field is in an object,
-     * the function will find the nested field values.
+     * Finds and returns an array of objects with the values in the given data item for the fields with the given names.  Names with one or more periods represent nested fields of objects in the data.
+     * Values in arrays will be split into individual objects in the result array so that the result array has each combination of the different values in the arrays.
      * @method getNestedValues
-     * @param {Object} data
-     * @param {String} name
-     * @return {Array} The data contained within the field using the given name in an array, or an empty array if the data or field with the given name does not exist.
+     * @param {Object} dataItem
+     * @param {Array} nestedFields
+     * @return {Array} An array of one or more objects mapping each nested field name to its value.
      */
-    getNestedValues: function(data, name) {
-        var fields = name.split(".");
-        var values = data[name] === undefined ? data[fields[0]] : data[name];
-
-        if(_.isArray(values)) {
-            values = [].concat.apply([], values.map(function(item) {
-                return ((_.isArray(item) || _.isObject(item)) && fields.length > 1) ? neon.helpers.getNestedValues(item, fields.slice(1).join(".")) : item;
-            }));
-        }
-
-        // Check for additional fields because the object might be a string wrapped by an angular $sce trusted object.
-        // Use typeof to check for false booleans.
-        if(_.isObject(values) && fields.length > 1 && values[fields[1]] !== undefined) {
-            values = neon.helpers.getNestedValues(values, fields.slice(1).join("."));
-        }
-
-        return values === undefined ? [] : (_.isArray(values) ? values : [values]);
-    },
-
-    /**
-     * Finds and returns the array of field values using the given function or property and the given data.
-     * @method getValues
-     * @param {Object} data
-     * @param {Function | String} functionOrProperty
-     * @return {Array}
-     */
-    getValues: function(data, functionOrProperty) {
-        if(_.isFunction(functionOrProperty)) {
-            return functionOrProperty(data);
-        }
-        return neon.helpers.getNestedValues(data, functionOrProperty);
-    },
-
-    /**
-     * Finds and returns the arrays of X & Y coordinates in the given data using the given fields.
-     * @method getPoints
-     * @param {Array} data
-     * @param {Function | String} xField
-     * @param {Function | String} yField
-     * @param {Object} extraFields Mapping {String} key to a {Function | String} field.  Please note that keys cannot be "x", "y", or "data".
-     * @return {Array} The array of {Object} points each containing {Number} x, {Number} y, {Object} data, and properties for each of the given extra fields.
-     */
-    getPoints: function(data, xField, yField, extraFields) {
-        var points = [];
-        data.forEach(function(item) {
-            // Get the arrays of values for the X & Y fields and all the extra fields.  Fields that contain only a single number/string will be wrapped in an array by getValues.
-            var values = {
-                x: neon.helpers.getValues(item, xField),
-                y: neon.helpers.getValues(item, yField)
-            };
-            Object.keys(extraFields || {}).forEach(function(key) {
-                if(extraFields[key] && key !== "x" && key !== "y" && key !== "data") {
-                    values[key] = neon.helpers.getValues(item, extraFields[key]);
+    getNestedValues: function(dataItem, nestedFields) {
+        var headsToTails = {};
+        nestedFields.forEach(function(nestedField) {
+            var nestedArray = nestedField.split(".");
+            if(dataItem[nestedField] !== undefined && !headsToTails[nestedField]) {
+                headsToTails[nestedField] = [];
+            } else if(nestedArray.length > 1) {
+                if(!headsToTails[nestedArray[0]]) {
+                    headsToTails[nestedArray[0]] = [];
                 }
-            });
-
-            var pushToPoints = function(xIndex, yIndex, extraFieldIndex) {
-                var point = {
-                    x: values.x[xIndex],
-                    y: values.y[yIndex],
-                    data: item
-                };
-                Object.keys(extraFields || {}).forEach(function(key) {
-                    if(values[key] && values[key].length) {
-                        if(typeof extraFieldIndex !== "undefined" && values[key].length > 1) {
-                            // Set the key to the value in the data at the given index, or undefined if that index does not exist.
-                            point[key] = values[key].length > extraFieldIndex ? values[key][extraFieldIndex] : undefined;
-                        } else {
-                            // Set the key to the array of all values in the data since we don't know how to choose the "best" data.
-                            point[key] = values[key].length > 1 ? values[key] : values[key][0];
-                        }
-                    }
-                });
-                points.push(point);
-            };
-
-            // If multiple X & Y values exist, create points for each common index of the arrays for the X, Y, and extra fields.
-            // If a single X or Y value exists, create points for each combination of it and the other coordinate(s).
-            if(values.x.length > 1 && values.y.length > 1) {
-                for(var i = 0; i < Math.min(values.x.length, values.y.length); ++i) {
-                    pushToPoints(i, i, i);
-                }
-            } else if(values.x.length === 1) {
-                for(var i = 0; i < values.y.length; ++i) {
-                    pushToPoints(0, i);
-                }
-            } else if(values.y.length === 1) {
-                for(var i = 0; i < values.x.length; ++i) {
-                    pushToPoints(i, 0);
-                }
+                headsToTails[nestedArray[0]].push(nestedArray.slice(1).join("."));
             }
         });
 
-        return points;
+        var getNestedValueForField = function(headField) {
+            if(_.isArray(dataItem[headField]) && headsToTails[headField].length) {
+                return [].concat.apply([], dataItem[headField].map(function(item) {
+                    return neon.helpers.getNestedValues(item, headsToTails[headField]);
+                }));
+            }
+
+            if(_.isObject(dataItem[headField]) && headsToTails[headField].length) {
+                return neon.helpers.getNestedValues(dataItem[headField], headsToTails[headField]);
+            }
+
+            return dataItem[headField];
+        };
+
+        var getNestedValuesForFields = function(headFields, currentResults) {
+            if(!headFields.length) {
+                return currentResults;
+            }
+
+            var nestedValue = getNestedValueForField(headFields[0]);
+            var updatedResults = [].concat.apply([], currentResults.map(function(currentResult) {
+                if(_.isArray(nestedValue)) {
+                    return nestedValue.map(function(value) {
+                        var updatedResult = _.cloneDeep(currentResult);
+                        if(_.isObject(value)) {
+                            Object.keys(value).forEach(function(valueField) {
+                                updatedResult[headFields[0] + "." + valueField] = value[valueField];
+                            });
+                        } else {
+                            updatedResult[headFields[0]] = value;
+                        }
+                        return updatedResult;
+                    });
+                }
+                currentResult[headFields[0]] = nestedValue;
+                return currentResult;
+            }));
+            return getNestedValuesForFields(headFields.slice(1), updatedResults);
+        };
+
+        return getNestedValuesForFields(Object.keys(headsToTails), [{}]);
     },
 
     /**
@@ -233,6 +194,8 @@ angular.module('neonDemo.filters', [])
 
 var XDATA = {};
 
+var VISUALIZATIONS = neonVisualizations || [];
+
 // Start angular once all of the configuration variables have been read from the JSON file(s) and set in the module.
 var startAngular = function() {
     angular.bootstrap(document, ['neonDemo'], {
@@ -319,30 +282,30 @@ var saveDashboards = function(config) {
         });
     }
 
-    var visualizations = neonVisualizations || [];
     (config.visualizations || []).forEach(function(visualization) {
-        var index = _.findIndex(visualizations, {
+        var index = _.findIndex(VISUALIZATIONS, {
             type: visualization.type
         });
         if(index < 0) {
-            visualizations.push(visualization);
+            VISUALIZATIONS.push(visualization);
         } else if(visualization.exclude) {
-            visualizations.splice(index, 1);
+            VISUALIZATIONS.splice(index, 1);
         } else {
-            visualizations[index] = visualization;
+            VISUALIZATIONS[index] = visualization;
         }
     });
 
-    // Most visualizations should have a minimum size of about 300px square to have space for their UI elements.
-    // TODO Use the browser width to determine the minimum size for visualizations and update it on browser resize.
-    visualizations.forEach(function(visualization) {
-        visualization.sizeX = visualization.sizeX || Math.floor(dashboardConfig.gridsterColumns * visualization.minSizePercentageX);
-        visualization.sizeY = visualization.sizeY || Math.floor(dashboardConfig.gridsterColumns * visualization.minSizePercentageY);
-        visualization.minSizeX = Math.floor(dashboardConfig.gridsterColumns * visualization.minSizePercentageX);
-        visualization.minSizeY = Math.floor(dashboardConfig.gridsterColumns * visualization.minSizePercentageY);
+    // Note that minimum sizes of visualizations will be updated automatically in the main controller whenever gridster is resized or new visualizations are added to the layout.
+    VISUALIZATIONS.forEach(function(visualization) {
+        visualization.sizeX = visualization.sizeX || Math.floor(dashboardConfig.gridsterColumns * 0.25);
+        visualization.sizeY = visualization.sizeY || Math.floor(dashboardConfig.gridsterColumns * 0.20);
+        visualization.minPixelX = visualization.minPixelX || neonVisualizationMinPixel.x;
+        visualization.minPixelY = visualization.minPixelY || neonVisualizationMinPixel.y;
+        visualization.minSizeX = 1;
+        visualization.minSizeY = 1;
     });
 
-    neonDemo.constant('visualizations', visualizations);
+    neonDemo.constant('visualizations', VISUALIZATIONS);
 };
 
 var createExternalService = function(args, argsMappings) {
@@ -525,6 +488,20 @@ var readAndSaveExternalServices = function(config, callback) {
 };
 
 var saveLayouts = function(layouts) {
+    Object.keys(layouts).forEach(function(layout) {
+        layouts[layout].forEach(function(visualization) {
+            var visualizationConfig = _.find(VISUALIZATIONS, function(visualizationConfig) {
+                return visualizationConfig.type === visualization.type;
+            });
+            visualization.sizeX = visualization.sizeX || visualizationConfig.sizeX;
+            visualization.sizeY = visualization.sizeY || visualizationConfig.sizeY;
+            visualization.minSizeX = visualization.minSizeX || visualizationConfig.minSizeX;
+            visualization.minSizeY = visualization.minSizeY || visualizationConfig.minSizeY;
+            visualization.minPixelX = visualization.minPixelX || visualizationConfig.minPixelX;
+            visualization.minPixelY = visualization.minPixelY || visualizationConfig.minPixelY;
+        });
+    });
+
     neonDemo.constant('layouts', layouts);
 };
 

@@ -470,6 +470,17 @@ angular.module('neonDemo.services')
     };
 
     /**
+     * Returns whether links exist for the given source and key.
+     * @param {String} source
+     * @param {String} key
+     * @method hasLinks
+     * @return {Boolean}
+     */
+    service.hasLinks = function(source, key) {
+        return (service.sourcesToKeysToLinks[source] ? service.sourcesToKeysToLinks[source][key] || [] : []).length > 0;
+    };
+
+    /**
      * The template for a link element that triggers the links popup used in the linksPopup and linksPopupButton directives.
      */
     service.ENABLED_TEMPLATE = "<a data-toggle='modal' data-target='.links-popup' data-links-json='{{json}}'" +

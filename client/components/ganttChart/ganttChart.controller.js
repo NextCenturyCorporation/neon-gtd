@@ -122,8 +122,10 @@ angular.module('neonDemo.controllers').controller('ganttChartController', ['$sco
             $scope.active.selectableGroups = [];
             $scope.functions.updateData([]);
         } else {
-            $scope.active.selectableGroups = data.map(function(item) {
-                return neon.helpers.getNestedValues(item, $scope.active.groupFields[0].columnName)[0];
+            $scope.active.selectableGroups = data.map(function(dataItem) {
+                return neon.helpers.getNestedValues(dataItem, $scope.active.groupFields[0].columnName).map(function(value) {
+                    return value[$scope.active.groupFields[0].columnName];
+                })[0];
             }) || [];
             // Run the query for the gantt chart data and update the gantt chart.
             $scope.functions.queryAndUpdate();
@@ -241,22 +243,22 @@ angular.module('neonDemo.controllers').controller('ganttChartController', ['$sco
                 $scope.active.data.push(treeParent);
             }
 
-            var color;
-            var colorFieldValue = neon.helpers.getNestedValues(item, $scope.active.colorField.columnName)[0];
-            if(Object.keys(groupsToColors).length) {
-                color = groupsToColors[colorFieldValue] || neonColors.DEFAULT;
-            } else if(colors.length) {
-                color = colorScale(colors.indexOf(colorFieldValue));
-            } else {
-                color = colorScale(index);
+            var fields = [$scope.active.startField.columnName, $scope.active.endField.columnName, $scope.active.colorField.columnName];
+            if($scope.functions.isFieldValid($scope.active.titleField)) {
+                fields.push($scope.active.titleField.columnName);
             }
 
-            treeParent.tasks.push({
-                id: item._id,
-                name: $scope.functions.isFieldValid($scope.active.titleField) ? neon.helpers.getNestedValues(item, $scope.active.titleField.columnName)[0] : "",
-                from: neon.helpers.getNestedValues(item, $scope.active.startField.columnName)[0],
-                to: neon.helpers.getNestedValues(item, $scope.active.endField.columnName)[0],
-                color: color
+            neon.helpers.getNestedValues(item, fields).forEach(function(value) {
+                var colorValue = value[$scope.active.colorField.columnName];
+                var color = Object.keys(groupsToColors).length ? (groupsToColors[colorValue] || neonColors.DEFAULT) : (colors.length ? colorScale(colors.indexOf(colorValue)) : colorScale(index));
+
+                treeParent.tasks.push({
+                    id: item._id,
+                    name: $scope.functions.isFieldValid($scope.active.titleField) ? value[$scope.active.titleField.columnName] : "",
+                    from: value[$scope.active.startField.columnName],
+                    to: value[$scope.active.endField.columnName],
+                    color: color
+                });
             });
         });
 
@@ -271,10 +273,11 @@ angular.module('neonDemo.controllers').controller('ganttChartController', ['$sco
     var createFieldValueList = function(field, data) {
         var list = [];
         data.forEach(function(item) {
-            var value = neon.helpers.getNestedValues(item, field)[0];
-            if(list.indexOf(value) < 0) {
-                list.push(value);
-            }
+            neon.helpers.getNestedValues(item, [field]).forEach(function(value) {
+                if(list.indexOf(value[field]) < 0) {
+                    list.push(value[field]);
+                }
+            });
         });
         return list;
     };
@@ -282,17 +285,18 @@ angular.module('neonDemo.controllers').controller('ganttChartController', ['$sco
     var buildTree = function(data) {
         if($scope.active.groupFields.length) {
             data.forEach(function(item) {
-                var groupValue = neon.helpers.getNestedValues(item, $scope.active.groupFields[0].columnName)[0];
+                var groupValue = neon.helpers.getNestedValues(item, [$scope.active.groupFields[0].columnName])[0][$scope.active.groupFields[0].columnName];
                 $scope.tree[groupValue] = buildSubtree($scope.tree, item, 0);
             });
         }
     };
 
     var buildSubtree = function(tree, item, rowIndex) {
-        var fieldValue = neon.helpers.getNestedValues(item, $scope.active.groupFields[rowIndex].columnName)[0];
+        var fieldValue = neon.helpers.getNestedValues(item, [$scope.active.groupFields[rowIndex].columnName])[0][$scope.active.groupFields[rowIndex].columnName];
         if(rowIndex + 1 < $scope.active.groupFields.length) {
             tree[fieldValue] = tree[fieldValue] || {};
-            tree[fieldValue][neon.helpers.getNestedValues(item, $scope.active.groupFields[rowIndex + 1].columnName)[0]] = buildSubtree(tree[fieldValue], item, rowIndex + 1);
+            var childFieldValue = neon.helpers.getNestedValues(item, [$scope.active.groupFields[rowIndex + 1].columnName])[0][$scope.active.groupFields[rowIndex + 1].columnName];
+            tree[fieldValue][childFieldValue] = buildSubtree(tree[fieldValue], item, rowIndex + 1);
             return tree[fieldValue];
         }
         return tree[fieldValue] || {
@@ -303,7 +307,7 @@ angular.module('neonDemo.controllers').controller('ganttChartController', ['$sco
     var getTreeParent = function(item) {
         var treeParent = $scope.tree;
         $scope.active.groupFields.forEach(function(groupField) {
-            treeParent = treeParent[neon.helpers.getNestedValues(item, groupField.columnName)[0]];
+            treeParent = treeParent[neon.helpers.getNestedValues(item, [groupField.columnName])[0][groupField.columnName]];
         });
         return treeParent;
     };

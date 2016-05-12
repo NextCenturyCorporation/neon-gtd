@@ -1464,13 +1464,12 @@ function($scope, external, connectionService, datasetService, errorNotificationS
 
         var unsharedFilterField;
         var unsharedFilterValue;
-        layers.forEach(function(layer) {
-            if(datasetService.isFieldValid(layer.unsharedFilterField) && layer.unsharedFilterValue) {
-                // The unshared filter will be the same for all layers with the same database and table.
-                unsharedFilterField = layer.unsharedFilterField;
-                unsharedFilterValue = layer.unsharedFilterValue;
-            }
-        });
+        // If queryByTable is true, the unshared filter will be the same for all layers with the same database and table.
+        // Otherwise, buildQuery will be called on each layer individually so the layers array will have a single item.
+        if(layers.length && datasetService.isFieldValid(layers[0].unsharedFilterField) && layers[0].unsharedFilterValue) {
+            unsharedFilterField = layers[0].unsharedFilterField;
+            unsharedFilterValue = layers[0].unsharedFilterValue;
+        }
 
         var unsharedFilterWhereClause;
         if(unsharedFilterField && unsharedFilterValue) {
@@ -1941,7 +1940,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
     var updateOtherLayers = function(layer) {
         $scope.active.layers.forEach(function(other) {
             // Layers with the same database/table must all have the same unshared filter and filter setting.
-            if(other.database.name === layer.database.name && other.table.name === layer.table.name) {
+            if($scope.queryByTable && other.database.name === layer.database.name && other.table.name === layer.table.name) {
                 other.unsharedFilterField = $scope.functions.findFieldObject(layer.unsharedFilterField.columnName, "", other);
                 other.unsharedFilterValue = layer.unsharedFilterValue;
                 other.filterable = layer.filterable;

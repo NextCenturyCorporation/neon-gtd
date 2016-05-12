@@ -104,7 +104,6 @@ angular.module('neonDemo.controllers').controller('dataTableController', ['$scop
     var updateColumns = function() {
         var OBJECT = "{...}";
 
-        // Based on neon.helpers.getNestedValues
         var getCellText = function(data, fields) {
             var values = data[fields[0]];
 
@@ -336,7 +335,7 @@ angular.module('neonDemo.controllers').controller('dataTableController', ['$scop
 
     $scope.handleChangeSortField = function() {
         updateSort();
-        $scope.functions.logChangeAndUpdate("sortField", $scope.active.sortByField.name);
+        $scope.functions.logChangeAndUpdate("sortField", $scope.active.sortByField.columnName);
     };
 
     $scope.handleChangeSortDirection = function() {

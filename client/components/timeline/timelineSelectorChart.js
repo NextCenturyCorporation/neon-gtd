@@ -1040,7 +1040,7 @@ charts.TimelineSelectorChart = function(element, configuration) {
             if(me.granularity !== 'hour') {
                 return (me.xFocus.domain()[0] <= obj.date && obj.date < me.xFocus.domain()[1]);
             }
-            return (me.xFocus.domain()[0] <= obj.date && obj.date <= me.xFocus.domain()[1]);
+            return (me.xFocus.domain()[0] <= obj.date && obj.date < me.xFocus.domain()[1]);
         });
 
         // Use lowest value or 0 for Y-axis domain, whichever is less (e.g. if negative)
@@ -1084,7 +1084,7 @@ charts.TimelineSelectorChart = function(element, configuration) {
 
             focus.selectAll("rect.bar")
                 .data(dataShown)
-            .enter().append("rect")
+                .enter().append("rect")
                 .attr("class", function(d) {
                     return "bar " + d.date;
                 })

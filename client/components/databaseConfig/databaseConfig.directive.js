@@ -213,15 +213,6 @@ angular.module('neonDemo.directives')
                 $scope.gridsterConfigs = layouts[layoutName] ? angular.copy(layouts[layoutName]) : [];
 
                 $scope.gridsterConfigs.forEach(function(config) {
-                    var index = _.findIndex(visualizations, {
-                        type: config.type
-                    });
-
-                    config.name = index >= 0 ? visualizations[index].name : "Unknown";
-                    config.sizeX = config.sizeX || (index >= 0 ? visualizations[index].sizeX : 1);
-                    config.sizeY = config.sizeY || (index >= 0 ? visualizations[index].sizeY : 1);
-                    config.minSizeX = index >= 0 ? visualizations[index].minSizeX : 1;
-                    config.minSizeY = index >= 0 ? visualizations[index].minSizeY : 1;
                     config.id = uuid();
                 });
 
@@ -255,6 +246,8 @@ angular.module('neonDemo.directives')
                         sizeY: visualization.sizeY,
                         minSizeX: visualization.minSizeX,
                         minSizeY: visualization.minSizeY,
+                        minPixelX: neonVisualizationMinPixel.x,
+                        minPixelY: neonVisualizationMinPixel.y,
                         type: visualization.type,
                         id: uuid(),
                         bindings: {}

@@ -49,7 +49,7 @@
         margin-left: 10px;
         padding: 0px;
 
-        button, a {
+        a, button {
             float: left;
             background: @visualization-box-background;
             border: 1px solid @visualization-box-background;
@@ -59,6 +59,7 @@
 
             &:focus, &:hover {
                 border: 1px solid @accent-bright;
+                cursor: pointer;
 
                 span {
                     color: @accent-bright;
@@ -74,14 +75,9 @@
             letter-spacing: 0.05em;
             overflow-y: hidden;
             text-align: center;
-            /* Supports three lines of text. */
-            height: 55px;
+            /* Supports four lines of text. */
+            height: 70px;
             width: 110px;
-
-            &.short {
-                /* Supports two lines of text. */
-                height: 35px;
-            }
         }
 
         .neon-popup-thumbnail {
@@ -92,10 +88,20 @@
             a, button {
                 background: @accent-bright;
                 border: 1px solid @accent-bright;
+
+                &:focus, &:hover {
+                    span {
+                        color: @light-text-color;
+                    }
+                }
             }
 
             span {
                 color: @light-text-color;
+            }
+
+            .icon-container {
+                background-color: @light-text-color;
             }
         }
 
@@ -103,18 +109,20 @@
             display: block;
             float:left;
             margin: 5px;
-            height: 130px;
+            height: 160px;
             width: 120px;
 
-            img {
-               height: 56px;
-               width: 56px;
+            .icon-container {
+               height: 72px;
+               width: 72px;
                border-radius: 4px;
-               margin-top: 4px;
-               margin-bottom: 4px;
+               margin: 4px auto;
                padding: 4px;
-               background-color: #ffffff;
             }
+
+            img {
+               background-color: #ffffff;
+           }
         }
     }
 

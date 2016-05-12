@@ -259,10 +259,10 @@ angular.module('neonDemo.controllers').controller('singleLayerController', ['$sc
         if($scope.queryTitle) {
             return $scope.queryTitle;
         }
-        var title = $scope.active.unsharedFilterValue ? $scope.active.unsharedFilterValue + " " : "";
         if($scope.bindings.title) {
-            return title + $scope.bindings.title;
+            return $scope.bindings.title;
         }
+        var title = $scope.active.unsharedFilterValue ? $scope.active.unsharedFilterValue + " " : "";
         if(_.keys($scope.active).length) {
             return title + ($scope.active.table ? $scope.active.table.prettyName : "");
         }
