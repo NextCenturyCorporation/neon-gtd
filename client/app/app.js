@@ -67,7 +67,7 @@ neon.helpers = {
             if(_.isArray(dataItem[headField]) && headsToTails[headField].length) {
                 return [].concat.apply([], dataItem[headField].map(function(item) {
                     return neon.helpers.getNestedValues(item, headsToTails[headField]);
-                }));;
+                }));
             }
 
             if(_.isObject(dataItem[headField]) && headsToTails[headField].length) {
@@ -299,8 +299,8 @@ var saveDashboards = function(config) {
     VISUALIZATIONS.forEach(function(visualization) {
         visualization.sizeX = visualization.sizeX || Math.floor(dashboardConfig.gridsterColumns * 0.25);
         visualization.sizeY = visualization.sizeY || Math.floor(dashboardConfig.gridsterColumns * 0.20);
-        visualization.minPixelX = visualization.minPixelX || neonVisualizationMinPixelX;
-        visualization.minPixelY = visualization.minPixelY || neonVisualizationMinPixelY;
+        visualization.minPixelX = visualization.minPixelX || neonVisualizationMinPixel.x;
+        visualization.minPixelY = visualization.minPixelY || neonVisualizationMinPixel.y;
         visualization.minSizeX = 1;
         visualization.minSizeY = 1;
     });

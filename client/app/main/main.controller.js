@@ -315,9 +315,9 @@ function($scope, $timeout, $location, config, datasets, themeService, connection
 
     $scope.$watch("visualizations", function() {
         updateVisualizationMinSizes();
-    })
+    });
 
     $scope.$on('gridster-resized', function() {
         updateVisualizationMinSizes();
-    })
+    });
 }]);

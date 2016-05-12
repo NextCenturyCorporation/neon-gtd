@@ -368,8 +368,10 @@ neonWizard.visualizationBindings["timeline-selector"] = [
     }
 ];
 
-var neonVisualizationMinPixelX = 320;
-var neonVisualizationMinPixelY = 240;
+var neonVisualizationMinPixel = {
+    x: 320,
+    y: 240
+};
 
 var neonVisualizations = [{   // jshint ignore:line
     name: "Aggregation Table",

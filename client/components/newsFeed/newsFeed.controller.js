@@ -29,13 +29,6 @@ angular.module('neonDemo.controllers').controller('newsFeedController', ['$scope
 
     var DEFAULT_TYPE = "NEWS";
 
-    var DEFAULT_LINKY_CONFIG = {
-        mentions: false,
-        hashtags: false,
-        urls: true,
-        linkTo: ""
-    };
-
     // The default limit and the number of news items added to the feed whenever the user scrolls to the bottom of the feed.
     var LIMIT_INTERVAL = 50;
 

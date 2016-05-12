@@ -401,15 +401,15 @@ coreMap.Map.prototype.createSelectControl =  function(layer) {
 
                 text += '</tr>';
 
-                for(i = 0; i < data.length; i++) {
+                data.forEach(function(item) {
                     text += '<tr>';
                     feature.layer.clusterPopupFields.forEach(function(popupField) {
-                        text += '<td>' + neon.helpers.getNestedValues(data[i], [popupField]).map(function(value) {
+                        text += '<td>' + neon.helpers.getNestedValues(item, [popupField]).map(function(value) {
                             return value[popupField];
                         }).join(",") + '</td>';
                     });
                     text += '</tr>';
-                }
+                });
                 text += '</table></div>';
             } else {
                 text = '<div><table class="table table-striped table-condensed">' + getPointPopupText(feature.cluster ? feature.attributes : data[0]) + '</table></div>';

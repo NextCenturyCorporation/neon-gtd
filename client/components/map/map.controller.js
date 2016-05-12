@@ -46,7 +46,7 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
 
     $scope.functions.createMenuText = function() {
         var text = "";
-        $scope.active.layers.forEach(function(layer, index) {
+        $scope.active.layers.forEach(function(layer) {
             if(!layer.new && layer.show && layer.olLayer.data) {
                 var limit = layer.olLayer.pointLimit <= layer.olLayer.pointTotal;
                 var count = $filter("number")(limit ? layer.olLayer.pointLimit : layer.olLayer.pointTotal);

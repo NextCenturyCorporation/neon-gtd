@@ -393,7 +393,7 @@ coreMap.Map.Layer.NodeLayer.prototype.calculateSizes = function() {
     var nodeWeightMapping = this.nodeWeightMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_WEIGHT_MAPPING;
 
     this.data.forEach(function(item) {
-        var values = neon.helpers.getNestedValues(element, [lineWeightMapping, nodeWeightMapping]);
+        var values = neon.helpers.getNestedValues(item, [lineWeightMapping, nodeWeightMapping]);
         if(!values.length) {
             var nestedValue = {};
             nestedValue[lineWeightMapping] = 1;
@@ -446,9 +446,7 @@ coreMap.Map.Layer.NodeLayer.prototype.updateFeatures = function(limit) {
         var pointValues = neon.helpers.getNestedValues(item, fields);
         me.pointTotal += pointValues.length;
         pointValues.slice(0, limit).forEach(function(pointValue) {
-            if($.isNumeric(pointValue[sourceLatitudeMapping]) && $.isNumeric(pointValue[sourceLongitudeMapping]) && $.isNumeric(pointValue[targetLatitudeMapping]) &&
-                $.isNumeric(pointValue[targetLongitudeMapping])) {
-
+            if($.isNumeric(pointValue[sourceLatitudeMapping]) && $.isNumeric(pointValue[sourceLongitudeMapping]) && $.isNumeric(pointValue[targetLatitudeMapping]) && $.isNumeric(pointValue[targetLongitudeMapping])) {
                 // Note: The date mappings must be on the top level of each attributes in order for filtering to work.
                 // This means even if the date is in to.date, keep the date at the top level with key "to.date" instead
                 // of in the object "to".
@@ -468,7 +466,7 @@ coreMap.Map.Layer.NodeLayer.prototype.updateFeatures = function(limit) {
                 var addPointToNodes = function(array) {
                     var key = array + "_" + date;
                     if(!nodes[key]) {
-                        nodes[key] = me.createNode(item, pointValue[nodeWeightMapping], pointValue[nodeMapping], array);
+                        nodes[key] = me.createNode(item, pointValue[nodeWeightMapping], pointValue[me.nodeMapping], array);
                         nodes[key].attributes[dateMapping] = date;
                     }
                 };

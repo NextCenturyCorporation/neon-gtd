@@ -375,9 +375,9 @@ coreMap.Map.Layer.PointsLayer.prototype.updateGradient = function() {
 
             this.data.forEach(function(item) {
                 var dates = neon.helpers.getNestedValues(item, [me.categoryMapping]).filter(function(value) {
-                    return value[dateMapping];
+                    return value[me.categoryMapping];
                 }).map(function(value) {
-                    return new Date(value[dateMapping]);
+                    return new Date(value[me.categoryMapping]);
                 }).sort(function(a, b) {
                     return a.getTime() - b.getTime();
                 });
