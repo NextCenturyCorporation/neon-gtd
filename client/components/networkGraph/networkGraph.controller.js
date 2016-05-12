@@ -193,23 +193,31 @@ angular.module('neonDemo.controllers').controller('networkGraphController', ['$s
     var publishNews = function(data) {
         var news = [];
         data.forEach(function(item) {
-            var newsItem = {
-                primaryTitle: neon.helpers.getNestedValues(item, $scope.active.nodeField.columnName)
-            };
+            var fields = [$scope.active.nodeField.columnName];
             if($scope.functions.isFieldValid($scope.active.dateField)) {
-                newsItem.date = new Date(neon.helpers.getNestedValues(item, $scope.active.dateField.columnName).sort(function(a, b) {
-                    return new Date(a).getTime() - new Date(b).getTime();
-                })[0]);
+                fields.push($scope.active.dateField.columnName);
             }
             if($scope.functions.isFieldValid($scope.active.nameField)) {
-                newsItem.secondaryTitle = neon.helpers.getNestedValues(item, $scope.active.nameField.columnName);
+                fields.push($scope.active.nameField.columnName);
             }
             if($scope.functions.isFieldValid($scope.active.textField)) {
-                newsItem.content = neon.helpers.getNestedValues(item, $scope.active.textField.columnName);
+                fields.push($scope.active.textField.columnName);
+            }
+
+            neon.helpers.getNestedValues(item, fields).forEach(function(value) {
+                news.push({
+                    primaryTitle: value[$scope.active.nodeField.columnName],
+                    secondaryTitle: $scope.functions.isFieldValid($scope.active.nameField) ? value[$scope.active.nameField.columnName] : undefined,
+                    date: $scope.functions.isFieldValid($scope.active.dateField) ? value[$scope.active.dateField.columnName] : undefined,
+                    content: $scope.functions.isFieldValid($scope.active.textField) ? value[$scope.active.textField.columnName] : undefined
+                });
+            });
+
+            // TODO Do we need this?
+            if($scope.functions.isFieldValid($scope.active.textField)) {
                 // Delete the text from the data to improve our memory preformance because we don't need it any longer.
                 delete item[$scope.active.textField.columnName];
             }
-            news.push(newsItem);
         });
 
         $scope.functions.publish("news", {

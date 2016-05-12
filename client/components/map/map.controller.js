@@ -68,7 +68,7 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
      * @param {String} database
      * @param {String} table
      * @param {String} idField
-     * @param {Number} or {String} id
+     * @param {Array | Number | String} id
      * @param {Function} updateDataFunction
      * @method queryForMapPopupData
      * @private
@@ -530,32 +530,27 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
                 maxLat: -90
             };
 
-            var recalculateBounds = function(data, longitude, latitude) {
-                neon.helpers.getPoints(data, longitude, latitude).forEach(function(point) {
-                    bounds = calculateMinMaxBounds(bounds, point.y, point.x);
+            var recalculateBounds = function(data, longitudeField, latitudeField) {
+                data.forEach(function(item) {
+                    neon.helpers.getNestedValues(item, [longitudeField, latitudeField]).forEach(function(pointValue) {
+                        bounds = calculateMinMaxBounds(bounds, pointValue[longitudeField], pointValue[latitudeField]);
+                    });
                 });
             };
 
             $scope.active.layers.forEach(function(layer) {
                 if(!layer.new) {
-                    var latitude;
-                    var longitude;
-                    var sourceLatitude;
-                    var sourceLongitude;
-                    var targetLatitude;
-                    var targetLongitude;
-
                     if(layer.type === $scope.NODE_AND_ARROW_LAYER) {
-                        var sourceLatitude = $scope.functions.isFieldValid(layer.sourceLatitudeField) ? layer.sourceLatitudeField.columnName : coreMap.Map.Layer.NodeLayer.DEFAULT_SOURCE_LATITUDE_MAPPING;
-                        var sourceLongitude = $scope.functions.isFieldValid(layer.sourceLongitudeField) ? layer.sourceLongitudeField.columnName : coreMap.Map.Layer.NodeLayer.DEFAULT_SOURCE_LONGITUDE_MAPPING;
-                        var targetLatitude = $scope.functions.isFieldValid(layer.targetLatitudeField) ? layer.targetLatitudeField.columnName : coreMap.Map.Layer.NodeLayer.DEFAULT_TARGET_LATITUDE_MAPPING;
-                        var targetLongitude = $scope.functions.isFieldValid(layer.targetLongitudeField) ? layer.targetLongitudeField.columnName : coreMap.Map.Layer.NodeLayer.DEFAULT_TARGET_LONGITUDE_MAPPING;
-                        recalculateBounds(data, targetLongitude, targetLatitude);
-                        recalculateBounds(data, sourceLongitude, sourceLatitude);
+                        var sourceLatitudeField = $scope.functions.isFieldValid(layer.sourceLatitudeField) ? layer.sourceLatitudeField.columnName : coreMap.Map.Layer.NodeLayer.DEFAULT_SOURCE_LATITUDE_MAPPING;
+                        var sourceLongitudeField = $scope.functions.isFieldValid(layer.sourceLongitudeField) ? layer.sourceLongitudeField.columnName : coreMap.Map.Layer.NodeLayer.DEFAULT_SOURCE_LONGITUDE_MAPPING;
+                        var targetLatitudeField = $scope.functions.isFieldValid(layer.targetLatitudeField) ? layer.targetLatitudeField.columnName : coreMap.Map.Layer.NodeLayer.DEFAULT_TARGET_LATITUDE_MAPPING;
+                        var targetLongitudeField = $scope.functions.isFieldValid(layer.targetLongitudeField) ? layer.targetLongitudeField.columnName : coreMap.Map.Layer.NodeLayer.DEFAULT_TARGET_LONGITUDE_MAPPING;
+                        recalculateBounds(data, targetLongitudeField, targetLatitudeField);
+                        recalculateBounds(data, sourceLongitudeField, sourceLatitudeField);
                     } else {
-                        var latitude = $scope.functions.isFieldValid(layer.latitudeField) ? layer.latitudeField.columnName : coreMap.Map.Layer.HeatmapLayer.DEFAULT_LATITUDE_MAPPING;
-                        var longitude = $scope.functions.isFieldValid(layer.longitudeField) ? layer.longitudeField.columnName : coreMap.Map.Layer.HeatmapLayer.DEFAULT_LONGITUDE_MAPPING;
-                        recalculateBounds(data, longitude, latitude);
+                        var latitudeField = $scope.functions.isFieldValid(layer.latitudeField) ? layer.latitudeField.columnName : coreMap.Map.Layer.HeatmapLayer.DEFAULT_LATITUDE_MAPPING;
+                        var longitudeField = $scope.functions.isFieldValid(layer.longitudeField) ? layer.longitudeField.columnName : coreMap.Map.Layer.HeatmapLayer.DEFAULT_LONGITUDE_MAPPING;
+                        recalculateBounds(data, longitudeField, latitudeField);
                     }
                 }
             });
@@ -610,12 +605,14 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
      * @private
      */
     var createExternalLinks = function(data, source, latitudeField, longitudeField) {
-        neon.helpers.getPoints(data, longitudeField, latitudeField).forEach(function(point) {
-            var linkData = {};
-            linkData[neonMappings.POINT] = {};
-            linkData[neonMappings.POINT][neonMappings.LATITUDE] = point.y;
-            linkData[neonMappings.POINT][neonMappings.LONGITUDE] = point.x;
-            $scope.functions.createLinksForData(neonMappings.POINT, linkData, $scope.functions.getLinksPopupService().generatePointKey(point.y, point.x), source);
+        data.forEach(function(item) {
+            neon.helpers.getNestedValues(item, [longitudeField, latitudeField]).forEach(function(pointValue) {
+                var linkData = {};
+                linkData[neonMappings.POINT] = {};
+                linkData[neonMappings.POINT][neonMappings.LATITUDE] = pointValue[longitudeField];
+                linkData[neonMappings.POINT][neonMappings.LONGITUDE] = pointValue[latitudeField];
+                $scope.functions.createLinksForData(neonMappings.POINT, linkData, $scope.functions.getLinksPopupService().generatePointKey(pointValue[longitudeField], pointValue[latitudeField]), source);
+            });
         });
     };
 
@@ -824,14 +821,16 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
             var allCoordinates = $scope.functions.getMapping("allCoordinates", message.database, message.table) || [];
             var layer = new coreMap.Map.Layer.SelectedPointsLayer("Selected Points");
 
-            var createPointsAndFeatures = function(latitude, longitude) {
+            var createPointsAndFeatures = function(latitudeField, longitudeField) {
                 var features = [];
-                neon.helpers.getPoints(message.data, longitude, latitude).forEach(function(point) {
-                    var openLayersPoint = new OpenLayers.Geometry.Point(point.x, point.y);
-                    openLayersPoint.transform(coreMap.Map.SOURCE_PROJECTION, coreMap.Map.DESTINATION_PROJECTION);
-                    var feature = new OpenLayers.Feature.Vector(openLayersPoint);
-                    feature.attributes = point.data;
-                    features.push(feature);
+                message.data.forEach(function(item) {
+                    neon.helpers.getNestedValues(item, [longitudeField, latitudeField]).forEach(function(pointValue) {
+                        var openLayersPoint = new OpenLayers.Geometry.Point(pointValue[latitudeField], pointValue[longitudeField]);
+                        openLayersPoint.transform(coreMap.Map.SOURCE_PROJECTION, coreMap.Map.DESTINATION_PROJECTION);
+                        var feature = new OpenLayers.Feature.Vector(openLayersPoint);
+                        feature.attributes = item;
+                        features.push(feature);
+                    });
                 });
                 return features;
             };
@@ -854,9 +853,9 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
                     database: message.database,
                     table: message.table
                 });
-                var latitude = pointsLayer ? pointsLayer.latitudeMapping : "latitude";
-                var longitude = pointsLayer ? pointsLayer.longitudeMapping : "longitude";
-                layer.addFeatures(createPointsAndFeatures(latitude, longitude));
+                var latitudeField = pointsLayer ? pointsLayer.latitudeMapping : "latitude";
+                var longitudeField = pointsLayer ? pointsLayer.longitudeMapping : "longitude";
+                layer.addFeatures(createPointsAndFeatures(latitudeField, longitudeField));
             }
             $scope.map.addLayer(layer);
             $scope.selectedPointLayer = layer;

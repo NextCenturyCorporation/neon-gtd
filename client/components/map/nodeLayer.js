@@ -341,12 +341,9 @@ coreMap.Map.Layer.NodeLayer.prototype.calculateAngle = function(x1, y1, x2, y2) 
  * @method areValuesInDataElement
  */
 coreMap.Map.Layer.NodeLayer.prototype.areValuesInDataElement = function(element) {
-    if(neon.helpers.getValues(element, this.sourceLatitudeMapping).length && neon.helpers.getValues(element, this.sourceLongitudeMapping).length &&
-            neon.helpers.getValues(element, this.targetLatitudeMapping).length && neon.helpers.getValues(element, this.targetLongitudeMapping).length) {
-        return true;
-    }
-
-    return false;
+    var values = neon.helpers.getNestedValues(element, [this.sourceLatitudeMapping, this.sourceLongitudeMapping, this.targetLatitudeMapping, this.targetLongitudeMapping]);
+    return values[0][this.sourceLatitudeMapping] !== undefined && values[0][this.sourceLongitudeMapping] !== undefined &&
+        values[0][this.targetLatitudeMapping] !== undefined && values[0][this.targetLongitudeMapping] !== undefined;
 };
 
 /**
@@ -392,14 +389,21 @@ coreMap.Map.Layer.NodeLayer.prototype.calculateSizes = function() {
     var me = this;
     this.minNodeRadius = this.minLineWidth = Number.MAX_VALUE;
     this.maxNodeRadius = this.maxLineWidth = Number.MIN_VALUE;
-    _.each(this.data, function(element) {
-        (neon.helpers.getValues(element, me.lineWeightMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_WEIGHT_MAPPING) || [1]).forEach(function(lineWeight) {
-            me.minLineWidth = _.min([me.minLineWidth, lineWeight]);
-            me.maxLineWidth = _.max([me.maxLineWidth, lineWeight]);
-        });
-        (neon.helpers.getValues(element, me.nodeWeightMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_WEIGHT_MAPPING) || [1]).forEach(function(nodeWeight) {
-            me.minNodeRadius = _.min([me.minNodeRadius, nodeWeight]);
-            me.maxNodeRadius = _.max([me.maxNodeRadius, nodeWeight]);
+    var lineWeightMapping = this.lineWeightMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_WEIGHT_MAPPING;
+    var nodeWeightMapping = this.nodeWeightMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_WEIGHT_MAPPING;
+
+    this.data.forEach(function(item) {
+        var values = neon.helpers.getNestedValues(element, [lineWeightMapping, nodeWeightMapping]);
+        if(!values.length) {
+            var nestedValue = {};
+            nestedValue[lineWeightMapping] = 1;
+            nestedValue[nodeWeightMapping] = 1;
+        }
+        values.forEach(function(nestedValue) {
+            me.minLineWidth = _.min([me.minLineWidth, nestedValue[lineWeightMapping] || 1]);
+            me.maxLineWidth = _.max([me.maxLineWidth, nestedValue[lineWeightMapping] || 1]);
+            me.minNodeRadius = _.min([me.minNodeRadius, nestedValue[nodeWeightMapping] || 1]);
+            me.maxNodeRadius = _.max([me.maxNodeRadius, nestedValue[nodeWeightMapping] || 1]);
         });
     });
 
@@ -415,6 +419,7 @@ coreMap.Map.Layer.NodeLayer.prototype.calculateSizes = function() {
  * @param {Number} limit
  */
 coreMap.Map.Layer.NodeLayer.prototype.updateFeatures = function(limit) {
+    var me = this;
     var lines = [];
     var nodes = {};
     var arrows = [];
@@ -424,121 +429,59 @@ coreMap.Map.Layer.NodeLayer.prototype.updateFeatures = function(limit) {
     // Initialize the weighted values.
     this.calculateSizes(this.data);
 
-    var list = getSourceAndTargetPointsList(this);
-    this.pointTotal = list.length;
+    this.pointTotal = 0;
     this.pointLimit = limit;
 
+    var sourceLatitudeMapping = this.sourceLatitudeMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_SOURCE_LATITUDE_MAPPING;
+    var sourceLongitudeMapping = this.sourceLongitudeMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_SOURCE_LONGITUDE_MAPPING;
+    var targetLatitudeMapping = this.targetLatitudeMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_TARGET_LATITUDE_MAPPING;
+    var targetLongitudeMapping = this.targetLongitudeMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_TARGET_LONGITUDE_MAPPING;
     var dateMapping = this.dateMapping || coreMap.Map.Layer.PointsLayer.DEFAULT_DATE_MAPPING;
-    var me = this;
-    list.slice(0, limit).forEach(function(points) {
-        if($.isNumeric(points.source[0]) && $.isNumeric(points.source[1]) && $.isNumeric(points.target[0]) && $.isNumeric(points.target[1])) {
-            // Note: The date mappings must be on the top level of each attributes in order for filtering to work.
-            // This means even if the date is in to.date, keep the date at the top level with key "to.date" instead
-            // of in the object "to".
+    var lineWeightMapping = this.lineWeightMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_WEIGHT_MAPPING;
+    var nodeWeightMapping = this.nodeWeightMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_WEIGHT_MAPPING;
+    var fields = [sourceLatitudeMapping, sourceLongitudeMapping, targetLatitudeMapping, targetLongitudeMapping, dateMapping, this.lineMapping, this.nodeMapping,
+        lineWeightMapping, nodeWeightMapping];
 
-            var line = me.createWeightedLine(points.source, points.target, points.lineWeight, points.lineColor);
-            line.attributes[dateMapping] = points.date;
-            lines.push(line);
+    this.data.forEach(function(item) {
+        var pointValues = neon.helpers.getNestedValues(item, fields);
+        me.pointTotal += pointValues.length;
+        pointValues.slice(0, limit).forEach(function(pointValue) {
+            if($.isNumeric(pointValue[sourceLatitudeMapping]) && $.isNumeric(pointValue[sourceLongitudeMapping]) && $.isNumeric(pointValue[targetLatitudeMapping]) &&
+                $.isNumeric(pointValue[targetLongitudeMapping])) {
 
-            var arrow = me.createWeightedArrow(points.source, points.target, points.lineWeight, points.nodeWeight, points.lineColor);
-            arrow.attributes[dateMapping] = points.date;
-            arrows.push(arrow);
+                // Note: The date mappings must be on the top level of each attributes in order for filtering to work.
+                // This means even if the date is in to.date, keep the date at the top level with key "to.date" instead
+                // of in the object "to".
+                var date = pointValue[dateMapping] ? new Date(pointValue[dateMapping]) : "none";
 
-            // Add the nodes to the node list if necesary.
-            var addPointToNodes = function(array) {
-                var key = array + "_" + points.date;
-                if(!nodes[key]) {
-                    nodes[key] = me.createNode(points.data, points.nodeWeight, points.nodeColor, array);
-                    nodes[key].attributes[dateMapping] = points.date;
-                }
-            };
+                var line = me.createWeightedLine([pointValue[sourceLongitudeMapping], pointValue[sourceLatitudeMapping]], [pointValue[targetLongitudeMapping], pointValue[targetLatitudeMapping]],
+                    pointValue[lineWeightMapping], pointValue[me.lineMapping]);
+                line.attributes[dateMapping] = date;
+                lines.push(line);
 
-            addPointToNodes(points.source);
-            addPointToNodes(points.target);
-        }
+                var arrow = me.createWeightedArrow([pointValue[sourceLongitudeMapping], pointValue[sourceLatitudeMapping]], [pointValue[targetLongitudeMapping], pointValue[targetLatitudeMapping]],
+                    pointValue[lineWeightMapping], pointValue[nodeWeightMapping], pointValue[me.lineMapping]);
+                arrow.attributes[dateMapping] = date;
+                arrows.push(arrow);
+
+                // Add the nodes to the node list if necesary.
+                var addPointToNodes = function(array) {
+                    var key = array + "_" + date;
+                    if(!nodes[key]) {
+                        nodes[key] = me.createNode(item, pointValue[nodeWeightMapping], pointValue[nodeMapping], array);
+                        nodes[key].attributes[dateMapping] = date;
+                    }
+                };
+
+                addPointToNodes([pointValue[sourceLongitudeMapping], pointValue[sourceLatitudeMapping]]);
+                addPointToNodes([pointValue[targetLongitudeMapping], pointValue[targetLatitudeMapping]]);
+            }
+        });
     });
 
     this.addFeatures(lines);
     this.addFeatures(arrows);
     this.addFeatures(_.values(nodes));
-};
-
-var getSourceAndTargetPointsList = function(me) {
-    // Collect the combinations of source and target points.  If multiple source points and multiple target points exist in a data record, draw a line between
-    // the points at each index.  If only one source or target exists, draw a line between it and all other target or source points.
-    var list = [];
-
-    var pushToList = function(sourcePoints, targetPoints, sourceIndex, targetIndex) {
-        var getValue = function(field) {
-            // If both points have values for the given field, arbitrarily use the value for the source point.  They are likely the same anyway.
-            return sourcePoints[sourceIndex][field] || targetPoints[targetIndex][field];
-        }
-
-        var cleanDateValue = function(value) {
-            // If the value is an array of dates, arbitrarily take the earliest.
-            var dateString =  _.isArray(value) ? value.sort(function(a, b) {
-                return new Date(a).getTime() - new Date(b).getTime();
-            })[0] : value;
-            return dateString ? new Date(dateString) : "none";
-        };
-
-        var cleanNumberValue = function(value) {
-            // If the value is an array of numbers, arbitrarily take the smallest.
-            return _.isArray(value) ? value.sort()[0] : value;
-        };
-
-        var cleanStringValue = function(value) {
-            // If the value is an array of strings, arbitrarily take the first.
-            return _.isArray(value) ? value[0] : value;
-        };
-
-        list.push({
-            source: [sourcePoints[sourceIndex].x, sourcePoints[sourceIndex].y],
-            target: [targetPoints[targetIndex].x, targetPoints[targetIndex].y],
-            // The strings passed to getValue here match the properties of the fields object below.
-            lineColor: cleanStringValue(getValue("lineColor")),
-            nodeColor: cleanStringValue(getValue("nodeColor")),
-            lineWeight: cleanNumberValue(getValue("lineWeight", true)),
-            nodeWeight: cleanNumberValue(getValue("nodeWeight", true)),
-            date: cleanDateValue(getValue("date")),
-            data: getValue("data")
-        });
-    };
-
-    // Extra fields to collect with getPoints (below) in addition to the longitude & latitude (X & Y) fields.
-    var fields = {
-        lineColor: me.lineMapping,
-        nodeColor: me.nodeMapping,
-        lineWeight: me.lineWeightMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_WEIGHT_MAPPING,
-        nodeWeight: me.nodeWeightMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_WEIGHT_MAPPING,
-        date: me.dateMapping || coreMap.Map.Layer.PointsLayer.DEFAULT_DATE_MAPPING
-    };
-
-    // Handle each data item (edge) individually so we create and link the source and target points for each data record separately.
-    me.data.forEach(function(item) {
-        // Use the helper function to collect the longitude & latitude (X & Y) coordinates from the data for the source and target points.
-        var sourcePoints = neon.helpers.getPoints([item], me.sourceLongitudeMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_SOURCE_LONGITUDE_MAPPING,
-                me.sourceLatitudeMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_SOURCE_LATITUDE_MAPPING, fields);
-
-        var targetPoints = neon.helpers.getPoints([item], me.targetLongitudeMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_TARGET_LONGITUDE_MAPPING,
-                me.targetLatitudeMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_TARGET_LATITUDE_MAPPING, fields);
-
-        if(sourcePoints.length > 1 && targetPoints.length > 1) {
-            for(var i = 0; i < Math.min(sourcePoints.length, targetPoints.length); ++i) {
-                pushToList(sourcePoints, targetPoints, i, i);
-            }
-        } else if(sourcePoints.length === 1) {
-            for(var i = 0; i < targetPoints.length; ++i) {
-                pushToList(sourcePoints, targetPoints, 0, i);
-            }
-        } else if(targetPoints.length === 1) {
-            for(var i = 0; i < sourcePoints.length; ++i) {
-                pushToList(sourcePoints, targetPoints, i, 0);
-            }
-        }
-    });
-
-    return list;
 };
 
 coreMap.Map.Layer.NodeLayer.DEFAULT_WEIGHT_MAPPING = "wgt";

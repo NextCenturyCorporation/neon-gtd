@@ -105,25 +105,27 @@ angular.module('neonDemo.controllers').controller('scatterPlotController', ['$sc
     };
 
     var buildScatterConfig = function(data) {
-        // Extra fields to collect in addition to the X & Y fields.
-        var fields = {
-            text: $scope.functions.isFieldValid($scope.active.textField) ? $scope.active.textField.columnName : undefined
-        };
-
-        // Use the helper function to collect the X & Y coordinates from the data for the points.
-        var points = neon.helpers.getPoints(data, $scope.active.xAxisField.columnName, $scope.active.yAxisField.columnName, fields);
-        $scope.pointCount = points.length;
-
-        // Collect the X, Y, and text data.
         var xArray = [];
         var yArray = [];
         var textArray = [];
-        points.forEach(function(point) {
-            xArray.push(point.x);
-            yArray.push(point.y);
-            var textValue = (_.isArray(point.text) ? point.text.join(",") : point.text) || "";
-            textArray.push(textValue.length > 50 ? textValue.substring(0, 50) + "..." : textValue);
+
+        var fields = [$scope.active.xAxisField.columnName, $scope.active.yAxisField.columnName];
+        if($scope.functions.isFieldValid($scope.active.textField)) {
+            fields.push($scope.active.textField.columnName);
+        }
+
+        data.forEach(function(item) {
+            neon.helpers.getNestedValues(item, fields).forEach(function(pointValue) {
+                xArray.push(pointValue[$scope.active.xAxisField.columnName]);
+                yArray.push(pointValue[$scope.active.yAxisField.columnName]);
+                if($scope.functions.isFieldValid($scope.active.textField)) {
+                    var textValue = pointValue[$scope.active.textField.columnName] || "";
+                    textArray.push(textValue.length > 50 ? textValue.substring(0, 50) + "..." : textValue);
+                }
+            });
         });
+
+        $scope.pointCount = xArray.length;
 
         return {
             x: xArray,

@@ -104,7 +104,6 @@ angular.module('neonDemo.controllers').controller('dataTableController', ['$scop
     var updateColumns = function() {
         var OBJECT = "{...}";
 
-        // Based on neon.helpers.getNestedValues
         var getCellText = function(data, fields) {
             var values = data[fields[0]];
 

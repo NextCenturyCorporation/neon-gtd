@@ -404,7 +404,9 @@ coreMap.Map.prototype.createSelectControl =  function(layer) {
                 for(i = 0; i < data.length; i++) {
                     text += '<tr>';
                     feature.layer.clusterPopupFields.forEach(function(popupField) {
-                        text += '<td>' + neon.helpers.getNestedValues(data[i], popupField).join(",") + '</td>';
+                        text += '<td>' + neon.helpers.getNestedValues(data[i], [popupField]).map(function(value) {
+                            return value[popupField];
+                        }).join(",") + '</td>';
                     });
                     text += '</tr>';
                 }
@@ -459,16 +461,17 @@ coreMap.Map.prototype.createSelectControl =  function(layer) {
             return text;
         };
 
+        var idMapping = feature.layer.idMapping || "_id";
         if(feature.cluster && feature.cluster.length > 1) {
             var ids = [];
             feature.cluster.forEach(function(object) {
-                ids.push(neon.helpers.getNestedValues(object.attributes, feature.layer.idMapping || "_id")[0]);
+                ids.push(neon.helpers.getNestedValues(object.attributes, [idMapping])[0][idMapping]);
             });
-            me.queryForMapPopupDataFunction(feature.layer.database, feature.layer.table, feature.layer.idMapping || "_id", ids, createAndShowFeaturePopup);
+            me.queryForMapPopupDataFunction(feature.layer.database, feature.layer.table, idMapping, ids, createAndShowFeaturePopup);
         } else {
             var object = feature.cluster && feature.cluster.length === 1 ? feature.cluster[0] : feature;
-            var id = neon.helpers.getNestedValues(object.attributes, feature.layer.idMapping || "_id")[0];
-            me.queryForMapPopupDataFunction(feature.layer.database, feature.layer.table, feature.layer.idMapping || "_id", id, createAndShowFeaturePopup);
+            var id = neon.helpers.getNestedValues(object.attributes, [idMapping])[0][idMapping];
+            me.queryForMapPopupDataFunction(feature.layer.database, feature.layer.table, idMapping, id, createAndShowFeaturePopup);
         }
     };
 

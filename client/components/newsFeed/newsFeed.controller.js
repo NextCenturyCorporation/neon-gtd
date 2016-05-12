@@ -301,25 +301,32 @@ angular.module('neonDemo.controllers').controller('newsFeedController', ['$scope
      */
     var updateData = function(data) {
         data.forEach(function(item) {
-            var primary = $scope.functions.isFieldValid($scope.active.primaryTitleField) ? neon.helpers.getNestedValues(item, $scope.active.primaryTitleField.columnName) : "";
-            var secondary = $scope.functions.isFieldValid($scope.active.secondaryTitleField) ? neon.helpers.getNestedValues(item, $scope.active.secondaryTitleField.columnName) : "";
-            var createdLinks = createExternalLinksForNewsItemData(primary, secondary);
-            var content = neon.helpers.getNestedValues(item, $scope.active.contentField.columnName);
-            var dates = neon.helpers.getNestedValues(item, $scope.active.dateField.columnName).sort(function(a, b) {
-                return new Date(a).getTime() - new Date(b).getTime();
-            });
+            var fields = [$scope.active.contentField.columnName, $scope.active.dateField.columnName];
+            if($scope.functions.isFieldValid($scope.active.primaryTitleField)) {
+                fields.push($scope.active.primaryTitleField.columnName);
+            }
+            if($scope.functions.isFieldValid($scope.active.secondaryTitleField)) {
+                fields.push($scope.active.secondaryTitleField.columnName);
+            }
 
-            $scope.active.data.push({
-                // If the date field contains multiple dates, arbitrarily choose the earliest date.
-                date: dates.length ? new Date(dates[0]) : null,
-                primaryTitle: primary,
-                primaryTitleTranslated: primary,
-                secondaryTitle: secondary,
-                secondaryTitleTranslated: secondary,
-                content: content,
-                contentTranslated: content,
-                linksPopupButtonJson: createLinksPopupButtonJson(primary, secondary),
-                showLinksPopupButton: !createdLinks
+            neon.helpers.getNestedValues(item, fields).forEach(function(newsValue) {
+                var primary = $scope.functions.isFieldValid($scope.active.primaryTitleField) ? newsValue[$scope.active.primaryTitleField.columnName] : "";
+                var secondary = $scope.functions.isFieldValid($scope.active.secondaryTitleField) ? newsValue[$scope.active.secondaryTitleField.columnName] : "";
+                var createdLinks = createExternalLinksForNewsItemData(primary, secondary);
+                var content = newsValue[$scope.active.contentField.columnName];
+                var date = newsValue[$scope.active.dateField.columnName] ? new Date(newsValue[$scope.active.dateField.columnName]) : null;
+
+                $scope.active.data.push({
+                    date: date,
+                    primaryTitle: primary,
+                    primaryTitleTranslated: primary,
+                    secondaryTitle: secondary,
+                    secondaryTitleTranslated: secondary,
+                    content: content,
+                    contentTranslated: content,
+                    linksPopupButtonJson: createLinksPopupButtonJson(primary, secondary),
+                    showLinksPopupButton: !createdLinks
+                });
             });
         });
 
