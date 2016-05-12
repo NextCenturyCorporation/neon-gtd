@@ -136,13 +136,14 @@ angular.module('neonDemo.controllers').controller('documentViewerController', ['
         $scope.active.documents = [];
         $scope.queryDocumentLimit = $scope.active.documentLimit;
         if(data) {
-            data.forEach(function(item) {
-                // A document object contains a text string, a count, a list of letter objects, a list of part objects (both annotations and
-                // non-annotations) that form the full annotated text, and a list of detail objects.
+            data.forEach(function(dataItem) {
+                // A document object contains the raw document text value, the document text (content) as a string, a document count, a list of annotation objects (different from
+                // $scope.active.annotations) for each annotation and its types present in the document, a list of detail objects for the details of the document, a list of letter
+                // objects for each letter in the document content, and a list of part objects (both annotations and non-annotations) that form the full annotated document content.
                 var document = {
-                    raw: findDocumentRawText(item),
-                    content: findDocumentContent(item),
-                    count: item.count,
+                    raw: findDocumentRawText(dataItem),
+                    content: findDocumentContent(dataItem),
+                    count: dataItem.count,
                     annotations: [],
                     details: [],
                     letters: [],
@@ -150,7 +151,7 @@ angular.module('neonDemo.controllers').controller('documentViewerController', ['
                 };
 
                 document.content.split('').forEach(function(letter) {
-                    // A letter object contains a letter and a list of annotation objects (different from $scope.active.annotations).
+                    // A letter object contains a letter and a list of mention objects for each mention starting at the letter.
                     document.letters.push({
                         letter: letter,
                         mentions: []
@@ -164,14 +165,32 @@ angular.module('neonDemo.controllers').controller('documentViewerController', ['
         }
     };
 
-    var findDocumentRawText = function(item) {
-        var text = neon.helpers.getNestedValues(item, $scope.active.documentTextField.columnName);
+    /**
+     * Returns the raw document text value in the given data item.
+     * @method findDocumentRawText
+     * @param {Object} dataItem
+     * @return {Array | String}
+     * @private
+     */
+    var findDocumentRawText = function(dataItem) {
+        var text = neon.helpers.getNestedValues(dataItem, [$scope.active.documentTextField.columnName]).map(function(value) {
+            return value[$scope.active.documentTextField.columnName];
+        });
         return text.length > 1 ? text : text[0];
     };
 
-    var findDocumentContent = function(item) {
-        var text = neon.helpers.getNestedValues(item, $scope.active.documentTextField.columnName);
-        // If the document text field contains an array, arbitrarily join the elements of the array to create the text.
+    /**
+     * Returns the document text value in the given data item as a content string.
+     * @method findDocumentContent
+     * @param {Object} dataItem
+     * @return {String}
+     * @private
+     */
+    var findDocumentContent = function(dataItem) {
+        var text = neon.helpers.getNestedValues(dataItem, [$scope.active.documentTextField.columnName]).map(function(value) {
+            return value[$scope.active.documentTextField.columnName];
+        });
+        // If the document text field contains an array, arbitrarily join the elements of the array to create the content.
         return _.escape(text.length > 1 ? text.join('') : text[0]);
     };
 
@@ -192,6 +211,14 @@ angular.module('neonDemo.controllers').controller('documentViewerController', ['
         }
     };
 
+    /**
+     * Adds options to the given Neon query and returns the query.
+     * @method addToAnnotationQuery
+     * @param {neon.query.Query} query
+     * @param {neon.query.WhereClause} unsharedFilterWhereClause
+     * @return {neon.query.Query}
+     * @private
+     */
     var addToAnnotationQuery = function(query, unsharedFilterWhereClause) {
         // Replace the database and table names set in the visualization superclass with the annotation database and table if they are different.
         if($scope.active.annotationsInAnotherTable) {
@@ -199,18 +226,17 @@ angular.module('neonDemo.controllers').controller('documentViewerController', ['
         }
 
         var annotations = getValidAnnotations();
-        var filterClauses = annotations.map(function(annotation) {
+        var filterWhereClauses = annotations.map(function(annotation) {
             return neon.query.and(neon.query.where(annotation.startField.columnName, "!=", null), neon.query.where(annotation.endField.columnName, "!=", null));
         });
 
-        var documentClauses = $scope.active.documents.map(function(document) {
+        var documentWhereClauses = $scope.active.documents.map(function(document) {
             return neon.query.where($scope.active.documentTextField.columnName, "=", document.raw);
         });
 
-        var filterWhereClause = (filterClauses.length > 1 ? neon.query.or.apply(neon.query, filterClauses) : filterClauses[0]);
-        var documentWhereClause = (documentClauses.length > 1 ? neon.query.or.apply(neon.query, documentClauses) : documentClauses[0]);
-        query.where(unsharedFilterWhereClause ? neon.query.and(filterWhereClause, documentWhereClause, unsharedFilterWhereClause) :
-                neon.query.and(filterWhereClause, documentWhereClause));
+        var filterWhereClause = (filterWhereClauses.length > 1 ? neon.query.or.apply(neon.query, filterWhereClauses) : filterWhereClauses[0]);
+        var documentWhereClause = (documentWhereClauses.length > 1 ? neon.query.or.apply(neon.query, documentWhereClauses) : documentWhereClauses[0]);
+        query.where(unsharedFilterWhereClause ? neon.query.and(filterWhereClause, documentWhereClause, unsharedFilterWhereClause) : neon.query.and(filterWhereClause, documentWhereClause));
 
         var fields = $scope.active.annotationsInAnotherTable ? [$scope.active.documentIdFieldInAnnotationTable.columnName] : [$scope.active.documentTextField.columnName];
         annotations.forEach(function(annotation) {
@@ -231,18 +257,36 @@ angular.module('neonDemo.controllers').controller('documentViewerController', ['
         return query.withFields(fields);
     };
 
+    /**
+     * Returns the list of valid annotation definitions for this visualization.
+     * @method getValidAnnotations
+     * @return {Array}
+     * @private
+     */
     var getValidAnnotations = function() {
         return $scope.active.annotations.filter(function(annotation) {
             return $scope.functions.isFieldValid(annotation.startField) && $scope.functions.isFieldValid(annotation.endField);
         });
     };
 
+    /**
+     * Returns the list of valid detail definitions for this visualization.
+     * @method getValidDetails
+     * @return {Array}
+     * @private
+     */
     var getValidDetails = function() {
         return $scope.active.details.filter(function(detail) {
             return $scope.functions.isFieldValid(detail.field);
         });
     };
 
+    /**
+     * Updates the annotation data for this visualization using the given query result data.
+     * @method updateAnnotationData
+     * @param {Array} data
+     * @private
+     */
     var updateAnnotationData = function(data) {
         $scope.active.documents.forEach(function(document) {
             document.showAnnotationsLegend = false;
@@ -274,6 +318,11 @@ angular.module('neonDemo.controllers').controller('documentViewerController', ['
         }
     };
 
+    /**
+     * Sets the default names for the unnamed annotation and detail definitions for this visualization.
+     * @method setDefaultAnnotationAndDetailNames
+     * @private
+     */
     var setDefaultAnnotationAndDetailNames = function() {
         getValidAnnotations().forEach(function(annotation, index) {
             annotation.label = annotation.label || ("Annotation " + (index + 1));
@@ -283,6 +332,13 @@ angular.module('neonDemo.controllers').controller('documentViewerController', ['
         });
     };
 
+    /**
+     * Finds and returns the document from the global list of documents that matches the given data item using the document text (or undefined if no such document exists).
+     * @method findDocument
+     * @param {Object} dataItem
+     * @return {Object}
+     * @private
+     */
     var findDocument = function(dataItem) {
         var document;
         if($scope.active.annotationsInAnotherTable) {
@@ -296,33 +352,42 @@ angular.module('neonDemo.controllers').controller('documentViewerController', ['
         return document;
     };
 
+    /**
+     * Saves the annotations and mentions from the given data item in the given document object.
+     * @method saveAnnotations
+     * @param {Object} dataItem
+     * @param {Object} document
+     * @private
+     */
     var saveAnnotations = function(dataItem, document) {
         getValidAnnotations().forEach(function(annotation) {
-            // Remember that each field in the data record may contain more than one value.
-            var starts = neon.helpers.getNestedValues(dataItem, annotation.startField.columnName);
-            var ends = neon.helpers.getNestedValues(dataItem, annotation.endField.columnName);
-            var texts = $scope.functions.isFieldValid(annotation.textField) ? neon.helpers.getNestedValues(dataItem, annotation.textField.columnName) : [];
-            var types = $scope.functions.isFieldValid(annotation.typeField) ? neon.helpers.getNestedValues(dataItem, annotation.typeField.columnName) : [];
+            var fields = [annotation.startField.columnName, annotation.endField.columnName];
+            if($scope.functions.isFieldValid(annotation.textField)) {
+                fields.push(annotation.textField.columnName);
+            }
+            if($scope.functions.isFieldValid(annotation.typeField)) {
+                fields.push(annotation.typeField.columnName);
+            }
+            var annotationValues = neon.helpers.getNestedValues(dataItem, fields);
 
             // If this document has any results for this annotation, add an object for this annotation to the list of annotations for this document.
-            var annotationIndex = (starts.length > 0 && ends.length > 0) ? addAnnotationToDocument(annotation, document) : -1;
+            var annotationIndex = annotationValues.length ? addAnnotationToDocument(annotation, document) : -1;
 
             // The lists of start and end indices should be equal length but use Math.min to be sure.
-            for(var i = 0; i < Math.min(starts.length, ends.length); ++i) {
-                var start = Number(starts[i]);
-                var end = Number(ends[i]);
-                var text = texts.length > i ? texts[i] : (texts.length === 1 ? texts[0] : "");
-                var type = types.length > i ? types[i] : (types.length === 1 ? types[0] : "");
+            annotationValues.forEach(function(annotationValue) {
+                var start = Number(annotationValue[annotation.startField.columnName]);
+                var end = Number(annotationValue[annotation.endField.columnName]);
+                var text = $scope.functions.isFieldValid(annotation.textField) ? annotationValue[annotation.textField.columnName] : "";
+                var type = $scope.functions.isFieldValid(annotation.typeField) ? annotationValue[annotation.typeField.columnName] : "";
 
                 // Add this type to the list of types for this annotation in the list of annotations of this document.
-                var annotationTypeIndex;
                 if(type && annotationIndex >= 0) {
-                    annotationTypeIndex = addAnnotationTypeToDocumentAnnotation(type, document.annotations[annotationIndex]);
+                    addAnnotationTypeToDocumentAnnotation(type, document.annotations[annotationIndex]);
                 }
 
                 if(start < end && document.letters.length > Math.max(start, end)) {
-                    // A mention object contains an annotation label string, an annotation field object, the highlight color for this mention based on the type
-                    // of annotation, the text for this mention taken from the document text, the type for this mention, and the index at which the mention ends.
+                    // A mention object contains an annotation label string, an annotation field object, the color of the mention based on the annotation type, the text of the
+                    // mention taken from the document text, the annotation type of the mention, and the index at which the mention ends.
                     document.letters[start].mentions.push({
                         label: annotation.label,
                         field: $scope.functions.isFieldValid(annotation.textField) ? annotation.textField : $scope.active.documentTextField,
@@ -332,7 +397,7 @@ angular.module('neonDemo.controllers').controller('documentViewerController', ['
                         end: end
                     });
                 }
-            }
+            });
 
             if(annotationIndex >= 0) {
                 // Sort the annotation types alphabetically.
@@ -345,12 +410,20 @@ angular.module('neonDemo.controllers').controller('documentViewerController', ['
         });
     };
 
+    /**
+     * Adds an annotation object for the given annotation definition to the given document object.
+     * @method addAnnotationToDocument
+     * @param {Object} annotation
+     * @param {Object} document
+     * @private
+     */
     var addAnnotationToDocument = function(annotation, document) {
         var index = _.findIndex(document.annotations, function(annotationItem) {
             return annotationItem.label === annotation.label;
         });
 
         if(index < 0) {
+            // A document annotation object contains a label string, whether the annotation is shown, and a list of type objects for each unique annotation value.
             document.annotations.push({
                 label: annotation.label,
                 shown: true,
@@ -362,12 +435,20 @@ angular.module('neonDemo.controllers').controller('documentViewerController', ['
         return index;
     };
 
+    /**
+     * Adds the given annotation type to the given document annotation object.
+     * @method addAnnotationTypeToDocumentAnnotation
+     * @param {String} type
+     * @param {Object} annotation
+     * @private
+     */
     var addAnnotationTypeToDocumentAnnotation = function(type, annotation) {
         var index = _.findIndex(annotation.types, function(typeItem) {
             return typeItem.label === type;
         });
 
         if(index < 0) {
+            // A document annotation type object contains a label string, whether the annotation type is shown, and the color of the annotation type.
             annotation.types.push({
                 label: type,
                 shown: true,
@@ -378,6 +459,14 @@ angular.module('neonDemo.controllers').controller('documentViewerController', ['
         return index;
     };
 
+    /**
+     * Updates the colors for the types in the given document annotation object and the mentions in the given list of document letter objects.
+     * @method updateDocumentAnnotationColors
+     * @param {Object} typeField
+     * @param {Object} annotation
+     * @param {Array} letters
+     * @private
+     */
     var updateDocumentAnnotationColors = function(typeField, annotation, letters) {
         // After all annotation types have been added, update the colors of the annotation types.
         var typesToHighlightColors = {};
@@ -411,9 +500,19 @@ angular.module('neonDemo.controllers').controller('documentViewerController', ['
         }
     }
 
+    /**
+     * Saves the details from the given data item in the given document object.
+     * @method saveDetails
+     * @param {Object} dataItem
+     * @param {Object} document
+     * @private
+     */
     var saveDetails = function(dataItem, document) {
         getValidDetails().forEach(function(detail) {
-            var value = neon.helpers.getNestedValues(dataItem, detail.field.columnName).join(",");
+            // If the detail field contains an array, arbitrarily join the elements of the array to create the detail value.
+            var value = neon.helpers.getNestedValues(dataItem, [detail.field.columnName]).map(function(value) {
+                return value[detail.field.columnName];
+            }).join(",");
             var index = _.findIndex(document.details, function(documentDetail) {
                 return documentDetail.label === detail.label;
             });
@@ -433,6 +532,12 @@ angular.module('neonDemo.controllers').controller('documentViewerController', ['
         });
     };
 
+    /**
+     * Creates the part objects shown in the display for the given document object using the mention objects from its list of letter objects.
+     * @method createDisplayObjects
+     * @param {Object} document
+     * @private
+     */
     var createDisplayObjects = function(document) {
         document.parts = [];
 
@@ -442,7 +547,7 @@ angular.module('neonDemo.controllers').controller('documentViewerController', ['
         var partMentions = [];
         var addPart = function() {
             if(partText) {
-                // A part object contains a text string, a description string, and a list of annotation types.
+                // A part object contains a text string, a description string, a highlight color, and a list of mentions.
                 document.parts.push({
                     text: _.escape(partText),
                     desc: partMentions.map(function(partMention) {
