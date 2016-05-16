@@ -661,7 +661,7 @@ angular.module('neonDemo.controllers').controller('documentViewerController', ['
     };
 
     $scope.functions.createMenuText = function() {
-        return ($scope.active.documents.length >= $scope.active.queryDocumentLimit ? "Limited to " : "") + ($scope.active.documents.length || "No") + " Documents";
+        return ($scope.active.documents.length >= $scope.active.queryDocumentLimit ? "Limited to " : "") + ($scope.active.documents.length ? ("Top " + $scope.active.documents.length) : "No Data");
     };
 
     $scope.functions.showMenuText = function() {
