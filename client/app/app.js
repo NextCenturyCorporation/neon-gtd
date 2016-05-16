@@ -258,8 +258,9 @@ var saveLegends = function(config) {
             legends[database][table].forEach(function(group) {
                 group.customized = group.customized || {};
                 group.customized.operator = group.customized.operator || "=";
+                group.items = group.items || [];
                 group.items.forEach(function(item) {
-                    item.label = item.field;
+                    item.label = item.label || item.value || item.field;
                     item.value = item.value || null;
                     item.operator = item.operator || (item.value === null ? "!=" : "=");
                 });
