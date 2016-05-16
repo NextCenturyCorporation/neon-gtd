@@ -150,7 +150,7 @@ angular.module('neonDemo.controllers').controller('documentViewerController', ['
                     parts: []
                 };
 
-                document.content.split('').forEach(function(letter) {
+                (_.isArray(document.raw) ? document.raw.join() : document.raw).split('').forEach(function(letter) {
                     // A letter object contains a letter and a list of mention objects for each mention starting at the letter.
                     document.letters.push({
                         letter: letter,
