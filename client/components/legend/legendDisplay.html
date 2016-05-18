@@ -3,9 +3,12 @@
     <ul>
         <li ng-if="!!group.label" ng-repeat="group in active.legend">
             <label ng-bind="group.label"></label>
-            <ul class="padded-list">
-                <li ng-if="!!item.label && !!item.field" ng-repeat="item in group.items">
-                    <label class="item" ng-class="{true: 'filtered', false: ''}[item.on]" ng-bind="item.label" title="{{'Toggle Filter on ' + item.label}}" ng-click="toggleFilterAndAddOrRemove(item)"></label>
+            <ul>
+                <li class="item" ng-if="!!item.label && !!item.field" ng-repeat="item in group.items">
+                    <span class="cell glyphicon glyphicon-plus" title="{{'Add Filter on ' + item.label}}" ng-click="toggleFilterAndAddOrRemove(item)" ng-show="!item.on"></span>
+                    <span class="cell glyphicon glyphicon-remove" title="{{'Remove Filter on ' + item.label}}" ng-click="toggleFilterAndAddOrRemove(item)" ng-show="item.on"></span>
+                    <span class="cell glyphicon glyphicon-transfer" title="{{'Replace All Filters with Filter on ' + item.label}}" ng-click="replaceFilters(item)"></span>
+                    <span class="cell" ng-class="{true: 'filtered', false: ''}[item.on]" ng-bind="item.label"></span>
                 </li>
             </ul>
         </li>
@@ -15,7 +18,7 @@
             <label ng-bind="'Add Customized Filter on ' + group.label"></label>
             <div class="form-group customized">
                 <div class="input-group">
-                    <input type="text" class="form-control" placeholder="{{group.label}}" ng-model="group.customized.value">
+                    <input type="text" class="form-control" placeholder="{{group.label}}" ng-model="group.customized.value" ng-keyup="$event.keyCode == 13 && addCustomizedFilter(group)">
                     <div class="input-group-btn">
                         <button type="button" class="btn btn-default" title="Add Customized Filter" ng-click="addCustomizedFilter(group)">
                             <span class="glyphicon glyphicon-plus"></span>

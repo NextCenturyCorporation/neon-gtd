@@ -68,7 +68,20 @@ angular.module('neonDemo.controllers').controller('legendController', ['$scope',
     };
 
     $scope.functions.createFilterTrayText = function(database, table, fields) {
-        return fields.join(",");
+        var text = "";
+        fields.forEach(function(field, index) {
+            text += (index > 0 ? ", " : "") + field + " (";
+            var values = [];
+            $scope.active.legend.forEach(function(group) {
+                group.items.forEach(function(item) {
+                    if(item.on && item.field === field) {
+                        values.push(item.value);
+                    }
+                });
+            });
+            text += values.join(", ") + ")";
+        });
+        return text;
     };
 
     $scope.functions.updateFilterValues = function(neonFilter) {
@@ -98,6 +111,7 @@ angular.module('neonDemo.controllers').controller('legendController', ['$scope',
     };
 
     $scope.functions.removeFilterValues = function() {
+        console.log("deactivated all");
         $scope.active.legend.forEach(function(group) {
             group.items.forEach(function(item) {
                 item.on = false;
@@ -116,10 +130,12 @@ angular.module('neonDemo.controllers').controller('legendController', ['$scope',
     $scope.toggleFilterAndAddOrRemove = function(item) {
         // TODO Logging
         item.on = !item.on;
-        $scope.addOrRemoveFilter(item.fieldObject);
+        // Note that removeNeonFilter will only be called if no items with the field of the input item are active (even if the input item itself is inactive).
+        addOrRemoveFilter(item.fieldObject);
     };
 
-    $scope.addOrRemoveFilter = function(fieldObject) {
+    var addOrRemoveFilter = function(fieldObject, callback) {
+        // Check if any items with the input field are active:  if so, update (add/replace) the Neon filter for the field; else remove it.
         var filterDataForField = $scope.getFilterData().filter(function(data) {
             return data.fieldObject.columnName === fieldObject.columnName;
         });
@@ -131,12 +147,47 @@ angular.module('neonDemo.controllers').controller('legendController', ['$scope',
                         return neon.query.where(fieldName, data.operator, data.value);
                     });
                     return filterClauses.length > 1 ? neon.query.and.apply(neon.query, filterClauses) : filterClauses[0];
-                }
+                },
+                callback: callback
             });
         } else {
             $scope.functions.removeNeonFilter({
                 fields: [fieldObject]
             });
+        }
+    };
+
+    $scope.replaceFilters = function(item) {
+        // TODO Logging
+        var callback = function() {
+            // Activate the input item and add its Neon filter once the other Neon filters have been removed.
+            item.on = true;
+            console.log("activated " + item.value);
+            addOrRemoveFilter(item.fieldObject, function() {
+                item.on = true;
+            });
+        };
+
+        // Turn off the active items except for the input item.
+        var filterData = $scope.getFilterData();
+        filterData.forEach(function(data) {
+            data.on = false;
+        });
+
+        // Remove the Neon filters for the fields from the previously active items except for the input item.
+        var fields = filterData.filter(function(data) {
+            return data.fieldObject.columnName !== item.fieldObject.columnName;
+        }).map(function(data) {
+            return data.fieldObject;
+        });
+
+        if(fields.length) {
+            $scope.functions.removeNeonFilter({
+                fields: fields,
+                callback: callback
+            });
+        } else {
+            callback();
         }
     };
 
@@ -152,7 +203,7 @@ angular.module('neonDemo.controllers').controller('legendController', ['$scope',
                 on: true
             });
             group.customized.value = "";
-            $scope.addOrRemoveFilter(group.customized.fieldObject);
+            addOrRemoveFilter(group.customized.fieldObject);
         }
     };
 
