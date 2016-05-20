@@ -88,7 +88,7 @@ angular.module('neonDemo.controllers').controller('barChartController', ['$scope
 
     $scope.functions.onUpdateFields = function() {
         $scope.active.groupField = $scope.functions.findFieldObject("groupField", neonMappings.BAR_GROUPS);
-        $scope.active.aggregationField = $scope.functions.findFieldObject("groupField", neonMappings.BAR_GROUPS);
+        $scope.active.aggregationField = $scope.functions.findFieldObject("aggregationField", neonMappings.Y_AXIS);
     };
 
     $scope.functions.createNeonQueryWhereClause = function() {
