@@ -525,10 +525,10 @@ angular.module('neonDemo.controllers').controller('lineChartController', ['$scop
 
         if($scope.active.granularity === $scope.active.DAY) {
             millis = (1000 * 60 * 60 * 24);
-            numBuckets = Math.ceil(Math.abs(end - start) / millis);
+            numBuckets = Math.ceil((end - start) / millis);
         } else {
             millis = (1000 * 60 * 60);
-            numBuckets = Math.ceil(Math.abs(end - start) / millis);
+            numBuckets = Math.ceil((end - start) / millis);
         }
 
         var startTime = start.getTime();
@@ -598,7 +598,7 @@ angular.module('neonDemo.controllers').controller('lineChartController', ['$scop
         var indexDate;
         for(i = 0; i < data.length; i++) {
             indexDate = new Date(data[i].date);
-            var dataIndex = Math.floor(Math.abs(indexDate - start) / millis);
+            var dataIndex = Math.floor((indexDate - start) / millis);
 
             if(dataIndex >= 0 && dataIndex + 1 <= numBuckets) {
                 if($scope.functions.isFieldValid(layer.groupField)) {
@@ -622,7 +622,7 @@ angular.module('neonDemo.controllers').controller('lineChartController', ['$scop
                 }
 
                 // Save the mapping from date string to data index so we can find the data index using the chart brush extent while calculating aggregations for brushed line charts.
-                $scope.dateStringToDataIndex[indexDate.toDateString()] = Math.floor(Math.abs(indexDate - start) / millis);
+                $scope.dateStringToDataIndex[indexDate.toDateString()] = Math.floor((indexDate - start) / millis);
             }
         }
 
