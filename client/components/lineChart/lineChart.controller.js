@@ -506,32 +506,29 @@ angular.module('neonDemo.controllers').controller('lineChartController', ['$scop
     };
 
     /**
-     * Creates a series object to use when drawing the given layer. Creates dates in the object from minDate
-     * to maxDate and sets all dates not in the given data to zero.
+     * Creates a series object to use when drawing the given layer. Creates dates in the object from start
+     * to end and sets all dates not in the given data to zero.
      * @param {Object} layer
      * @param {Array} data
-     * @param {Date} minDate
-     * @param {Date} maxDate
+     * @param {Date} start
+     * @param {Date} end
      * @return {Object}
      * @method zeroPadData
      * @private
      */
-    var zeroPadData = function(layer, data, minDate, maxDate) {
+    var zeroPadData = function(layer, data, start, end) {
         $scope.dateStringToDataIndex = {};
 
         var i = 0;
-        var start = zeroOutDate(minDate);
-        var end = zeroOutDate(maxDate);
-
         var numBuckets;
         var millis;
 
         if($scope.active.granularity === $scope.active.DAY) {
             millis = (1000 * 60 * 60 * 24);
-            numBuckets = Math.ceil(Math.abs(end - start) / millis) + 1;
+            numBuckets = Math.ceil(Math.abs(end - start) / millis);
         } else {
             millis = (1000 * 60 * 60);
-            numBuckets = Math.ceil(Math.abs(end - start) / millis) + 1;
+            numBuckets = Math.ceil(Math.abs(end - start) / millis);
         }
 
         var startTime = start.getTime();
@@ -714,13 +711,16 @@ angular.module('neonDemo.controllers').controller('lineChartController', ['$scop
      * @param date
      * @returns {Date}
      */
-    var zeroOutDate = function(date) {
+    var zeroOutDate = function(date, adjustment) {
         var zeroed = new Date(date);
         zeroed.setUTCMinutes(0);
         zeroed.setUTCSeconds(0);
         zeroed.setUTCMilliseconds(0);
         if($scope.active.granularity === $scope.active.DAY) {
             zeroed.setUTCHours(0);
+            zeroed.setUTCDate(zeroed.getUTCDate() + (adjustment || 0));
+        } else {
+            zeroed.setUTCHours(zeroed.getUTCHours() + (adjustment || 0));
         }
         return zeroed;
     };
@@ -930,8 +930,8 @@ angular.module('neonDemo.controllers').controller('lineChartController', ['$scop
                     var range = d3.extent($scope.data[layer.id], function(d) {
                         return new Date(d.date);
                     });
-                    min = range[0];
-                    max = range[1];
+                    min = zeroOutDate(range[0]);
+                    max = zeroOutDate(range[1], 1);
                 }
 
                 if(min < minDate || !minDate) {
@@ -942,8 +942,8 @@ angular.module('neonDemo.controllers').controller('lineChartController', ['$scop
                 }
             });
         } else {
-            minDate = $scope.extent[0];
-            maxDate = $scope.extent[1];
+            minDate = zeroOutDate($scope.extent[0]);
+            maxDate = zeroOutDate($scope.extent[1]);
         }
 
         return {
