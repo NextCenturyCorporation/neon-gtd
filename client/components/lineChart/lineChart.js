@@ -341,7 +341,7 @@ charts.LineChart.prototype.showTooltip = function(index, date) {
             var color = this.calculateColor(this.data[i]);
             var seriesText = this.getSeriesValue(this.data[i].series);
 
-            html += ('<span style="color: ' + color + '">' + seriesText + ": " +
+            html += ('<span style="color: ' + color + '">' + _.escape(seriesText) + ": " +
                 numFormat(Math.round(this.data[i].data[index].value * 100) / 100) + '</span>');
         }
     }

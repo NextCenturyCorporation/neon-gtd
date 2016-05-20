@@ -203,6 +203,7 @@ angular.module('neonDemo.controllers').controller('dataTableController', ['$scop
 
         $scope.active.count = tableData.length;
         $scope.active.total = tableData.length;
+        tableData = neon.helpers.escapeDataRecursively(tableData);
         $scope.active.gridOptions.api.setRowData(tableData);
 
         if(tableData.length) {
@@ -257,7 +258,7 @@ angular.module('neonDemo.controllers').controller('dataTableController', ['$scop
         var linkedData = _.map(data, function(row) {
             _.each(row, function(value, key) {
                 if(value && typeof value === 'string') {
-                    row[key] = $sce.trustAsHtml(linkify.twitter(value));
+                    row[key] = linkify.twitter(value);
                 }
             });
 

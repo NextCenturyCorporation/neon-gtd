@@ -110,7 +110,7 @@ angular.module('neonDemo.controllers').controller('scatterPlotController', ['$sc
 
         _.each(data, function(row) {
             var xValue = neon.helpers.getNestedValue(row, $scope.active.xAxisField.columnName);
-            x.push(xValue);
+            x.push(_.escape(xValue));
 
             if(xValue < minx) {
                 minx = xValue;
@@ -121,7 +121,7 @@ angular.module('neonDemo.controllers').controller('scatterPlotController', ['$sc
             }
 
             var yValue = neon.helpers.getNestedValue(row, $scope.active.yAxisField.columnName);
-            y.push(yValue);
+            y.push(_.escape(yValue));
 
             if(yValue < miny) {
                 miny = yValue;
@@ -137,7 +137,7 @@ angular.module('neonDemo.controllers').controller('scatterPlotController', ['$sc
                     textVal = textVal.substring(0, 51) + '...';
                 }
 
-                text.push(textVal);
+                text.push(_.escape(textVal));
             }
         });
 
@@ -161,8 +161,8 @@ angular.module('neonDemo.controllers').controller('scatterPlotController', ['$sc
         var y = [];
 
         _.each(data, function(row) {
-            x.push(neon.helpers.getNestedValue(row, $scope.active.xAxisField.columnName));
-            y.push(neon.helpers.getNestedValue(row, $scope.active.yAxisField.columnName));
+            x.push(_.escape(neon.helpers.getNestedValue(row, $scope.active.xAxisField.columnName)));
+            y.push(_.escape(neon.helpers.getNestedValue(row, $scope.active.yAxisField.columnName)));
         });
 
         return {

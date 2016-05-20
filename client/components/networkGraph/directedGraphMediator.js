@@ -964,40 +964,40 @@ mediators.DirectedGraphMediator = (function() {
             }
 
             var text = '<tr class="graph-tooltip-block">' +
-                '<td class="graph-tooltip-label">' + mediator.tooltip.idLabel + '</td>' +
-                '<td class="graph-tooltip-value">' + node.id + '</td>' +
+                '<td class="graph-tooltip-label">' + _.escape(mediator.tooltip.idLabel) + '</td>' +
+                '<td class="graph-tooltip-value">' + _.escape(node.id) + '</td>' +
                 '</tr>' +
                 '<tr class="graph-tooltip-block">' +
-                '<td class="graph-tooltip-label">' + mediator.tooltip.dataLabel + '</td>' +
+                '<td class="graph-tooltip-label">' + _.escape(mediator.tooltip.dataLabel) + '</td>' +
                 '<td class="graph-tooltip-value">' + getNumberOfDatesInBucket(node, mediator.bucketizer, mediator.selected.dateBucket) + '</td>' +
                 '</tr>';
 
             if(mediator.options.nameField) {
                 text = '<tr class="graph-tooltip-block">' +
-                    '<td class="graph-tooltip-label">' + mediator.tooltip.nameLabel + '</td>' +
-                    '<td class="graph-tooltip-value">' + node.name + '</td>' +
+                    '<td class="graph-tooltip-label">' + _.escape(mediator.tooltip.nameLabel) + '</td>' +
+                    '<td class="graph-tooltip-value">' + _.escape(node.name) + '</td>' +
                     '</tr>' + text;
             }
 
             if(mediator.options.sizeField) {
                 text += '<tr class="graph-tooltip-block">' +
-                    '<td class="graph-tooltip-label">' + mediator.tooltip.sizeLabel + '</td>' +
-                    '<td class="graph-tooltip-value">' + node.size + '</td>' +
+                    '<td class="graph-tooltip-label">' + _.escape(mediator.tooltip.sizeLabel) + '</td>' +
+                    '<td class="graph-tooltip-value">' + _.escape(node.size) + '</td>' +
                     '</tr>';
             }
 
             text += '<tr class="graph-tooltip-block">' +
-                '<td class="graph-tooltip-label">' + mediator.tooltip.sourceSizeLabel + '</td>' +
-                '<td class="graph-tooltip-value">' + node.numberOfSources + '</td>' +
+                '<td class="graph-tooltip-label">' + _.escape(mediator.tooltip.sourceSizeLabel) + '</td>' +
+                '<td class="graph-tooltip-value">' + _.escape(node.numberOfSources) + '</td>' +
                 '</tr>' +
                 '<tr class="graph-tooltip-block">' +
-                '<td class="graph-tooltip-label">' + mediator.tooltip.targetSizeLabel + '</td>' +
-                '<td class="graph-tooltip-value">' + node.numberOfTargets + '</td>' +
+                '<td class="graph-tooltip-label">' + _.escape(mediator.tooltip.targetSizeLabel) + '</td>' +
+                '<td class="graph-tooltip-value">' + _.escape(node.numberOfTargets) + '</td>' +
                 '</tr>';
 
             if(node.type !== DirectedGraphMediator.CLUSTER_TYPE && mediator.maps.nodeIdsToFlags[node.id]) {
                 text += '<tr class="graph-tooltip-block">' +
-                    '<td class="graph-tooltip-label">' + mediator.tooltip.flagLabel + '</td>' +
+                    '<td class="graph-tooltip-label">' + _.escape(mediator.tooltip.flagLabel) + '</td>' +
                     '</tr>';
             }
 
@@ -1073,25 +1073,25 @@ mediators.DirectedGraphMediator = (function() {
     var createFunctionToGenerateLinkTooltip = function(mediator) {
         return function(link) {
             var nodesInCluster = [];
-            var sourceText = '<td class="graph-tooltip-value">' + link.source.name + '</td>';
+            var sourceText = '<td class="graph-tooltip-value">' + _.escape(link.source.name) + '</td>';
             if(link.source.type === DirectedGraphMediator.CLUSTER_TYPE) {
                 nodesInCluster = mediator.selected.dateBucket ? link.source.nodesForSelectedDateBucket : link.source.nodes;
                 sourceText = '<td class="graph-tooltip-value">Cluster of ' + nodesInCluster.length + '</td>';
             }
-            var targetText = '<td class="graph-tooltip-value">' + link.target.name + '</td>';
+            var targetText = '<td class="graph-tooltip-value">' + _.escape(link.target.name) + '</td>';
             if(link.target.type === DirectedGraphMediator.CLUSTER_TYPE) {
                 nodesInCluster = mediator.selected.dateBucket ? link.target.nodesForSelectedDateBucket : link.target.nodes;
                 targetText = '<td class="graph-tooltip-value">Cluster of ' + nodesInCluster.length + '</td>';
             }
 
             return '<tr class="graph-tooltip-block">' +
-                '<td class="graph-tooltip-label">' + mediator.tooltip.sourceNameLabel + '</td>' + sourceText +
+                '<td class="graph-tooltip-label">' + _.escape(mediator.tooltip.sourceNameLabel) + '</td>' + sourceText +
                 '</tr>' +
                 '<tr class="graph-tooltip-block">' +
-                '<td class="graph-tooltip-label">' + mediator.tooltip.targetNameLabel + '</td>' + targetText +
+                '<td class="graph-tooltip-label">' + _.escape(mediator.tooltip.targetNameLabel) + '</td>' + targetText +
                 '</tr>' +
                 '<tr class="graph-tooltip-block">' +
-                '<td class="graph-tooltip-label">' + mediator.tooltip.dataLabel + '</td>' +
+                '<td class="graph-tooltip-label">' + _.escape(mediator.tooltip.dataLabel) + '</td>' +
                 '<td class="graph-tooltip-value">' + getNumberOfDatesInBucket(link, mediator.bucketizer, mediator.selected.dateBucket) + '</td>' +
                 '</tr>';
         };
