@@ -41,9 +41,17 @@ angular.module('neonDemo.controllers').controller('legendController', ['$scope',
             }
 
             group.items.forEach(function(item) {
-                item.fieldObject = _.find($scope.active.fields, function(field) {
-                    return item.field === field.columnName;
-                });
+                if(item.field) {
+                    item.fieldObject = _.find($scope.active.fields, function(field) {
+                        return item.field === field.columnName;
+                    });
+                } else {
+                    Object.keys(item.multi).forEach(function(fieldName) {
+                        item.multi[fieldName].fieldObject = _.find($scope.active.fields, function(fieldObject) {
+                            return fieldName === fieldObject.columnName;
+                        });
+                    });
+                }
             });
         });
     };
@@ -74,8 +82,19 @@ angular.module('neonDemo.controllers').controller('legendController', ['$scope',
             var values = [];
             $scope.active.legend.forEach(function(group) {
                 group.items.forEach(function(item) {
-                    if(item.on && item.field === field) {
-                        values.push(item.value);
+                    if(item.on) {
+                        if(item.field === field) {
+                            values.push(item.value);
+                        }
+                        if(!item.field) {
+                            Object.keys(item.multi).forEach(function(key) {
+                                if(key === field) {
+                                    item.multi[field].where.forEach(function(where) {
+                                        values = values.concat(where.value);
+                                    });
+                                }
+                            });
+                        }
                     }
                 });
             });
@@ -104,14 +123,13 @@ angular.module('neonDemo.controllers').controller('legendController', ['$scope',
         if(Object.keys(filters).length) {
             $scope.active.legend.forEach(function(group) {
                 group.items.forEach(function(item) {
-                    item.on = (filters[item.field] !== undefined && filters[item.field].operator === item.operator && filters[item.field].value === item.value);
+                    item.on = (item.field && filters[item.field] !== undefined && filters[item.field].operator === item.operator && filters[item.field].value === item.value);
                 });
             });
         }
     };
 
     $scope.functions.removeFilterValues = function() {
-        console.log("deactivated all");
         $scope.active.legend.forEach(function(group) {
             group.items.forEach(function(item) {
                 item.on = false;
@@ -131,20 +149,47 @@ angular.module('neonDemo.controllers').controller('legendController', ['$scope',
         // TODO Logging
         item.on = !item.on;
         // Note that removeNeonFilter will only be called if no items with the field of the input item are active (even if the input item itself is inactive).
-        addOrRemoveFilter(item.fieldObject);
+        addOrRemoveFilter(item);
     };
 
-    var addOrRemoveFilter = function(fieldObject, callback) {
-        // Check if any items with the input field are active:  if so, update (add/replace) the Neon filter for the field; else remove it.
-        var filterDataForField = $scope.getFilterData().filter(function(data) {
-            return data.fieldObject.columnName === fieldObject.columnName;
+    var addOrRemoveFilter = function(item, callback) {
+        var fields = item.fieldObject ? [item.fieldObject] : Object.keys(item.multi).map(function(field) {
+            return item.multi[field].fieldObject;
         });
-        if(filterDataForField.length) {
+
+        // Check if any items with the input field are active:  if so, update (add/replace) the Neon filter for the field; else remove it.
+        var filterDataForItemFields = $scope.getFilterData().filter(function(data) {
+            if(data.fieldObject && item.fieldObject) {
+                return data.fieldObject.columnName === item.fieldObject.columnName;
+            }
+            if(Object.keys(data.multi).length && Object.keys(item.multi).length) {
+                return _.isEqual(Object.keys(data.multi).sort(), Object.keys(item.multi).sort());
+            }
+            return false;
+        });
+
+        if(filterDataForItemFields.length) {
             $scope.functions.updateNeonFilter({
-                fields: [fieldObject],
-                createNeonFilterClause: function(databaseAndTableName, fieldName) {
-                    var filterClauses = filterDataForField.map(function(data) {
-                        return neon.query.where(fieldName, data.operator, data.value);
+                fields: fields,
+                createNeonFilterClause: function(databaseAndTableName, fieldNames) {
+                    var filterClauses = filterDataForItemFields.map(function(data) {
+                        if(item.fieldObject) {
+                            // In this case fieldNames is a string.
+                            return neon.query.where(fieldNames, data.operator, data.value);
+                        }
+                        // Create a Neon where clause for each field.
+                        var fieldClauses = (_.isArray(fieldNames) ? fieldNames : [fieldNames]).map(function(fieldName) {
+                            // Create a Neon where clause for each object in the where clause array.
+                            var whereClauses = data.multi[fieldName].where.map(function(where) {
+                                // Create a Neon where clause for each value.
+                                var valueClauses = where.value.map(function(value) {
+                                    return neon.query.where(fieldName, where.operator, value);
+                                });
+                                return valueClauses.length > 1 ? neon.query.and.apply(neon.query, valueClauses) : valueClauses[0];
+                            });
+                            return whereClauses.length > 1 ? neon.query.or.apply(neon.query, whereClauses) : whereClauses[0];
+                        });
+                        return fieldClauses.length > 1 ? neon.query.or.apply(neon.query, fieldClauses) : fieldClauses[0];
                     });
                     return filterClauses.length > 1 ? neon.query.and.apply(neon.query, filterClauses) : filterClauses[0];
                 },
@@ -152,7 +197,7 @@ angular.module('neonDemo.controllers').controller('legendController', ['$scope',
             });
         } else {
             $scope.functions.removeNeonFilter({
-                fields: [fieldObject]
+                fields: fields
             });
         }
     };
@@ -160,10 +205,9 @@ angular.module('neonDemo.controllers').controller('legendController', ['$scope',
     $scope.replaceFilters = function(item) {
         // TODO Logging
         var callback = function() {
-            // Activate the input item and add its Neon filter once the other Neon filters have been removed.
             item.on = true;
-            console.log("activated " + item.value);
-            addOrRemoveFilter(item.fieldObject, function() {
+            addOrRemoveFilter(item, function() {
+                // Activate the input item and add its Neon filter once the other Neon filters have been removed.
                 item.on = true;
             });
         };
@@ -175,11 +219,22 @@ angular.module('neonDemo.controllers').controller('legendController', ['$scope',
         });
 
         // Remove the Neon filters for the fields from the previously active items except for the input item.
-        var fields = filterData.filter(function(data) {
-            return data.fieldObject.columnName !== item.fieldObject.columnName;
+        var fields = [].concat.apply([], filterData.filter(function(data) {
+            if(data.fieldObject && item.fieldObject) {
+                return data.fieldObject.columnName !== item.fieldObject.columnName;
+            }
+            if(Object.keys(data.multi).length && Object.keys(item.multi).length) {
+                return !(_.isEqual(Object.keys(data.multi).sort(), Object.keys(item.multi).sort()));
+            }
+            return true;
         }).map(function(data) {
-            return data.fieldObject;
-        });
+            if(data.fieldObject) {
+                return [data.fieldObject];
+            }
+            return Object.keys(data.multi).map(function(field) {
+                return data.multi[field].fieldObject;
+            });
+        }));
 
         if(fields.length) {
             $scope.functions.removeNeonFilter({
@@ -200,10 +255,11 @@ angular.module('neonDemo.controllers').controller('legendController', ['$scope',
                 fieldObject: group.customized.fieldObject,
                 operator: group.customized.operator,
                 value: group.customized.value,
+                multi: {},
                 on: true
             });
             group.customized.value = "";
-            addOrRemoveFilter(group.customized.fieldObject);
+            addOrRemoveFilter(group.items[group.items.length - 1]);
         }
     };
 
@@ -221,7 +277,16 @@ angular.module('neonDemo.controllers').controller('legendController', ['$scope',
     };
 
     $scope.getFilterDesc = function(item) {
-        return item.field + " " + item.operator + " " + item.value;
+        if(item.field) {
+            return item.field + " " + item.operator + " " + item.value;
+        }
+        var text = "";
+        Object.keys(item.multi).forEach(function(field, index) {
+            text += (index > 0 ? ", " : "") + field + " (" + item.multi[field].where.map(function(where) {
+                return where.value;
+            }).join(", ") + ")";
+        });
+        return text;
     };
 
     $scope.getFilterText = function(item) {

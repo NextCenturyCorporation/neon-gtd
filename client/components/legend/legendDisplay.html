@@ -4,7 +4,7 @@
         <li ng-if="!!group.label" ng-repeat="group in active.legend">
             <label ng-bind="group.label"></label>
             <ul>
-                <li class="item" ng-if="!!item.label && !!item.field" ng-repeat="item in group.items">
+                <li class="item" ng-if="!!item.label" ng-repeat="item in group.items">
                     <span class="cell glyphicon glyphicon-plus" title="{{'Add Filter on ' + item.label}}" ng-click="toggleFilterAndAddOrRemove(item)" ng-show="!item.on"></span>
                     <span class="cell glyphicon glyphicon-remove" title="{{'Remove Filter on ' + item.label}}" ng-click="toggleFilterAndAddOrRemove(item)" ng-show="item.on"></span>
                     <span class="cell glyphicon glyphicon-transfer" title="{{'Replace All Filters with Filter on ' + item.label}}" ng-click="replaceFilters(item)"></span>

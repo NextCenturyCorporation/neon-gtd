@@ -263,6 +263,16 @@ var saveLegends = function(config) {
                     item.label = item.label || item.value || item.field;
                     item.value = item.value || null;
                     item.operator = item.operator || (item.value === null ? "!=" : "=");
+                    item.multi = item.multi || {};
+                    Object.keys(item.multi).forEach(function(field) {
+                        item.multi[field] = {
+                            where: angular.copy(item.multi[field])
+                        };
+                        item.multi[field].where.forEach(function(where) {
+                            where.value = where.value ? (_.isArray(where.value) ? where.value : [where.value]) : [null];
+                            where.operator = where.operator || (where.value[0] === null ? "!=" : "=");
+                        });
+                    });
                 });
             });
         });

@@ -444,6 +444,18 @@
                     "field": "myField",
                     "operator": "contains"
                 }
+            }, {
+                "label": "My Group 2",
+                "multi": {
+                    "myField": [{
+                        "value": "A"
+                    }, {
+                        "operator": "contains",
+                        "value": "B"
+                    }, {
+                        "value": ["C", "D"]
+                    }]
+                }
             }]
         }
     },
