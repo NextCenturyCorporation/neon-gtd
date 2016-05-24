@@ -220,7 +220,7 @@ NeonGTDSetup = (function() {
             });
         });
 
-        neonDemo.constant('layouts', layouts);
+        this.angularApp.value('layouts', layouts);
     };
 
     NeonGTDSetup.prototype.readLayoutFilesAndSaveLayouts = function($http, layouts, layoutFiles, callback) {
@@ -359,12 +359,7 @@ NeonGTDSetup = (function() {
             visualization.minSizeY = 1;
         });
 
-        neonDemo.constant('visualizations', VISUALIZATIONS);
-    };
-
-    NeonGTDSetup.prototype.saveVisualizations = function(config) {
-        var visualizations = (config.visualizations || []);
-        this.angularApp.constant('visualizations', visualizations);
+        this.angularApp.value('visualizations', VISUALIZATIONS);
     };
 
     NeonGTDSetup.prototype.saveExternal = function(services) {
