@@ -386,7 +386,7 @@
         }]
     },
 
-    "legends": {
+    "customFilters": {
         "test": {
             "earthquakes": [{
                 "label": "Types",

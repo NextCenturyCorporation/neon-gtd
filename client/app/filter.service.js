@@ -211,7 +211,7 @@ angular.module("neonDemo.services")
         service.filters.forEach(function(filter) {
             if((includeAllFilters || filter.filter.filterName.indexOf(service.filterBuildPrefix) !== 0) && filter.dataSet.databaseName === database && filter.dataSet.tableName === table &&
                 checkClauses(filter.filter.whereClause)) {
-                    filters.push(filter);
+                filters.push(filter);
             }
         });
 

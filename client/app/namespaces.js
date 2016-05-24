@@ -386,10 +386,6 @@ var neonVisualizations = [{   // jshint ignore:line
     type: "dataTable",
     icon: "ViewData64"
 }, {
-    name: "Document Viewer",
-    type: "documentViewer",
-    icon: "DocumentViewer64"
-}, {
     minPixelX: 480,
     name: "Filter Builder",
     type: "filterBuilder",
@@ -399,9 +395,9 @@ var neonVisualizations = [{   // jshint ignore:line
     type: "ganttChart",
     icon: "Gantt64"
 }, {
-    name: "Legend",
-    type: "legend",
-    icon: "Legend64"
+    name: "Custom Filter List",
+    type: "customFilterList",
+    icon: "CustomFilterList64"
 }, {
     name: "Line Chart",
     type: "lineChart",

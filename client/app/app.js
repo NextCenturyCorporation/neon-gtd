@@ -250,12 +250,12 @@ var saveOpenCpu = function(config) {
     neonDemo.constant('opencpu', opencpuConfig);
 };
 
-var saveLegends = function(config) {
-    var legends = config.legends || {};
+var saveCustomFilters = function(config) {
+    var customFilters = config.customFilters || {};
 
-    Object.keys(legends).forEach(function(database) {
-        Object.keys(legends[database]).forEach(function(table) {
-            legends[database][table].forEach(function(group) {
+    Object.keys(customFilters).forEach(function(database) {
+        Object.keys(customFilters[database]).forEach(function(table) {
+            customFilters[database][table].forEach(function(group) {
                 group.customized = group.customized || {};
                 group.customized.operator = group.customized.operator || "=";
                 group.items = group.items || [];
@@ -278,7 +278,7 @@ var saveLegends = function(config) {
         });
     });
 
-    neonDemo.constant("legends", legends);
+    neonDemo.constant("customFilters", customFilters);
 };
 
 var saveDashboards = function(config) {
@@ -584,7 +584,7 @@ var readDatasetFilesAndSaveDatasets = function($http, datasets, datasetFiles, ca
 var saveNeonConfig = function($http, config) {
     saveUserAle(config);
     saveOpenCpu(config);
-    saveLegends(config);
+    saveCustomFilters(config);
     saveDashboards(config);
 
     var files = (config.files || []);

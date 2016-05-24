@@ -1,7 +1,7 @@
-<div class="legend-display">
-    <label ng-show="!active.legend.length" ng-bind="'No legend defined in the dashboard configuration file for the chosen table.'"></label>
+<div class="custom-filter-list">
+    <label ng-show="!active.customFilters.length" ng-bind="'No custom filters were defined in the dashboard configuration file for the chosen table.'"></label>
     <ul>
-        <li ng-if="!!group.label" ng-repeat="group in active.legend">
+        <li ng-if="!!group.label" ng-repeat="group in active.customFilters">
             <label ng-bind="group.label"></label>
             <ul>
                 <li class="item" ng-if="!!item.label" ng-repeat="item in group.items">
@@ -14,7 +14,7 @@
         </li>
     </ul>
     <ul>
-        <li ng-if="!!group.label && !!group.customized.field" ng-repeat="group in active.legend">
+        <li ng-if="!!group.label && !!group.customized.field" ng-repeat="group in active.customFilters">
             <label ng-bind="'Add Customized Filter on ' + group.label"></label>
             <div class="form-group customized">
                 <div class="input-group">

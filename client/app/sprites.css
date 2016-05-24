@@ -81,19 +81,19 @@ Icon classes can be used entirely standalone. They are named after their origina
   width: 64px;
   height: 64px;
 }
-.icon-Gantt64 {
+.icon-CustomFilterList64 {
   background-image: url(../assets/images/spritesheet.png);
   background-position: 0px -192px;
   width: 64px;
   height: 64px;
 }
-.icon-Graph64 {
+.icon-Gantt64 {
   background-image: url(../assets/images/spritesheet.png);
   background-position: -64px -192px;
   width: 64px;
   height: 64px;
 }
-.icon-Legend64 {
+.icon-Graph64 {
   background-image: url(../assets/images/spritesheet.png);
   background-position: -128px -192px;
   width: 64px;

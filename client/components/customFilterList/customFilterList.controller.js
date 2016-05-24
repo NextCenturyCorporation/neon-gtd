@@ -17,22 +17,22 @@
  */
 
 /**
- * This visualization shows a legend of data fields and values specified in the dashboard configuration file.
+ * This visualization shows a list of custom filters specified in the dashboard configuration file.
  * @namespace neonDemo.controllers
- * @class legendController
+ * @class customFilterListController
  * @constructor
  */
-angular.module('neonDemo.controllers').controller('legendController', ['$scope', function($scope) {
-    // Since objects are passed by reference, all legend visualizations will use the same legend objects to maintain their global filter state.
-    $scope.legends = $scope.functions.getLegends();
+angular.module('neonDemo.controllers').controller('customFilterListController', ['$scope', function($scope) {
+    // Since objects are passed by reference, all custom filter list visualizations will use the same lists to maintain their global filter state.
+    $scope.customFilters = $scope.functions.getCustomFilters();
 
-    // The legend for the active database and table displayed in this visualization.
-    $scope.active.legend = [];
+    // The custom filter for the active database and table displayed in this visualization.
+    $scope.active.customFilters = [];
 
     $scope.functions.onUpdateFields = function() {
-        $scope.active.legend = $scope.legends[$scope.active.database.name] ? ($scope.legends[$scope.active.database.name][$scope.active.table.name] || []) : [];
+        $scope.active.customFilters = $scope.customFilters[$scope.active.database.name] ? ($scope.customFilters[$scope.active.database.name][$scope.active.table.name] || []) : [];
 
-        $scope.active.legend.forEach(function(group) {
+        $scope.active.customFilters.forEach(function(group) {
             if(group.customized.field) {
                 group.customized.fieldObject = _.find($scope.active.fields, function(field) {
                     return group.customized.field === field.columnName;
@@ -57,12 +57,12 @@ angular.module('neonDemo.controllers').controller('legendController', ['$scope',
     };
 
     $scope.functions.executeQuery = function() {
-        // The legend does not query the database.
+        // The custom filter list visualization does not query the database.
         return undefined;
     };
 
     $scope.functions.isFilterSet = function() {
-        return $scope.active.legend.some(function(group) {
+        return $scope.active.customFilters.some(function(group) {
             return group.items.some(function(item) {
                 return item.on;
             });
@@ -70,8 +70,8 @@ angular.module('neonDemo.controllers').controller('legendController', ['$scope',
     };
 
     $scope.functions.getFilterFields = function() {
-        // Called by checkDashboardNeonFilters (through findFilterData) in the visualizationSuperclass.  The legend visualization can set filters on any fields so return them all.
-        // Will not be called by updateNeonFilter or removeNeonFilter because the legend visualization will give its own list of filter fields when those functions are invoked.
+        // Called by checkDashboardNeonFilters (through findFilterData) in the visualizationSuperclass.  The custom filter list visualization can set filters on any fields so return all fields.
+        // Will not be called by updateNeonFilter or removeNeonFilter because the custom filter list visualization will give its own list of filter fields when it invokes those functions.
         return $scope.active.fields;
     };
 
@@ -80,7 +80,7 @@ angular.module('neonDemo.controllers').controller('legendController', ['$scope',
         fields.forEach(function(field, index) {
             text += (index > 0 ? ", " : "") + field + " (";
             var values = [];
-            $scope.active.legend.forEach(function(group) {
+            $scope.active.customFilters.forEach(function(group) {
                 group.items.forEach(function(item) {
                     if(item.on) {
                         if(item.field === field) {
@@ -121,7 +121,7 @@ angular.module('neonDemo.controllers').controller('legendController', ['$scope',
         }
 
         if(Object.keys(filters).length) {
-            $scope.active.legend.forEach(function(group) {
+            $scope.active.customFilters.forEach(function(group) {
                 group.items.forEach(function(item) {
                     item.on = (item.field && filters[item.field] !== undefined && filters[item.field].operator === item.operator && filters[item.field].value === item.value);
                 });
@@ -130,17 +130,17 @@ angular.module('neonDemo.controllers').controller('legendController', ['$scope',
     };
 
     $scope.functions.removeFilterValues = function() {
-        $scope.active.legend.forEach(function(group) {
+        $scope.active.customFilters.forEach(function(group) {
             group.items.forEach(function(item) {
                 item.on = false;
             });
         });
     };
 
-    $scope.functions.createExportDataObject = function(exportId) {
-        // The legend does not query the database so do not include any data queries.
+    $scope.functions.createExportDataObject = function() {
+        // The custom filter list visualization does not query the database so do not include any data queries.
         return {
-            name: "Legend",
+            name: "Custom Filter List",
             data: []
         };
     };
@@ -264,9 +264,9 @@ angular.module('neonDemo.controllers').controller('legendController', ['$scope',
     };
 
     $scope.getFilterData = function() {
-        // Legend items for display in the filter notification directive.
+        // Items from the custom filter list for display in the filter notification directive.
         var data = [];
-        $scope.active.legend.forEach(function(group) {
+        $scope.active.customFilters.forEach(function(group) {
             group.items.forEach(function(item) {
                 if(item.on) {
                     data.push(item);

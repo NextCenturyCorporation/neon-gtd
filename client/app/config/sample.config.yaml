@@ -651,7 +651,7 @@ layouts:
         table: earthquakes
         dataField: net
 
-legends: 
+customFilters: 
   test: 
     earthquakes: 
       -
