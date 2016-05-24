@@ -95,15 +95,25 @@ module.exports = function(grunt) {
                     starttag: "<!-- injector:js -->",
                     endtag: "<!-- endinjector -->",
                     transform: function(filePath) {
+                        // injector doesn't allow pattern matching in the ignorePath object, so check for *.spec.js files here to exclude them.
+                        if (!filePath || filePath.match(/spec.js$/)) {
+                            return '';
+                        }
                         filePath = filePath.replace("/client/", "");
                         return '<script src="' + filePath + '"></script>';
-                    }
+                    },
+                    ignorePath: [
+                        'client/app/test.js'
+                    ]
                 },
                 files: {
                     "client/index.html": [
                         "client/app/namespaces.js",
+                        "client/app/neon.helpers.js",
+                        "client/app/neonGTDSetup.js",
                         "client/app/app.js",
                         "client/app/*.service.js",
+                        "client/app/main/main.controller.js",
                         "client/{app,components}/**/*.js"
                     ]
                 }

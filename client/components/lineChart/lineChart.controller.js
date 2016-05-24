@@ -109,7 +109,8 @@ angular.module('neonDemo.controllers').controller('lineChartController', ['$scop
     var handleDateSelected = function(message) {
         if($scope.chart) {
             if(message.start && message.end) {
-                $scope.chart.selectDate(message.start, message.end);
+                $scope.chart.selectDate(_.isNumber(message.start) ? new Date(message.start) : undefined,
+                    _.isNumber(message.end) ? new Date(message.end) : undefined);
             } else {
                 $scope.chart.deselectDate();
             }
@@ -278,7 +279,7 @@ angular.module('neonDemo.controllers').controller('lineChartController', ['$scop
         if(!$scope.functions.isFieldValid(layer.dateField)) {
             fields.push("Date");
         }
-        if(layer.aggregationType !== "count" && $scope.functions.isFieldValid(layer.aggregationField)) {
+        if(layer.aggregationType !== "count" && !$scope.functions.isFieldValid(layer.aggregationField)) {
             fields.push("Aggregation Field");
         }
         layer.error = fields.length ? "Please choose fields:  " + fields.join(", ") : undefined;
@@ -639,8 +640,8 @@ angular.module('neonDemo.controllers').controller('lineChartController', ['$scop
     var onHover = function(startDate, endDate) {
         $scope.$apply(function() {
             $scope.functions.publish("date_selected", {
-                start: startDate,
-                end: endDate
+                start: (startDate !== undefined) ? startDate.getTime() : undefined,
+                end: (endDate !== undefined) ? endDate.getTime() : undefined
             });
         });
     };
@@ -932,13 +933,13 @@ angular.module('neonDemo.controllers').controller('lineChartController', ['$scop
                     });
                     min = zeroOutDate(range[0]);
                     max = zeroOutDate(range[1], 1);
-                }
 
-                if(min < minDate || !minDate) {
-                    minDate = min;
-                }
-                if(max > maxDate || !maxDate) {
-                    maxDate = max;
+                    if(min < minDate || !minDate) {
+                        minDate = min;
+                    }
+                    if(max > maxDate || !maxDate) {
+                        maxDate = max;
+                    }
                 }
             });
         } else {

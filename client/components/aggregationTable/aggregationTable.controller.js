@@ -40,7 +40,8 @@ angular.module('neonDemo.controllers').controller('aggregationTableController', 
             $scope.active.gridOptions.api.selectIndex(cell.rowIndex, false);
         }
 
-        $scope.filter = cell.node.data[$scope.active.groupField.columnName];
+        // The data in the grid has been HTML-escaped, so unescape it before creating a filter from it.
+        $scope.filter = _.unescape(cell.node.data[$scope.active.groupField.columnName]);
         selectRow($scope.filter);
         $scope.functions.updateNeonFilter();
     };
@@ -149,6 +150,9 @@ angular.module('neonDemo.controllers').controller('aggregationTableController', 
     $scope.functions.updateData = function(data) {
         var tableData = data || [];
 
+        // Escape the data so that special characters render correctly
+        tableData = neon.helpers.escapeDataRecursively(tableData);
+
         if($scope.functions.areExternalServicesActive()) {
             tableData = addExternalLinksToColumnData(tableData);
         }
@@ -175,8 +179,11 @@ angular.module('neonDemo.controllers').controller('aggregationTableController', 
      * @private
      */
     var selectRow = function(value) {
+        // The data in the grid has been HTML-escaped, so escape the value so that we can compare
+        // apples to apples.
+        var escapedValue = _.escape(value);
         var selected = _.findWhere($scope.active.gridOptions.api.getRenderedNodes(), function(node) {
-            return node.data[$scope.active.groupField.columnName] === value;
+            return node.data[$scope.active.groupField.columnName] === escapedValue;
         });
         if(selected) {
             $scope.active.gridOptions.api.selectNode(selected);

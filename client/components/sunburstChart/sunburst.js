@@ -266,7 +266,7 @@ charts.SunburstChart = function(rootElement, selector, opts) {
         }
 
         function onMouseOver(d) {
-            var text = "<span class='sunburst-tooltip-title'>" + d.prettyName + "</span>";
+            var text = "<span class='sunburst-tooltip-title'>" + _.escape(d.prettyName) + "</span>";
 
             if(!d.count && !d.total && d.value) {
                 text = text + "<span class='sunburst-tooltip-field'><strong>";

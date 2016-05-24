@@ -1134,7 +1134,12 @@ function($scope, external, connectionService, datasetService, errorNotificationS
         var invalid = $scope.active.layers.some(function(otherLayer, otherIndex) {
             return otherLayer.name === (layer.name || layer.table.name).toUpperCase() && otherIndex !== index;
         });
-        layer.error = invalid ? "Please choose a unique layer name." : undefined;
+        var error = invalid ? "Please choose a unique layer name." : undefined;
+        if(layer.error && error) {
+            layer.error = layer.error + "  " + error;
+        } else if(invalid) {
+            layer.error = error;
+        }
     };
 
     /**
@@ -1377,7 +1382,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
 
             $scope.$apply(function() {
                 // The response for an array-counts query is an array and the response for other queries is an object containing a data array.
-                updateDataFunction(neon.helpers.escapeDataRecursively(response.data || response), item.layers);
+                updateDataFunction(response.data || response, item.layers);
                 queryAndUpdate(data, ++index, addToQueryFunction, executeQueryFunction, updateDataFunction);
             });
 
