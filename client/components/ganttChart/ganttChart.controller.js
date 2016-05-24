@@ -100,7 +100,12 @@ angular.module('neonDemo.controllers').controller('ganttChartController', ['$sco
         }
     };
 
-    var addToSelectedGroupsQuery = function(query) {
+    var addToSelectedGroupsQuery = function(query, unsharedFilterWhereClause) {
+        var groupWhereClause = createGroupWhereClause();
+        if(groupWhereClause) {
+            query.where(unsharedFilterWhereClause ? neon.query.and(groupWhereClause, unsharedFilterWhereClause) : groupWhereClause);
+        }
+
         query.groupBy($scope.active.groupFields[0]).aggregate(neon.query.COUNT, "*", "count").sortBy("count", neon.query.DESCENDING);
         if($scope.filter) {
             var filterClause = $scope.functions.createNeonFilterClause({
@@ -162,7 +167,7 @@ angular.module('neonDemo.controllers').controller('ganttChartController', ['$sco
         return $scope.functions.isFilterSet() || $scope.active.selectedGroups.length;
     };
 
-    $scope.functions.createNeonQueryWhereClause = function() {
+    var createGroupWhereClause = function() {
         if($scope.active.groupFields.length && $scope.functions.isFieldValid($scope.active.groupFields[0])) {
             var whereClauses = $scope.active.selectedGroups.map(function(group) {
                 return neon.query.where($scope.active.groupFields[0].columnName, "=", group);
@@ -174,7 +179,12 @@ angular.module('neonDemo.controllers').controller('ganttChartController', ['$sco
         return undefined;
     };
 
-    $scope.functions.addToQuery = function(query) {
+    $scope.functions.addToQuery = function(query, unsharedFilterWhereClause) {
+        var groupWhereClause = createGroupWhereClause();
+        if(groupWhereClause) {
+            query.where(unsharedFilterWhereClause ? neon.query.and(groupWhereClause, unsharedFilterWhereClause) : groupWhereClause);
+        }
+
         var fields = [$scope.active.startField.columnName, $scope.active.endField.columnName];
         if($scope.functions.isFieldValid($scope.active.colorField)) {
             fields.push($scope.active.colorField.columnName);
@@ -185,9 +195,7 @@ angular.module('neonDemo.controllers').controller('ganttChartController', ['$sco
         $scope.active.groupFields.forEach(function(groupField) {
             fields.push(groupField.columnName);
         });
-        query.withFields(fields);
-        query.limit($scope.active.limit);
-        return query;
+        return query.withFields(fields).limit($scope.active.limit);
     };
 
     $scope.functions.updateData = function(data) {

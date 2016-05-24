@@ -108,11 +108,10 @@ angular.module('neonDemo.controllers').controller('aggregationTableController', 
         return $scope.functions.isFieldValid($scope.active.groupField) && ($scope.active.aggregation === "count" || $scope.functions.isFieldValid($scope.active.aggregationField));
     };
 
-    $scope.functions.createNeonQueryWhereClause = function() {
-        return neon.query.where($scope.active.groupField.columnName, "!=", null);
-    };
+    $scope.functions.addToQuery = function(query, unsharedFilterWhereClause) {
+        var whereClause = neon.query.where($scope.active.groupField.columnName, "!=", null);
+        query.where(unsharedFilterWhereClause ? neon.query.and(whereClause, unsharedFilterWhereClause) : whereClause);
 
-    $scope.functions.addToQuery = function(query) {
         if($scope.functions.isFilterSet()) {
             var filterClause = $scope.functions.createNeonFilterClause({
                 database: $scope.active.database.name,

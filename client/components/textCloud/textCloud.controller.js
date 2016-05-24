@@ -64,12 +64,10 @@ angular.module('neonDemo.controllers').controller('textCloudController', ['$scop
         return $scope.functions.isFieldValid($scope.active.dataField);
     };
 
-    $scope.functions.createNeonQueryWhereClause = function() {
-        return neon.query.where($scope.active.dataField.columnName, "!=", null);
-    };
-
-    $scope.functions.addToQuery = function(query) {
-        return query.groupBy($scope.active.dataField.columnName).aggregate(neon.query.COUNT, '*', 'count').sortBy('count', neon.query.DESCENDING)
+    $scope.functions.addToQuery = function(query, unsharedFilterWhereClause) {
+        var whereClause = neon.query.where($scope.active.dataField.columnName, "!=", null);
+        return query.where(unsharedFilterWhereClause ? neon.query.and(whereClause, unsharedFilterWhereClause) : whereClause)
+            .groupBy($scope.active.dataField.columnName).aggregate(neon.query.COUNT, '*', 'count').sortBy('count', neon.query.DESCENDING)
             .limit($scope.active.limit).enableAggregateArraysByElement();
     };
 

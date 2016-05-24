@@ -11,55 +11,55 @@ Icon classes can be used entirely standalone. They are named after their origina
 */
 .icon-Error_16x16 {
   background-image: url(../assets/images/spritesheet.png);
-  background-position: -336px -86px;
+  background-position: -336px -154px;
   width: 16px;
   height: 16px;
 }
 .icon-Error_64x64 {
   background-image: url(../assets/images/spritesheet.png);
-  background-position: -192px -192px;
+  background-position: -256px 0px;
   width: 64px;
   height: 64px;
 }
 .icon-FilterTray_34x34 {
   background-image: url(../assets/images/spritesheet.png);
-  background-position: -320px 0px;
+  background-position: -320px -68px;
   width: 34px;
   height: 34px;
 }
 .icon-Help_34x34 {
   background-image: url(../assets/images/spritesheet.png);
-  background-position: -286px -256px;
+  background-position: -320px -34px;
   width: 34px;
   height: 34px;
 }
 .icon-Neon_16x16 {
   background-image: url(../assets/images/spritesheet.png);
-  background-position: -320px -86px;
+  background-position: -320px -154px;
   width: 16px;
   height: 16px;
 }
 .icon-Neon_60x34 {
   background-image: url(../assets/images/spritesheet.png);
-  background-position: -192px -256px;
+  background-position: -256px -256px;
   width: 60px;
   height: 34px;
 }
 .icon-Options_34x34 {
   background-image: url(../assets/images/spritesheet.png);
-  background-position: -252px -256px;
+  background-position: -320px 0px;
   width: 34px;
   height: 34px;
 }
 .icon-Translated_20x20 {
   background-image: url(../assets/images/spritesheet.png);
-  background-position: -320px -66px;
+  background-position: -320px -134px;
   width: 20px;
   height: 20px;
 }
 .icon-Twitter_32x32 {
   background-image: url(../assets/images/spritesheet.png);
-  background-position: -320px -34px;
+  background-position: -320px -102px;
   width: 32px;
   height: 32px;
 }
@@ -87,15 +87,21 @@ Icon classes can be used entirely standalone. They are named after their origina
   width: 64px;
   height: 64px;
 }
-.icon-Gantt64 {
+.icon-DocumentViewer64 {
   background-image: url(../assets/images/spritesheet.png);
   background-position: -64px -192px;
   width: 64px;
   height: 64px;
 }
-.icon-Graph64 {
+.icon-Gantt64 {
   background-image: url(../assets/images/spritesheet.png);
   background-position: -128px -192px;
+  width: 64px;
+  height: 64px;
+}
+.icon-Graph64 {
+  background-image: url(../assets/images/spritesheet.png);
+  background-position: -192px -192px;
   width: 64px;
   height: 64px;
 }
@@ -107,43 +113,43 @@ Icon classes can be used entirely standalone. They are named after their origina
 }
 .icon-Map64 {
   background-image: url(../assets/images/spritesheet.png);
-  background-position: -256px 0px;
+  background-position: -256px -64px;
   width: 64px;
   height: 64px;
 }
 .icon-News64 {
   background-image: url(../assets/images/spritesheet.png);
-  background-position: -256px -64px;
+  background-position: -256px -128px;
   width: 64px;
   height: 64px;
 }
 .icon-OPS64 {
   background-image: url(../assets/images/spritesheet.png);
-  background-position: -256px -128px;
+  background-position: -256px -192px;
   width: 64px;
   height: 64px;
 }
 .icon-OpsClock64 {
   background-image: url(../assets/images/spritesheet.png);
-  background-position: -256px -192px;
+  background-position: 0px -256px;
   width: 64px;
   height: 64px;
 }
 .icon-PieChart64 {
   background-image: url(../assets/images/spritesheet.png);
-  background-position: 0px -256px;
+  background-position: -64px -256px;
   width: 64px;
   height: 64px;
 }
 .icon-ScatterPlot64 {
   background-image: url(../assets/images/spritesheet.png);
-  background-position: -64px -256px;
+  background-position: -128px -256px;
   width: 64px;
   height: 64px;
 }
 .icon-Sunburst64 {
   background-image: url(../assets/images/spritesheet.png);
-  background-position: -128px -256px;
+  background-position: -192px -256px;
   width: 64px;
   height: 64px;
 }

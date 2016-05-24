@@ -390,6 +390,10 @@ var neonVisualizations = [{   // jshint ignore:line
     type: "dataTable",
     icon: "ViewData64"
 }, {
+    name: "Document Viewer",
+    type: "documentViewer",
+    icon: "DocumentViewer64"
+}, {
     minPixelX: 480,
     name: "Filter Builder",
     type: "filterBuilder",

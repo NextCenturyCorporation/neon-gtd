@@ -650,7 +650,13 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
         $scope.data = [];
     };
 
-    var buildValidDatesQuery = function(query) {
+    var buildValidDatesQuery = function(query, unsharedFilterWhereClause) {
+        var validDatesWhereClause = neon.query.and(
+            neon.query.where($scope.active.dateField.columnName, '>=', new Date("1970-01-01T00:00:00.000Z")),
+            neon.query.where($scope.active.dateField.columnName, '<=', new Date("2025-01-01T00:00:00.000Z"))
+        );
+        query.where(unsharedFilterWhereClause ? neon.query.and(validDatesWhereClause, unsharedFilterWhereClause) : validDatesWhereClause);
+
         var yearGroupClause = new neon.query.GroupByFunctionClause(neon.query.YEAR, $scope.active.dateField.columnName, $scope.active.YEAR);
         var monthGroupClause = new neon.query.GroupByFunctionClause(neon.query.MONTH, $scope.active.dateField.columnName, $scope.active.MONTH);
         var dayGroupClause = new neon.query.GroupByFunctionClause(neon.query.DAY, $scope.active.dateField.columnName, $scope.active.DAY);
@@ -670,34 +676,20 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
         return query.aggregate(neon.query.COUNT, '*', 'count').enableAggregateArraysByElement();
     };
 
-    $scope.functions.createNeonQueryWhereClause = function() {
-        return neon.query.and(
-            neon.query.where($scope.active.dateField.columnName, '>=', new Date("1970-01-01T00:00:00.000Z")),
-            neon.query.where($scope.active.dateField.columnName, '<=', new Date("2025-01-01T00:00:00.000Z"))
-        );
-    };
-
-    /**
-     * Helper method for queryForChartData(). Creates the Query object for invalid dates to be used by this moethod.
-     * @method buildInvalidDatesQuery
-     * @private
-     * @return {neon.query.Query} query The Query object to be used by queryForChartData()
-     */
-    var buildInvalidDatesQuery = function(query) {
-        // Replace the where clause created by $scope.functions.createNeonQueryWhereClause with an invalid date where clause.
-        query.filter.whereClause.whereClauses[0] = neon.query.or(
+    var buildInvalidDatesQuery = function(query, unsharedFilterWhereClause) {
+        var invalidDatesWhereClause = neon.query.or(
             neon.query.where($scope.active.dateField.columnName, '<', new Date("1970-01-01T00:00:00.000Z")),
             neon.query.where($scope.active.dateField.columnName, '>', new Date("2025-01-01T00:00:00.000Z")),
             neon.query.where($scope.active.dateField.columnName, '=', null)
         );
-
+        query.where(unsharedFilterWhereClause ? neon.query.and(invalidDatesWhereClause, unsharedFilterWhereClause) : invalidDatesWhereClause);
         return query.aggregate(neon.query.COUNT, '*', 'invalidCount').enableAggregateArraysByElement();
     };
 
-    $scope.functions.addToQuery = function(query) {
+    $scope.functions.addToQuery = function(query, unsharedFilterWhereClause) {
         var queryGroup = new neon.query.QueryGroup();
-        var validDatesQuery = buildValidDatesQuery(angular.copy(query));
-        var invalidDatesQuery = buildInvalidDatesQuery(query);
+        var validDatesQuery = buildValidDatesQuery(angular.copy(query), unsharedFilterWhereClause);
+        var invalidDatesQuery = buildInvalidDatesQuery(query, unsharedFilterWhereClause);
 
         queryGroup.addQuery(validDatesQuery);
         queryGroup.addQuery(invalidDatesQuery);

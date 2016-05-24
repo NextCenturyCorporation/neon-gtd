@@ -133,19 +133,15 @@ angular.module('neonDemo.controllers').controller('lineChartController', ['$scop
         return $scope.functions.isFieldValid(layer.dateField) && (layer.aggregationType !== "count" ? $scope.functions.isFieldValid(layer.aggregationField) : true);
     };
 
-    $scope.functions.createNeonQueryWhereClause = function(layers) {
+    $scope.functions.addToQuery = function(query, unsharedFilterWhereClause, layers) {
         // The line chart will only query for data from one layer at a time.
         var layer = layers[0];
 
-        return neon.query.and(
+        var validDatesWhereClause = neon.query.and(
             neon.query.where(layer.dateField.columnName, '>=', new Date("1970-01-01T00:00:00.000Z")),
             neon.query.where(layer.dateField.columnName, '<=', new Date("2025-01-01T00:00:00.000Z"))
         );
-    };
-
-    $scope.functions.addToQuery = function(query, layers) {
-        // The line chart will only query for data from one layer at a time.
-        var layer = layers[0];
+        query.where(unsharedFilterWhereClause ? neon.query.and(validDatesWhereClause, unsharedFilterWhereClause) : validDatesWhereClause);
 
         var yearGroupClause = new neon.query.GroupByFunctionClause(neon.query.YEAR, layer.dateField.columnName, 'year');
         var monthGroupClause = new neon.query.GroupByFunctionClause(neon.query.MONTH, layer.dateField.columnName, 'month');
