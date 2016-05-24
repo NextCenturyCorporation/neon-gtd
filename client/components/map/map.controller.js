@@ -910,7 +910,6 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
             $scope.active.legend.layers[legendIndex].olLayerId = layer.olLayer.id;
         }
 
-
         $scope.map.setLayerVisibility(layer.olLayer.id, layer.show);
     };
 

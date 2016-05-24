@@ -96,7 +96,7 @@ module.exports = function(grunt) {
                     endtag: "<!-- endinjector -->",
                     transform: function(filePath) {
                         // injector doesn't allow pattern matching in the ignorePath object, so check for *.spec.js files here to exclude them.
-                        if (!filePath || filePath.match(/spec.js$/)) {
+                        if(!filePath || filePath.match(/spec.js$/)) {
                             return '';
                         }
                         filePath = filePath.replace("/client/", "");

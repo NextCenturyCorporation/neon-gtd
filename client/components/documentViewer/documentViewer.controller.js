@@ -149,7 +149,8 @@ angular.module('neonDemo.controllers').controller('documentViewerController', ['
                     annotations: [],
                     details: [],
                     letters: [],
-                    parts: []
+                    parts: [],
+                    showDetailsList: false
                 };
 
                 (_.isArray(document.raw) ? document.raw.join() : document.raw).split('').forEach(function(letter) {
@@ -343,9 +344,8 @@ angular.module('neonDemo.controllers').controller('documentViewerController', ['
      */
     var findDocument = function(dataItem) {
         var document;
-        if($scope.active.annotationsInAnotherTable) {
-            // TODO Handle coreferencing documents and annotations in different tables.
-        } else {
+        // TODO If annotationsInAnotherTable is true, handle coreferencing documents and annotations in different tables.
+        if(!$scope.active.annotationsInAnotherTable) {
             var content = findDocumentContent(dataItem);
             document = _.find($scope.active.documents, function(document) {
                 return document.content === content;
@@ -500,7 +500,7 @@ angular.module('neonDemo.controllers').controller('documentViewerController', ['
                 });
             });
         }
-    }
+    };
 
     /**
      * Saves the details from the given data item in the given document object.
@@ -545,8 +545,8 @@ angular.module('neonDemo.controllers').controller('documentViewerController', ['
 
         var endIndex;
         var partText = "";
-        var partHighlightColor = undefined;
         var partMentions = [];
+        var partHighlightColor;
         var addPart = function() {
             if(partText) {
                 // A part object contains a text string, a description string, a highlight color, and a list of mentions.
@@ -789,7 +789,6 @@ angular.module('neonDemo.controllers').controller('documentViewerController', ['
         });
 
         if(annotation.mentions.length) {
-            var fields = [];
             $scope.filter = {
                 data: annotation.mentions.map(function(mention) {
                     return {

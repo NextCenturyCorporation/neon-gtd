@@ -210,13 +210,15 @@ NeonGTDSetup = (function() {
                 var visualizationConfig = _.find(VISUALIZATIONS, function(visualizationConfig) {
                     return visualizationConfig.type === visualization.type;
                 });
-                visualization.name = visualizationConfig.name;
-                visualization.sizeX = visualization.sizeX || visualizationConfig.sizeX;
-                visualization.sizeY = visualization.sizeY || visualizationConfig.sizeY;
-                visualization.minSizeX = visualization.minSizeX || visualizationConfig.minSizeX;
-                visualization.minSizeY = visualization.minSizeY || visualizationConfig.minSizeY;
-                visualization.minPixelX = visualization.minPixelX || visualizationConfig.minPixelX;
-                visualization.minPixelY = visualization.minPixelY || visualizationConfig.minPixelY;
+                if(visualizationConfig) {
+                    visualization.name = visualizationConfig.name;
+                    visualization.sizeX = visualization.sizeX || visualizationConfig.sizeX;
+                    visualization.sizeY = visualization.sizeY || visualizationConfig.sizeY;
+                    visualization.minSizeX = visualization.minSizeX || visualizationConfig.minSizeX;
+                    visualization.minSizeY = visualization.minSizeY || visualizationConfig.minSizeY;
+                    visualization.minPixelX = visualization.minPixelX || visualizationConfig.minPixelX;
+                    visualization.minPixelY = visualization.minPixelY || visualizationConfig.minPixelY;
+                }
             });
         });
 
