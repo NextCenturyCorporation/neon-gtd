@@ -298,7 +298,7 @@ charts.LineChart.prototype.selectIndexedDates = function(startIndex, endIndex) {
                 me.hoverCircles[seriesObject.series][i]
                     .attr("stroke-opacity", 1)
                     .attr("fill-opacity", 1)
-                    .attr("cx", seriesObject.data.length > 1 ? me.x(date) : me.width / 2)
+                    .attr("cx", seriesObject.data.length > 1 ? (me.x(date) + me.xOffset) : me.width / 2)
                     .attr("cy", me.y(seriesObject.data[i].value));
             }
         }
@@ -307,8 +307,8 @@ charts.LineChart.prototype.selectIndexedDates = function(startIndex, endIndex) {
     if(!allUndefined) {
         var startDate = me.data[0].data[startIndex].date;
         var endDate = me.data[0].data[endIndex - 1].date;
-        var startDateX = this.data[0].data.length > 1 ? this.x(startDate) : this.width / 2;
-        var endDateX = this.data[0].data.length > 1 ? this.x(endDate) : this.width / 2;
+        var startDateX = this.data[0].data.length > 1 ? this.x(startDate) + this.xOffset : this.width / 2;
+        var endDateX = this.data[0].data.length > 1 ? this.x(endDate) + this.xOffset : this.width / 2;
 
         // Use a single highlight rectangle for the whole selected date range.
         var highlightX = Math.max(0, startDateX - (charts.LineChart.DEFAULT_HIGHLIGHT_WIDTH / 2));
@@ -412,21 +412,23 @@ charts.LineChart.prototype.drawLines = function(opts) {
     }
 
     me.x = d3.time.scale.utc()
-    .range([25, (me.width - (me.margin.left + me.margin.right))], 0.25);
+    .range([0, (me.width - (me.margin.left + me.margin.right))], 0.25);
 
     me.xDomain = d3.extent(fullDataSet, function(d) {
         return d[me.xAttribute];
     });
-
     // If no data exists then the min and max of the domain will be undefined.
-    if(me.xDomain[1] && me.granularity === 'day') {
+    if(me.xDomain[1]) {
         // Add one day to the end of the x-axis so users can hover over and filter on the end date.
-        me.xDomain[1] = d3.time.day.utc.offset(me.xDomain[1], 1);
-    } else if(me.xDomain[1] && me.granularity === 'hour') {
-        // Add one hour to the end of the x-axis so users can hover over and filter on the end date.
-        me.xDomain[1] = d3.time.hour.utc.offset(me.xDomain[1], 1);
+        me.xDomain[1] = d3.time[me.granularity].utc.offset(me.xDomain[1], 1);
     }
     me.x.domain(me.xDomain);
+
+    me.xOffset = 0;
+    if(me.xDomain[1]) {
+        // Save the offset for the points along the x-axis so they are drawn in the center of each date bucket instead of on the left.
+        me.xOffset = (me.x(me.xDomain[0]) + me.x(d3.time[me.granularity].utc.offset(me.xDomain[0], 1))) / 2.0;
+    }
 
     var xAxis = d3.svg.axis()
         .scale(me.x)
@@ -441,7 +443,7 @@ charts.LineChart.prototype.drawLines = function(opts) {
 
     me.svg.append("g")
         .attr("class", "x axis")
-        .attr("transform", "translate(0," + (me.height - (me.margin.top + me.margin.bottom)) + ")")
+        .attr("transform", "translate(" + me.xOffset + "," + (me.height - (me.margin.top + me.margin.bottom)) + ")")
         .call(xAxis);
 
     me.y = d3.scale.linear().range([(me.height - (me.margin.top + me.margin.bottom)), 0]);
@@ -513,7 +515,7 @@ charts.LineChart.prototype.drawLines = function(opts) {
 
         var line = d3.svg.line()
         .x(function(d) {
-            return me.x(d.date);
+            return me.x(d.date) + me.xOffset;
         })
         .y(function(d) {
             return me.y(d[me.yAttribute]);
@@ -536,7 +538,7 @@ charts.LineChart.prototype.drawLines = function(opts) {
         var func;
         if(data.length < 40) {
             func = function(d) {
-                return me.x(d.date);
+                return me.x(d.date) + me.xOffset;
             };
             if(data.length === 1) {
                 func = me.width / 2;
@@ -557,7 +559,7 @@ charts.LineChart.prototype.drawLines = function(opts) {
                 });
         } else {
             func = function(d) {
-                return me.x(d.date);
+                return me.x(d.date) + me.xOffset;
             };
 
             var singlePoints = me.filterOutSinglePoints(data);
@@ -595,7 +597,7 @@ charts.LineChart.prototype.drawLines = function(opts) {
         // Calculate and create trendlines
 
         var xSeries = filteredData.map(function(datum) {
-            return me.x(datum.date);
+            return me.x(datum.date) + me.xOffset;
         });
         var ySeries = filteredData.map(function(datum) {
             return me.y(datum[me.yAttribute]);
@@ -849,6 +851,8 @@ charts.LineChart.prototype.drawBrush = function() {
 
     this.brush = d3.svg.brush().x(this.x).on("brush", function() {
         me.drawBrushMasks(this, me.brush);
+        // Hide the highlight rectangle while the brush is shown.
+        me.deselectDate();
     });
 
     if(this.brushHandler) {
@@ -941,11 +945,8 @@ charts.LineChart.prototype.drawBrushMasks = function(element, brush) {
             newExtent = [startDay, endDay];
         } else {
             newExtent = oldExtent.map(timeFunction.round);
-
-            if(newExtent[0] >= newExtent[1]) {
-                newExtent[0] = timeFunction.floor(oldExtent[0]);
-                newExtent[1] = timeFunction.ceil(oldExtent[1]);
-            }
+            newExtent[0] = timeFunction.floor(oldExtent[0]);
+            newExtent[1] = timeFunction.ceil(oldExtent[1]);
         }
 
         if(newExtent[0] < newExtent[1]) {

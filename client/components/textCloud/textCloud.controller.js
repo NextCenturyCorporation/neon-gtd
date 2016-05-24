@@ -216,6 +216,11 @@ angular.module('neonDemo.controllers').controller('textCloudController', ['$scop
         $scope.functions.logChangeAndUpdate("dataField", $scope.active.dataField.columnName);
     };
 
+    $scope.handleChangeLimit = function() {
+        $scope.active.limit = $scope.active.limit || 1;
+        $scope.functions.logChangeAndUpdate("limit", $scope.active.limit, "button");
+    };
+
     $scope.handleChangeAndFilters = function() {
         $scope.functions.logChangeAndUpdate("andFilters", $scope.active.andFilters, "button");
         $scope.functions.updateNeonFilter();
@@ -308,11 +313,11 @@ angular.module('neonDemo.controllers').controller('textCloudController', ['$scop
     };
 
     $scope.functions.createMenuText = function() {
-        return !$scope.functions.isFilterSet() && !$scope.active.data.length ? "No Data" : "";
+        return !$scope.functions.isFilterSet() && !$scope.active.data.length ? "No Data" : "Top " + $scope.active.data.length;
     };
 
     $scope.functions.showMenuText = function() {
-        return !$scope.functions.isFilterSet() && !$scope.active.data.length;
+        return true;
     };
 
     $scope.getFilterData = function() {

@@ -120,7 +120,7 @@ angular.module('neonDemo.controllers').controller('dataTableController', ['$scop
                 return getCellText(values, fields.slice(1));
             }
 
-            return _.isObject(values) ? OBJECT : ("" + values);
+            return _.isObject($sce.valueOf(values)) ? OBJECT : ("" + values);
         };
 
         // Use the fields in the order they are defined in the Neon dashboard configuration (so we can't use sorted $scope.active.fields) for the order of the columns.
