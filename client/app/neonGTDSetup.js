@@ -393,11 +393,6 @@ NeonGTDSetup = (function() {
         this.angularApp.value('visualizations', VISUALIZATIONS);
     };
 
-    NeonGTDSetup.prototype.saveVisualizations = function(config) {
-        var visualizations = (config.visualizations || []);
-        this.angularApp.constant('visualizations', visualizations);
-    };
-
     NeonGTDSetup.prototype.saveExternal = function(services) {
         this.angularApp.constant('external', {
             active: Object.keys(services).length,
