@@ -453,7 +453,8 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
     };
 
     $scope.functions.updateData = function(data, layers) {
-        $scope.dataBounds = $scope.dataBounds || computeDataBounds(data || []);
+        $scope.dataBounds = computeDataBounds(data || []);
+        zoomToDataBounds();
 
         (layers || $scope.active.layers).forEach(function(layer) {
             if(layer.olLayer) {
@@ -533,7 +534,7 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
             var recalculateBounds = function(data, longitudeField, latitudeField) {
                 data.forEach(function(item) {
                     neon.helpers.getNestedValues(item, [longitudeField, latitudeField]).forEach(function(pointValue) {
-                        bounds = calculateMinMaxBounds(bounds, pointValue[longitudeField], pointValue[latitudeField]);
+                        bounds = calculateMinMaxBounds(bounds, pointValue[latitudeField], pointValue[longitudeField]);
                     });
                 });
             };
