@@ -35,10 +35,6 @@ angular.module('neonDemo.controllers').controller('documentViewerController', ['
     $scope.active.documents = [];
     $scope.active.details = [];
 
-    // Override the default in the superclass because we need to reference the original text for the character indices.
-    // This visualization will escape the text data itself before the text is shown.
-    $scope.active.escapeData = false;
-
     // Annotation highlight colors.
     var HIGHLIGHT_COLORS = [
         neonColors.LIGHT_GREEN,
@@ -76,13 +72,19 @@ angular.module('neonDemo.controllers').controller('documentViewerController', ['
     };
 
     var updateAnnotationFields = function() {
+        var findAnnotationField = function(binding) {
+            var result;
+            if(binding) {
+                result = _.find($scope.active.annotationFields, function(field) {
+                    return field.columnName === binding;
+                });
+            }
+            return result || $scope.functions.createBlankField();
+        };
+
         $scope.active.annotationFields = $scope.functions.getSortedFields($scope.active.annotationDatabase, $scope.active.annotationTable);
-        $scope.active.documentIdFieldInAnnotationTable = ($scope.bindings.documentIdFieldInAnnotationTable ? _.find($scope.active.annotationFields, function(field) {
-            return field.columnName === $scope.bindings.documentIdFieldInAnnotationTable;
-        }) : undefined) || $scope.functions.createBlankField();
-        $scope.active.documentIdFieldInDocumentTable = ($scope.bindings.documentIdFieldInDocumentTable ? _.find($scope.active.annotationFields, function(field) {
-            return field.columnName === $scope.bindings.documentIdFieldInDocumentTable;
-        }) : undefined) || $scope.functions.createBlankField();
+        $scope.active.documentIdFieldInAnnotationTable = findAnnotationField($scope.bindings.documentIdFieldInAnnotationTable);
+        $scope.active.documentIdFieldInDocumentTable = findAnnotationField($scope.bindings.documentIdFieldInDocumentTable);
 
         $scope.active.annotations = [];
         ($scope.bindings.annotations || []).forEach(function(annotation) {
@@ -373,7 +375,6 @@ angular.module('neonDemo.controllers').controller('documentViewerController', ['
             // If this document has any results for this annotation, add an object for this annotation to the list of annotations for this document.
             var annotationIndex = annotationValues.length ? addAnnotationToDocument(annotation, document) : -1;
 
-            // The lists of start and end indices should be equal length but use Math.min to be sure.
             annotationValues.forEach(function(annotationValue) {
                 var start = Number(annotationValue[annotation.startField.columnName]);
                 var end = Number(annotationValue[annotation.endField.columnName]);
@@ -482,7 +483,8 @@ angular.module('neonDemo.controllers').controller('documentViewerController', ['
             });
         }
 
-        // Use the default highlight color palette if no color mappings were defined.
+        // Use the default highlight color palette if no color mappings were defined and there are enough colors in the default palette for all the types.
+        // If there are not enough colors for all the types, just use one color for all the types because reusing colors for multiple types is confusing.
         if(_.isEmpty(colors) && annotation.types.length <= HIGHLIGHT_COLORS.length) {
             annotation.types.forEach(function(type, index) {
                 type.color = HIGHLIGHT_COLORS[index];
@@ -776,7 +778,16 @@ angular.module('neonDemo.controllers').controller('documentViewerController', ['
     };
 
     $scope.handleSelectAnnotation = function(annotation) {
-        // TODO Logging
+        XDATA.userALE.log({
+            activity: "select",
+            action: "click",
+            elementId: "documentViewer",
+            elementType: "canvas",
+            elementGroup: "chart_group",
+            source: "user",
+            tags: ["filter", "documentViewer", "annotation", annotation.text]
+        });
+
         if(annotation.mentions.length) {
             var fields = [];
             $scope.filter = {
@@ -794,13 +805,31 @@ angular.module('neonDemo.controllers').controller('documentViewerController', ['
     };
 
     $scope.toggleShowAnnotationsLegend = function(document) {
-        // TODO Logging
         document.showAnnotationsLegend = !document.showAnnotationsLegend;
+
+        XDATA.userALE.log({
+            activity: "alter",
+            action: "click",
+            elementId: "documentViewer",
+            elementType: "canvas",
+            elementGroup: "chart_group",
+            source: "user",
+            tags: ["toggle", "documentViewer", "showAnnotationsLegend", document.showAnnotationsLegend]
+        });
     };
 
     $scope.toggleShowDetailsList = function(document) {
-        // TODO Logging
         document.showDetailsList = !document.showDetailsList;
+
+        XDATA.userALE.log({
+            activity: "alter",
+            action: "click",
+            elementId: "documentViewer",
+            elementType: "canvas",
+            elementGroup: "chart_group",
+            source: "user",
+            tags: ["toggle", "documentViewer", "showDetailsList", document.showDetailsList]
+        });
     };
 
     $scope.toggleFilterOnDocument = function(document) {
@@ -825,15 +854,34 @@ angular.module('neonDemo.controllers').controller('documentViewerController', ['
     };
 
     $scope.toggleShowAnnotation = function(document, annotation) {
-        // TODO Logging
         annotation.types.forEach(function(type) {
             type.shown = annotation.shown;
         });
+
+        XDATA.userALE.log({
+            activity: "alter",
+            action: "click",
+            elementId: "documentViewer",
+            elementType: "canvas",
+            elementGroup: "chart_group",
+            source: "user",
+            tags: ["toggle", "documentViewer", "showAnnotation", annotation.text, annotation.shown]
+        });
+
         createDisplayObjects(document);
     };
 
     $scope.toggleShowAnnotationType = function(document) {
-        // TODO Logging
+        XDATA.userALE.log({
+            activity: "alter",
+            action: "click",
+            elementId: "documentViewer",
+            elementType: "canvas",
+            elementGroup: "chart_group",
+            source: "user",
+            tags: ["toggle", "documentViewer", "showAnnotationType"]
+        });
+
         createDisplayObjects(document);
     };
 }]);

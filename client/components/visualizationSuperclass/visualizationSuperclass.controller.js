@@ -64,14 +64,6 @@ function($scope, external, connectionService, datasetService, errorNotificationS
     $scope.active.displayOverlapsHeaders = false;
 
     /**
-     * Whether this visualization should escape the data from its queries (like replacing & with &amp;).  This should only be disabled if this visualization handles escaping the data itself!
-     * @property escapeData
-     * @type Boolean
-     * @default true
-     */
-    $scope.active.escapeData = true;
-
-    /**
      * Whether this visualization should query for data in all data layers with the same database and table with a single query instead of querying for data in each data layer with an individual query.
      * @property $scope.active.queryByTable
      * @type Boolean
@@ -1394,7 +1386,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
             });
 
             $scope.$apply(function() {
-                updateDataFunction($scope.active.escapeData ? neon.helpers.escapeDataRecursively(response.data) : response.data, item.layers);
+                updateDataFunction(response.data, item.layers);
                 queryAndUpdate(data, ++index, addToQueryFunction, executeQueryFunction, updateDataFunction);
             });
 
