@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en" style="height:100%">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Neon Dashboard</title>
+
+        <link type="image/png" rel="shortcut icon" href="assets/images/Neon_16x16.png">
+
+        <!-- OpenLayers will automatically add the link for its style during runtime if it can't find it in the index.html file even if it's included in the CSS package.  Put the link here so the style is defined before the Neon Dashboard style. -->
+        <link rel="stylesheet" href="bower_components/openlayers/theme/default/style.css" />
+
+        <!-- build:css app/app.min.css -->
+        <!-- bower:css -->
+        <link rel="stylesheet" href="bower_components/ag-grid/dist/ag-grid.css" />
+        <link rel="stylesheet" href="bower_components/ag-grid/dist/theme-fresh.css" />
+        <link rel="stylesheet" href="bower_components/ag-grid/dist/theme-blue.css" />
+        <link rel="stylesheet" href="bower_components/ag-grid/dist/theme-dark.css" />
+        <link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.css" />
+        <!-- endbower -->
+        <link rel="stylesheet" href="bower_components/jquery-ui/themes/ui-lightness/jquery-ui.css" />
+        <link rel="stylesheet" href="bower_components/jquery-ui/themes/ui-lightness/jquery.ui.theme.css" />
+
+        <link rel="stylesheet" type="text/css" href="app/sprites.css">
+        <!-- endbuild -->
+
+        <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+        <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+        <!--[if lt IE 9]>
+        <script src="lib/html5shiv.js"></script>
+        <script src="lib/respond.min.js"></script>
+        <![endif]-->
+    </head>
+    <body style="height:100%" ng-controller="neonDemoController">
+        <link rel="stylesheet" type="text/css" ng-href="app/themes/{{theme.selected.file}}.css">
+        <!-- Widget Config -->
+        <div class="visualization-well visualization-widget">
+        </div>
+        <!-- In production use:
+        <script src="//ajax.googleapis.com/ajax/libs/angularjs/x.x.x/angular.min.js"></script>
+        -->
+
+        <!-- Including neon before angular here as neon has lodash and jquery wrapped into it.  If this is
+             loaded first, angular should pick up the included jQuery. -->
+        <script src="assets/vendor/owf-widget-min.js"></script>
+
+        <!-- Including neon before angular here as neon has lodash and jquery wrapped into it.  If this is
+             loaded first, angular should pick up the included jQuery. -->
+        <script src="/neon/js/neon.js"></script>
+
+        <!-- build:js(client) app/lib.min.js -->
+        <!-- bower:js -->
+        <script src="bower_components/jquery/dist/jquery.js"></script>
+        <script src="bower_components/angular/angular.js"></script>
+        <script src="bower_components/moment/moment.js"></script>
+        <script src="bower_components/angular-linkify/angular-linkify.js"></script>
+        <script src="bower_components/angular-loader/angular-loader.js"></script>
+        <script src="bower_components/angular-mocks/angular-mocks.js"></script>
+        <script src="bower_components/angular-route/angular-route.js"></script>
+        <script src="bower_components/bootstrap/dist/js/bootstrap.js"></script>
+        <script src="bower_components/js-yaml/dist/js-yaml.js"></script>
+        <script src="bower_components/mustache/mustache.js"></script>
+        <script src="bower_components/remarkable-bootstrap-notify/bootstrap-notify.js"></script>
+        <!-- endbower -->
+
+        <script src="bower_components/user-ale/helper-libs/javascript/userale.js"></script>
+        <script src="bower_components/user-ale/helper-libs/javascript/userale-worker.js"></script>
+
+        <!-- Include the ag-grid library after the angular library. -->
+        <script src="bower_components/ag-grid/dist/ag-grid.js"></script>
+
+        <!-- Include third party libs -->
+        <script src="bower_components/javascript-detect-element-resize/jquery.resize.js"></script>
+        <script src="bower_components/jquery.linky/jquery.linky.js"></script>
+        <script src="bower_components/rainbowvis.js/rainbowvis.js"></script>
+        <!-- endbuild -->
+
+        <!-- build:js(client) app/app.min.js -->
+        <!-- injector:js -->
+        <script src="app/namespaces.js"></script>
+        <script src="app/neon.helpers.js"></script>
+        <script src="app/neonGTDSetup.js"></script>
+         <!-- Setup our widget's OWF handlers and trigger the angular code -->
+        <script type="text/javascript">
+            var WidgetConfig = {
+                templateURL: 'aggregationTableWidget.html',
+                namespace: 'com.ncc.neon.aggregationtable',
+                name: 'Aggregation Table',
+                type: 'aggregationTable',
+                logElementGroup: 'table_group',
+                logElementType: 'datagrid',
+                theme: 'Dark Green',
+                demoModuleList: [
+                    'neonDemo.controllers',
+                    'neonDemo.services',
+                    'neonDemo.directives',
+                    'neonDemo.filters',
+                    'ngRoute',
+                    'linkify',
+                    'agGrid'
+                ]
+            };
+        </script>
+        
+        <script src="owf-widgets/js/widget.js"></script>
+        <script src="app/connection.service.js"></script>
+        <script src="app/dataset.service.js"></script>
+        <script src="app/errorNotification.service.js"></script>
+        <script src="app/export.service.js"></script>
+        <script src="app/filter.service.js"></script>
+        <script src="app/import.service.js"></script>
+        <script src="app/parameter.service.js"></script>
+        <script src="app/theme.service.js"></script>
+        <script src="app/translation.service.js"></script>
+        <script src="app/visualization.service.js"></script>
+        <script src="components/aggregationTable/aggregationTable.controller.js"></script>
+        <script src="components/export/export.directive.js"></script>
+        <script src="components/export/fileFormats.directive.js"></script>
+        <script src="components/filterNotification/filterNotification.directive.js"></script>
+        <script src="components/import/import.directive.js"></script>
+        <script src="components/import/removeDataset.directive.js"></script>
+        <script src="components/layerOptions/layerOptions.directive.js"></script>
+        <script src="components/linksPopup/linksPopup.directive.js"></script>
+        <script src="components/linksPopup/linksPopup.service.js"></script>
+        <script src="components/linksPopup/linksPopupButton.directive.js"></script>
+        <script src="components/optionsMenu/optionsMenu.directive.js"></script>
+        <script src="components/savedStates/savedStates.directive.js"></script>
+        <script src="components/translationOptions/translationOptions.directive.js"></script>
+        <script src="components/visualization/visualizationDisplay.directive.js"></script>
+        <script src="components/visualization/visualizationHeaders.directive.js"></script>
+        <script src="components/visualization/visualizationLayerOptions.directive.js"></script>
+        <script src="components/visualization/visualizationOptions.directive.js"></script>
+        <script src="components/visualizationSuperclass/multipleLayer.controller.js"></script>
+        <script src="components/visualizationSuperclass/singleLayer.controller.js"></script>
+        <script src="components/visualizationSuperclass/visualizationSuperclass.controller.js"></script>
+        <script src="components/visualizationSuperclass/visualizationSuperclass.directive.js"></script>
+        <script src="components/visualizationWidget/visualizationWidget.directive.js"></script>
+        <!-- endinjector -->
+        <!-- endbuild -->
+    </body>
+</html>

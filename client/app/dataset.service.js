@@ -744,7 +744,7 @@ angular.module("neonDemo.services")
      * @return {Boolean}
      */
     service.isFieldValid = function(fieldObject) {
-        return fieldObject && fieldObject.columnName;
+        return Boolean(fieldObject && fieldObject.columnName);
     };
 
     /**

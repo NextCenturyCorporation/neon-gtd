@@ -18,6 +18,7 @@
 var yearBucketizer = yearBucketizer || function() {
     var startDate;
     var endDate;
+    var GRANULARITY = "year";
 
     var setStartDate = function(newStartDate) {
         startDate = newStartDate;
@@ -58,6 +59,10 @@ var yearBucketizer = yearBucketizer || function() {
         return dateForBucket;
     };
 
+    var getGranularity = function() {
+        return GRANULARITY;
+    };
+
     var getNumBuckets = function() {
         return getBucketIndex(getEndDate());
     };
@@ -94,6 +99,7 @@ var yearBucketizer = yearBucketizer || function() {
         zeroOutDate: zeroOutDate,
         getBucketIndex: getBucketIndex,
         getDateForBucket: getDateForBucket,
+        getGranularity: getGranularity,
         getNumBuckets: getNumBuckets,
         roundDownBucket: roundDownBucket,
         roundUpBucket: roundUpBucket,
