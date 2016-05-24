@@ -115,10 +115,10 @@ angular.module('neonDemo.controllers').controller('scatterPlotController', ['$sc
 
         data.forEach(function(item) {
             neon.helpers.getNestedValues(item, fields).forEach(function(pointValue) {
-                xArray.push(pointValue[$scope.active.xAxisField.columnName]);
-                yArray.push(pointValue[$scope.active.yAxisField.columnName]);
+                xArray.push(_.escape(pointValue[$scope.active.xAxisField.columnName]));
+                yArray.push(_.escape(pointValue[$scope.active.yAxisField.columnName]));
                 if($scope.functions.isFieldValid($scope.active.textField)) {
-                    var textValue = pointValue[$scope.active.textField.columnName] || "";
+                    var textValue = _.escape(pointValue[$scope.active.textField.columnName]) || "";
                     textArray.push(textValue.length > 50 ? textValue.substring(0, 50) + "..." : textValue);
                 }
             });

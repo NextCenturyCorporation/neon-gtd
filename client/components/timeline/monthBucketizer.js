@@ -18,6 +18,7 @@
 var monthBucketizer = monthBucketizer || function() {
     var startDate;
     var endDate;
+    var GRANULARITY = "month";
 
     var setStartDate = function(newStartDate) {
         startDate = newStartDate;
@@ -59,6 +60,10 @@ var monthBucketizer = monthBucketizer || function() {
         return dateForBucket;
     };
 
+    var getGranularity = function() {
+        return GRANULARITY;
+    };
+
     var getNumBuckets = function() {
         return getBucketIndex(getEndDate());
     };
@@ -95,6 +100,7 @@ var monthBucketizer = monthBucketizer || function() {
         zeroOutDate: zeroOutDate,
         getBucketIndex: getBucketIndex,
         getDateForBucket: getDateForBucket,
+        getGranularity: getGranularity,
         getNumBuckets: getNumBuckets,
         roundUpBucket: roundUpBucket,
         roundDownBucket: roundDownBucket,

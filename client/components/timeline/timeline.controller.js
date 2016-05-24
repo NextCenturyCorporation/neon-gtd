@@ -16,7 +16,7 @@
  *
  */
 
-/**
+/*
  * This visualization shows aggregated time data in a timeline.
  * @namespace neonDemo.controllers
  * @class timelineController
@@ -242,6 +242,10 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
             dateSelected.end = $scope.bucketizer.getEndDate();
         }
 
+        // Convert dates to longs for transmission as JSON.
+        dateSelected.start = (dateSelected.start !== undefined) ? dateSelected.start.getTime() : undefined;
+        dateSelected.end = (dateSelected.end !== undefined) ? dateSelected.end.getTime() : undefined;
+
         $scope.functions.publish('date_selected', dateSelected);
         onDateSelected(dateSelected);
 
@@ -324,7 +328,9 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
             setDateTimePickerStart($scope.bucketizer.getStartDate());
             setDateTimePickerEnd($scope.bucketizer.getEndDate());
             $scope.functions.publish('date_bucketizer', {
-                bucketizer: $scope.bucketizer
+                startDate: $scope.bucketizer.getStartDate().getTime(),
+                endDate: $scope.bucketizer.getEndDate().getTime(),
+                granularity: $scope.bucketizer.getGranularity()
             });
         }
     };
@@ -416,8 +422,8 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
         $scope.chart.setHoverListener(function(startDate, endDate) {
             $scope.$apply(function() {
                 $scope.functions.publish('date_selected', {
-                    start: startDate,
-                    end: endDate
+                    start: (startDate !== undefined) ? startDate.getTime() : undefined,
+                    end: (endDate !== undefined) ? endDate.getTime() : undefined
                 });
             });
         });
@@ -447,7 +453,8 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
      */
     var onDateSelected = function(message) {
         if(message.start && message.end) {
-            $scope.chart.selectDate(message.start, message.end);
+            $scope.chart.selectDate(_.isNumber(message.start) ? new Date(message.start) : undefined,
+                _.isNumber(message.end) ? new Date(message.end) : undefined);
         } else {
             $scope.chart.deselectDate();
         }

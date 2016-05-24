@@ -1144,7 +1144,12 @@ function($scope, external, connectionService, datasetService, errorNotificationS
         var invalid = $scope.active.layers.some(function(otherLayer, otherIndex) {
             return otherLayer.name === (layer.name || layer.table.name).toUpperCase() && otherIndex !== index;
         });
-        layer.error = invalid ? "Please choose a unique layer name." : undefined;
+        var error = invalid ? "Please choose a unique layer name." : undefined;
+        if(layer.error && error) {
+            layer.error = layer.error + "  " + error;
+        } else if(invalid) {
+            layer.error = error;
+        }
     };
 
     /**
