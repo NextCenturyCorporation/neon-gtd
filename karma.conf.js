@@ -49,6 +49,7 @@ module.exports = function(config){
         'client/bower_components/ngDraggable/ngDraggable.js',
         'client/app/namespaces.js',
         'client/app/test.js',
+        'client/app/neon.helpers.js',
         'client/app/*.service.js',
         'client/components/**/*.js',
         'client/components/**/*.html'

@@ -19,7 +19,6 @@ describe('Controller: opsClock', function() {
     // load the necessary modules
     beforeEach(module('neonDemo'));
 
-
     var $controller;
 
     beforeEach(inject(function(_$controller_) {
@@ -32,7 +31,9 @@ describe('Controller: opsClock', function() {
             active: {},
             functions: {}
         };
-        var controller = $controller('opsClockController', {$scope: $scope});
+        $controller('opsClockController', {
+            $scope: $scope
+        });
         expect($scope.active.dateField).toEqual({});
         expect($scope.active.maxDay).toBe('');
         expect($scope.active.maxTime).toBe('');
