@@ -313,8 +313,8 @@ NeonGTDSetup = (function() {
         Object.keys(customFilters).forEach(function(database) {
             Object.keys(customFilters[database]).forEach(function(table) {
                 customFilters[database][table].forEach(function(group) {
-                    group.customized = group.customized || {};
-                    group.customized.operator = group.customized.operator || "=";
+                    group.input = group.input || {};
+                    group.input.operator = group.input.operator || "=";
                     group.items = group.items || [];
                     group.items.forEach(function(item) {
                         item.label = item.label || item.value || item.field;

@@ -14,13 +14,13 @@
         </li>
     </ul>
     <ul>
-        <li ng-if="!!group.label && !!group.customized.field" ng-repeat="group in active.customFilters">
-            <label ng-bind="'Add Customized Filter on ' + group.label"></label>
-            <div class="form-group customized">
+        <li ng-if="!!group.label && !!group.input.field" ng-repeat="group in active.customFilters">
+            <label ng-bind="'Add Custom Filter on ' + group.label"></label>
+            <div class="form-group custom">
                 <div class="input-group">
-                    <input type="text" class="form-control" placeholder="{{group.label}}" ng-model="group.customized.value" ng-keyup="$event.keyCode == 13 && addCustomizedFilter(group)">
+                    <input type="text" class="form-control" placeholder="{{group.label}}" ng-model="group.input.value" ng-keyup="$event.keyCode == 13 && addCustomFilter(group)">
                     <div class="input-group-btn">
-                        <button type="button" class="btn btn-default" title="Add Customized Filter" ng-click="addCustomizedFilter(group)">
+                        <button type="button" class="btn btn-default" title="Add Custom Filter" ng-click="addCustomFilter(group)">
                             <span class="glyphicon glyphicon-plus"></span>
                         </button>
                     </div>

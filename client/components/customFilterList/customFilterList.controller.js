@@ -33,11 +33,11 @@ angular.module('neonDemo.controllers').controller('customFilterListController', 
         $scope.active.customFilters = $scope.customFilters[$scope.active.database.name] ? ($scope.customFilters[$scope.active.database.name][$scope.active.table.name] || []) : [];
 
         $scope.active.customFilters.forEach(function(group) {
-            if(group.customized.field) {
-                group.customized.fieldObject = _.find($scope.active.fields, function(field) {
-                    return group.customized.field === field.columnName;
+            if(group.input.field) {
+                group.input.fieldObject = _.find($scope.active.fields, function(field) {
+                    return group.input.field === field.columnName;
                 });
-                group.customized.value = "";
+                group.input.value = "";
             }
 
             group.items.forEach(function(item) {
@@ -130,6 +130,7 @@ angular.module('neonDemo.controllers').controller('customFilterListController', 
     };
 
     $scope.functions.removeFilterValues = function() {
+        // Note that we're not actually removing the values; we're just deactivating them.
         $scope.active.customFilters.forEach(function(group) {
             group.items.forEach(function(item) {
                 item.on = false;
@@ -146,8 +147,18 @@ angular.module('neonDemo.controllers').controller('customFilterListController', 
     };
 
     $scope.toggleFilterAndAddOrRemove = function(item) {
-        // TODO Logging
         item.on = !item.on;
+
+        XDATA.userALE.log({
+            activity: "select",
+            action: "click",
+            elementId: "customFilterList",
+            elementType: "canvas",
+            elementGroup: "chart_group",
+            source: "user",
+            tags: ["toggle", "customFilterList", item.label, item.on]
+        });
+
         // Note that removeNeonFilter will only be called if no items with the field of the input item are active (even if the input item itself is inactive).
         addOrRemoveFilter(item);
     };
@@ -203,7 +214,16 @@ angular.module('neonDemo.controllers').controller('customFilterListController', 
     };
 
     $scope.replaceFilters = function(item) {
-        // TODO Logging
+        XDATA.userALE.log({
+            activity: "select",
+            action: "click",
+            elementId: "customFilterList",
+            elementType: "canvas",
+            elementGroup: "chart_group",
+            source: "user",
+            tags: ["replace", "customFilterList", item.label]
+        });
+
         var callback = function() {
             item.on = true;
             addOrRemoveFilter(item, function() {
@@ -246,19 +266,28 @@ angular.module('neonDemo.controllers').controller('customFilterListController', 
         }
     };
 
-    $scope.addCustomizedFilter = function(group) {
-        // TODO Logging
-        if(group.customized.value) {
+    $scope.addCustomFilter = function(group) {
+        if(group.input.value) {
+            XDATA.userALE.log({
+                activity: "select",
+                action: "click",
+                elementId: "customFilterList",
+                elementType: "canvas",
+                elementGroup: "chart_group",
+                source: "user",
+                tags: ["add", "customFilterList", group.label, group.input.value]
+            });
+
             group.items.push({
-                label: group.customized.value,
-                field: group.customized.field,
-                fieldObject: group.customized.fieldObject,
-                operator: group.customized.operator,
-                value: group.customized.value,
+                label: group.input.value,
+                field: group.input.field,
+                fieldObject: group.input.fieldObject,
+                operator: group.input.operator,
+                value: group.input.value,
                 multi: {},
                 on: true
             });
-            group.customized.value = "";
+            group.input.value = "";
             addOrRemoveFilter(group.items[group.items.length - 1]);
         }
     };
