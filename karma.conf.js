@@ -20,8 +20,9 @@ module.exports = function(config){
 
     colors: true,
 
-    // Notes:  This assumes neon has been built and exists at the same directory level as 
-    // neon-gtd.  Note that the base neon.js file also includes jquery, lodash, and a few other
+    // Notes:  This runs against the latest succesful build of neon.js hosted on neonframework.org as
+    // neon-gtd is kept in lock-step with Neon.  Change this if necessary to test against a custom 
+    // Neon build.  Note that the base neon.js file also includes jquery, lodash, and a few other
     // items that are not explicitly pulled in here.
     files : [
         'client/bower_components/jquery/dist/jquery.min.js',
@@ -29,7 +30,7 @@ module.exports = function(config){
         'client/bower_components/angular-route/angular-route.min.js',
         'client/bower_components/angular-mocks//angular-mocks.js',
         'client/bower_components/ag-grid/dist/ag-grid.js',
-        '../neon/neon-server/build/js/neon.js',
+        'https://s3.amazonaws.com/neonframework.org/neon/versions/latest/neon.js',
         'client/bower_components/javascript-detect-element-resize/jquery.resize.js',
         'client/bower_components/opencpu/opencpu-0.5.js',
         'client/bower_components/user-ale/client/www/js/draper.activity_logger-2.1.1.js',
