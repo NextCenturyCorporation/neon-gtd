@@ -88,7 +88,7 @@ angular.module('neonDemo.controllers').controller('textCloudController', ['$scop
         });
 
         if($scope.active.showTranslations) {
-            $scope.functions.performTranslation();
+            $scope.functions.updateTranslations();
         }
 
         updateTextStyle();
@@ -228,7 +228,9 @@ angular.module('neonDemo.controllers').controller('textCloudController', ['$scop
             });
         }
 
-        $scope.functions.runTranslation(dataKeys, onTranslationSuccess);
+        if(dataKeys.length > 1) {
+            $scope.functions.runTranslation(dataKeys, onTranslationSuccess);
+        }
     };
 
     var onTranslationSuccess = function(translations) {
