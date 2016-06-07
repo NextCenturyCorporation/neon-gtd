@@ -172,10 +172,15 @@ angular.module("neonDemo.services")
                         });
                         deferred.resolve(response);
                     }, function(response) {
-                        deferred.reject({
-                            message: response.data.error.message,
-                            reason: concatErrorResponses(response.data.error.errors)
-                        });
+                        var rejection = {
+                            message: "",
+                            reasion: ""
+                        };
+                        if(response && response.data && response.data.error) {
+                            rejection.message = response.data.error.message;
+                            rejection.reason = concatErrorResponses(response.data.error.errors);
+                        }
+                        deferred.reject(rejection);
                     });
 
                 return deferred.promise;

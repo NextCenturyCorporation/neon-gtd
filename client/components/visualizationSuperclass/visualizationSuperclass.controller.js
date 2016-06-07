@@ -781,7 +781,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
             }
             $scope.errorMessage = errorNotificationService.showErrorMessage($scope.element, response.message,  response.reason);
             if(translationFailureCallback) {
-                translationFailureCallback(response.data.data.translations);
+                translationFailureCallback();
             }
         }, $scope.languages.chosenFromLanguage);
     };

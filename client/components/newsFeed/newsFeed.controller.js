@@ -35,6 +35,8 @@ angular.module('neonDemo.controllers').controller('newsFeedController', ['$scope
     // Prevents translation api calls from getting too long and returning an error
     var TRANSLATION_INTERVAL = 10;
 
+    var MAXIMUM_TRANSLATION_QUERY_LENGTH = 10000;
+
     // The data in this newsfeed from a news event or an empty array if the data in this newsfeed is from a query.
     var newsEventData = [];
 
@@ -378,6 +380,36 @@ angular.module('neonDemo.controllers').controller('newsFeedController', ['$scope
         sliceStart = sliceStart || 0;
         sliceEnd = sliceEnd || sliceStart + TRANSLATION_INTERVAL;
 
+        var getLengthOfField = function(index, key) {
+            if($scope.active.data[index] && _.isString($scope.active.data[index][key])) {
+                return encodeURIComponent($scope.active.data[index][key]).length;
+            } else {
+                return 0;
+            }
+        };
+
+        var queryLength = 0;
+        for(var i = sliceStart; i < sliceEnd; ++i) {
+            queryLength += getLengthOfField(i, "primaryTitle");
+            queryLength += getLengthOfField(i, "secondaryTitle");
+            queryLength += getLengthOfField(i, "content");
+            if(queryLength > MAXIMUM_TRANSLATION_QUERY_LENGTH) {
+                // If this item causes us to go over the maximum length, then stop before this
+                // item...
+                if(i > sliceStart) {
+                    sliceEnd = i;
+                    break;
+                } else {
+                    // ...unless this was the first item, in which case this item is too long to
+                    // translate on its own, so just mark its translation as failed and skip it.
+                    $scope.active.data[i].isTranslated = false;
+                    $scope.active.data[i].translationFailed = true;
+                    sliceStart = i + 1;
+                    queryLength = 0;
+                }
+            }
+        }
+
         runTranslation("primaryTitle", sliceStart, sliceEnd, function() {
             runTranslation("secondaryTitle", sliceStart, sliceEnd, function() {
                 runTranslation("content", sliceStart, sliceEnd, function() {
@@ -395,37 +427,43 @@ angular.module('neonDemo.controllers').controller('newsFeedController', ['$scope
      * @param {String} newsProperty
      * @param {Integer} sliceStart
      * @param {Integer} sliceEnd
-     * @param {Function} successCallback
+     * @param {Function} finishedCallback
      * @method runTranslation
      * @private
      */
-    var runTranslation = function(newsProperty, sliceStart, sliceEnd, successCallback) {
+    var runTranslation = function(newsProperty, sliceStart, sliceEnd, finishedCallback) {
         var dataText = _.pluck($scope.active.data, newsProperty).map(function(data) {
             return $.isNumeric(data) ? "" : data;
         });
 
         var translationSuccessCallback = function(translations) {
             var index = sliceStart;
-            translations.forEach(function(item) {
-                while(!$scope.active.data[index][newsProperty] && index < sliceEnd) {
-                    index++;
-                }
-                if(index < sliceEnd) {
-                    var newsItem = $scope.active.data[index];
-                    newsItem[newsProperty + "Translated"] = item.translatedText;
-                    newsItem.isTranslated = newsItem.isTranslated || newsItem[newsProperty] !== newsItem[newsProperty + "Translated"];
-                    index++;
-                }
-            });
-            successCallback();
+            try {
+                translations.forEach(function(item) {
+                    if(index < sliceEnd) {
+                        if(!($scope.active.data[index] && $scope.active.data[index][newsProperty])) {
+                            index++;
+                        } else {
+                            var newsItem = $scope.active.data[index];
+                            newsItem[newsProperty + "Translated"] = item.translatedText;
+                            newsItem.isTranslated = !newsItem.translationFailed && (newsItem.isTranslated || newsItem[newsProperty] !== newsItem[newsProperty + "Translated"]);
+                            index++;
+                        }
+                    }
+                });
+            } catch(err) {
+            }
+            finishedCallback();
         };
 
         var translationFailureCallback = function() {
             for(var i = sliceStart; i < sliceEnd; ++i) {
                 $scope.active.data[i][newsProperty + "Translated"] = $scope.active.data[i][newsProperty];
                 $scope.active.data[i].isTranslated = false;
+                $scope.active.data[i].translationFailed = true;
             }
             $scope.loadingTranslations = false;
+            finishedCallback();
         };
 
         $scope.functions.runTranslation(dataText.slice(sliceStart, sliceEnd), translationSuccessCallback, translationFailureCallback);

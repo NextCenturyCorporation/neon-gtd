@@ -11,7 +11,7 @@ Icon classes can be used entirely standalone. They are named after their origina
 */
 .icon-Error_16x16 {
   background-image: url(../assets/images/spritesheet.png);
-  background-position: -336px -52px;
+  background-position: -336px -72px;
   width: 16px;
   height: 16px;
 }
@@ -35,7 +35,7 @@ Icon classes can be used entirely standalone. They are named after their origina
 }
 .icon-Neon_16x16 {
   background-image: url(../assets/images/spritesheet.png);
-  background-position: -320px -52px;
+  background-position: -320px -72px;
   width: 16px;
   height: 16px;
 }
@@ -53,6 +53,12 @@ Icon classes can be used entirely standalone. They are named after their origina
 }
 .icon-Translated_20x20 {
   background-image: url(../assets/images/spritesheet.png);
+  background-position: -320px -52px;
+  width: 20px;
+  height: 20px;
+}
+.icon-Translation_Failed_20x20 {
+  background-image: url(../assets/images/spritesheet.png);
   background-position: -320px -32px;
   width: 20px;
   height: 20px;
@@ -65,79 +71,79 @@ Icon classes can be used entirely standalone. They are named after their origina
 }
 .icon-BarChart64 {
   background-image: url(../assets/images/spritesheet.png);
-  background-position: -192px 0px;
+  background-position: -192px -64px;
   width: 64px;
   height: 64px;
 }
 .icon-Count64 {
   background-image: url(../assets/images/spritesheet.png);
-  background-position: -192px -64px;
+  background-position: -192px -128px;
   width: 64px;
   height: 64px;
 }
 .icon-CreateFilter64 {
   background-image: url(../assets/images/spritesheet.png);
-  background-position: -192px -128px;
+  background-position: 0px -192px;
   width: 64px;
   height: 64px;
 }
 .icon-Gantt64 {
   background-image: url(../assets/images/spritesheet.png);
-  background-position: 0px -192px;
+  background-position: -64px -192px;
   width: 64px;
   height: 64px;
 }
 .icon-Graph64 {
   background-image: url(../assets/images/spritesheet.png);
-  background-position: -64px -192px;
+  background-position: -128px -192px;
   width: 64px;
   height: 64px;
 }
 .icon-LineChart64 {
   background-image: url(../assets/images/spritesheet.png);
-  background-position: -128px -192px;
+  background-position: 0px 0px;
   width: 64px;
   height: 64px;
 }
 .icon-Map64 {
   background-image: url(../assets/images/spritesheet.png);
-  background-position: 0px 0px;
+  background-position: -256px 0px;
   width: 64px;
   height: 64px;
 }
 .icon-News64 {
   background-image: url(../assets/images/spritesheet.png);
-  background-position: -256px 0px;
+  background-position: -256px -64px;
   width: 64px;
   height: 64px;
 }
 .icon-OPS64 {
   background-image: url(../assets/images/spritesheet.png);
-  background-position: -256px -64px;
+  background-position: -256px -128px;
   width: 64px;
   height: 64px;
 }
 .icon-OpsClock64 {
   background-image: url(../assets/images/spritesheet.png);
-  background-position: -256px -128px;
+  background-position: -256px -192px;
   width: 64px;
   height: 64px;
 }
 .icon-PieChart64 {
   background-image: url(../assets/images/spritesheet.png);
-  background-position: -256px -192px;
+  background-position: 0px -256px;
   width: 64px;
   height: 64px;
 }
 .icon-ScatterPlot64 {
   background-image: url(../assets/images/spritesheet.png);
-  background-position: 0px -256px;
+  background-position: -64px -256px;
   width: 64px;
   height: 64px;
 }
 .icon-Sunburst64 {
   background-image: url(../assets/images/spritesheet.png);
-  background-position: -64px -256px;
+  background-position: -192px 0px;
   width: 64px;
   height: 64px;
 }
