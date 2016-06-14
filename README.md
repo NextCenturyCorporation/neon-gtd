@@ -48,6 +48,10 @@ Building the **neon-gtd** application requires [npm][10], [grunt][11], and [bowe
 
 **[Developer Quick Start Guide][4]** - A quick tour of how to develop apps that use Neon.
 
+## Apache 2 Open Source License
+
+Neon and Neon-GTD are made available by [Next Century][18] under the [Apache 2 Open Source License][16]. You may freely download, use, and modify, in whole or in part, the source code or release packages. Any restrictions or attribution requirements are spelled out in the license file. Neon and Neon-GTD attribution information can be found in the LICENSE.TXT file and licenses folder in each of the [Neon Git Repository][neon] and [Neon-GTD Git Repository][neon-gtd]. For more information about the Apache license, please visit the [The Apache Software Foundation’s License FAQ][17].
+
 ## Additional Information
 
 Email: neon-support@nextcentury.com
@@ -55,6 +59,9 @@ Email: neon-support@nextcentury.com
 Website: [http://neonframework.org][5]
 
 Copyright 2014 Next Century Corporation
+
+[neon]: https://github.com/NextCenturyCorporation/neon
+[neon-gtd]: https://github.com/NextCenturyCorporation/neon-gtd
 
 [1]: https://github.com/NextCenturyCorporation/neon/wiki
 [2]: https://github.com/NextCenturyCorporation/neon/wiki/Build-Instructions
@@ -71,3 +78,6 @@ Copyright 2014 Next Century Corporation
 [13]: https://angularjs.org/
 [14]: https://www.elastic.co/products/elasticsearch
 [15]: https://github.com/NextCenturyCorporation/neon-gtd/wiki/Neon-Dashboard-Configuration-Guide
+[16]: http://www.apache.org/licenses/LICENSE-2.0.txt
+[17]: http://www.apache.org/foundation/license-faq.html
+[18]: http://www.nextcentury.com
