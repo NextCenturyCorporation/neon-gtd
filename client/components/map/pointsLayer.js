@@ -345,7 +345,7 @@ coreMap.Map.Layer.PointsLayer.prototype.setData = function(data) {
     this.updateRadii();
     this.updateFeatures();
     if(this.dateFilterStrategy) {
-        this.dateFilterStrategy.setFilter();
+        this.dateFilterStrategy.deactivate();
     }
     return this.colors;
 };
@@ -356,9 +356,10 @@ coreMap.Map.Layer.PointsLayer.prototype.setDateFilter = function(filterBounds) {
         this.dateFilter.lowerBoundary = filterBounds.start;
         this.dateFilter.upperBoundary = filterBounds.end;
         this.dateFilterStrategy.setFilter(this.dateFilter);
+        this.dateFilterStrategy.activate();
     } else {
-        // Clear the filter
-        this.dateFilterStrategy.setFilter();
+        // Deactivate the filter
+        this.dateFilterStrategy.deactivate();
     }
 };
 
