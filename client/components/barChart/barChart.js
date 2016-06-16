@@ -232,7 +232,7 @@ charts.BarChart.prototype.createCategoriesFromUniqueValues_ = function(data) {
         .map(function(item) {
             return me.categoryForItem(item);
         })
-        .unique()
+        .uniq()
         .filter(function(item) {
             return !_.isNull(item) && !_.isUndefined(item);
         })

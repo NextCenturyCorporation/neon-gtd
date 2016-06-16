@@ -38,7 +38,7 @@
         "karma": "0.13.22",
         "karma-junit-reporter": "0.2.2",
         "karma-chrome-launcher": "0.1.8",
-        "karma-phantomjs-launcher": "0.1.4",
+        "karma-phantomjs-launcher": "1.0.0",
         "karma-ng-html2js-preprocessor": "0.1.2",
         "karma-jasmine": "^1.0.2",
         "shelljs": "0.4.0"

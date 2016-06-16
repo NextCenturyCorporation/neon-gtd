@@ -657,7 +657,7 @@ angular.module('neonDemo.controllers').controller('lineChartController', ['$scop
      */
     $scope.getTitleFromMapping = function(colorMapping) {
         return _.result(
-            _.findWhere($scope.active.layers, {
+            _.find($scope.active.layers, {
                 id: colorMapping.series.split(":")[0]
             }),
             "name"

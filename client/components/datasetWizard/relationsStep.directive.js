@@ -176,8 +176,8 @@ angular.module('neonDemo.directives')
              * @method addRelationButtonDisabled
              */
             $scope.addRelationButtonDisabled = function() {
-                return !(_.all($scope.selectedRelations, function(relation) {
-                    return relation.database && relation.database.name && _.all(relation.customRelationTables, function(relationTable) {
+                return !(_.every($scope.selectedRelations, function(relation) {
+                    return relation.database && relation.database.name && _.every(relation.customRelationTables, function(relationTable) {
                         return relationTable.table && relationTable.table.name && relationTable.field && relationTable.field.columnName;
                     });
                 }));
@@ -190,7 +190,7 @@ angular.module('neonDemo.directives')
              * @method removeButtonDisabled
              */
             $scope.removeButtonDisabled = function() {
-                return _.all($scope.customRelations, function(relation) {
+                return _.every($scope.customRelations, function(relation) {
                     return !relation.selected;
                 });
             };

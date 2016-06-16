@@ -177,7 +177,7 @@ angular.module('neonDemo.controllers').controller('aggregationTableController', 
         // The data in the grid has been HTML-escaped, so escape the value so that we can compare
         // apples to apples.
         var escapedValue = _.escape(value);
-        var selected = _.findWhere($scope.active.gridOptions.api.getRenderedNodes(), function(node) {
+        var selected = _.find($scope.active.gridOptions.api.getRenderedNodes(), function(node) {
             return node.data[$scope.active.groupField.columnName] === escapedValue;
         });
         if(selected) {

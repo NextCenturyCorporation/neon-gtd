@@ -66,8 +66,10 @@ module.exports = function(grunt) {
                     /html5shiv/,
                     /respond/,
                     // Exclude the remaining libraries because they do not have bower.json files.
-                    /threedubmedia/,
-                    /mergesort/,
+                    /underscore/,
+                    /log4javascript/,
+                    /node-uuid/,
+                    /postal/,
                     /opencpu/,
                     /openlayers/,
                     /heatmapjs/,

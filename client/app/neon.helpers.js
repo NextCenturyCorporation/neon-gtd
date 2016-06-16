@@ -69,13 +69,13 @@ neon.helpers = {
             for(i = 0; i < data.length; i++) {
                 data[i] = neon.helpers.escapeDataRecursively(data[i]);
             }
+        } else if(_.isString(data)) {
+            data = _.escape(data);
         } else if(_.keys(data).length) {
             var keys = _.keys(data);
             for(i = 0; i < keys.length; i++) {
                 data[keys[i]] = neon.helpers.escapeDataRecursively(data[keys[i]]);
             }
-        } else if(_.isString(data)) {
-            data = _.escape(data);
         }
         return data;
     }
