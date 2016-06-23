@@ -39,7 +39,7 @@ angular.module('neonDemo.controllers').controller('scatterPlotController', ['$sc
         $scope.graph = $scope.functions.getElement(".graph-div");
         $scope.graph.bind('plotly_relayout', updateFilter);
         $scope.graph.bind('plotly_filter_box', updateFilter);
-        Plotly.newPlot($scope.graph[0], [], buildGraphLayout(), {
+        Plotly.newPlot($scope.graph[0], [], {}, {
             displayModeBar: true,
             doubleClick: 'reset',
             modeBarButtons: [['toImage', 'pan2d'], ['zoom2d', 'zoomIn2d', 'zoomOut2d'], ['resetScale2d']],
@@ -89,22 +89,20 @@ angular.module('neonDemo.controllers').controller('scatterPlotController', ['$sc
         var layout = buildGraphLayout();
 
         // Remove the previous plot trace if one exists.
-        ($scope.graph[0].data && $scope.graph[0].data.length > 0) ? Plotly.deleteTraces($scope.graph[0],[0]) : undefined;
+        if($scope.graph[0].data && $scope.graph[0].data.length > 0) {
+            Plotly.deleteTraces($scope.graph[0],[0]);
+        }
 
         if(dataObject.type === "scattergl") {
             var traces = [];
             // Scattergl throws exceptions when you try plotting an empty trace.   Plot only if we have trace data.
-            if (dataObject.x.length > 0 && dataObject.y.length > 0) {
+            if(dataObject.x.length > 0 && dataObject.y.length > 0) {
                 traces.push(dataObject);
-                Plotly.relayout($scope.graph[0], layout);
-                Plotly.addTraces($scope.graph[0], traces);
+                Plotly.plot($scope.graph[0], traces, layout);
             }
         } else {
-            Plotly.relayout($scope.graph[0], layout);
-            Plotly.addTraces($scope.graph[0], [dataObject]);
+            Plotly.plot($scope.graph[0], [dataObject], layout);
         }
-
-        Plotly.redraw($scope.graph[0]);
     };
 
     var buildDataConfig = function(data) {
@@ -119,7 +117,7 @@ angular.module('neonDemo.controllers').controller('scatterPlotController', ['$sc
         return buildScatterConfig(data, false);
     };
 
-    var buildScatterConfig = function(data, enableGL = false) {
+    var buildScatterConfig = function(data, enableGL) {
         var x = [];
         var y = [];
         var text = [];
@@ -128,6 +126,8 @@ angular.module('neonDemo.controllers').controller('scatterPlotController', ['$sc
         var maxx;
         var miny;
         var maxy;
+
+        enableGL = (enableGL !== undefined) ? enableGL : false;
 
         _.each(data, function(row) {
             var xValue = neon.helpers.getNestedValue(row, $scope.active.xAxisField.columnName);
@@ -234,7 +234,7 @@ angular.module('neonDemo.controllers').controller('scatterPlotController', ['$sc
         return buildScatterConfig(data);
     };
 
-    var buildGraphLayout = function() {
+    var buildGraphLayout = function(width, height, titleHeight) {
         var layout = {
             font: {
                 color: $scope.textColor
@@ -262,6 +262,9 @@ angular.module('neonDemo.controllers').controller('scatterPlotController', ['$sc
             }
         };
 
+        layout.width = (width !== undefined) ? width : undefined;
+        layout.height = (height !== undefined) ? height - (titleHeight || 0) : undefined;
+
         if($scope.active.type === 'scatter' || $scope.active.type === 'scattergl') {
             layout = buildScatterLayout(layout);
         } else if($scope.active.type === 'histogramScatter' || $scope.active.type === 'heatmapScatter') {
@@ -272,8 +275,8 @@ angular.module('neonDemo.controllers').controller('scatterPlotController', ['$sc
     };
 
     var buildScatterLayout = function(layout) {
-        // layout.xaxis.side = "bottom";
-        // layout.yaxis.side = "left";
+        layout.xaxis.side = "bottom";
+        layout.yaxis.side = "left";
         return layout;
     };
 
@@ -360,13 +363,13 @@ angular.module('neonDemo.controllers').controller('scatterPlotController', ['$sc
         return false;
     };
 
-    $scope.functions.onResize = function() {
-        console.log('resizing');
-        if ($scope.graph) {
-            Plotly.relayout($scope.graph[0], buildGraphLayout());
-            Plotly.redraw($scope.graph[0]);
+    // Override the default onresize handler.  Use debounce to prevent excessive calls to the graph
+    // layout functions.
+    $scope.functions.onResize = _.debounce(function(height, width, titleHeight) {
+        if($scope.graph) {
+            Plotly.relayout($scope.graph[0], buildGraphLayout(width, height, titleHeight));
         }
-    };
+    }, 500);
 
     $scope.functions.onThemeChanged = function(theme) {
         if(theme.backgroundColor !== $scope.backgroundColor || theme.textColor !== $scope.textColor) {
