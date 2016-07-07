@@ -331,8 +331,8 @@ angular.module('neonDemo.controllers').controller('scatterPlotController', ['$sc
             margin: {
                 l: 70,
                 r: 10,
-                t: 20,
-                b: 60
+                t: 35,
+                b: 50
             },
             paper_bgcolor: $scope.backgroundColor,
             plot_bgcolor: $scope.backgroundColor,
@@ -374,6 +374,18 @@ angular.module('neonDemo.controllers').controller('scatterPlotController', ['$sc
         return layout;
     };
 
+    $scope.removeFilter = function() {
+        $scope.functions.removeNeonFilter(false);
+    };
+
+    $scope.getFilterData = function() {
+        return ($scope.functions.isFilterSet()) ? ["Plot Filter"] : undefined;
+    };
+
+    $scope.getFilterDesc = function() {
+        return "Scatterplot";
+    };
+
     $scope.functions.isFilterSet = function() {
         return $scope.filter;
     };
@@ -400,7 +412,7 @@ angular.module('neonDemo.controllers').controller('scatterPlotController', ['$sc
         var filterClauses = [neon.query.where(xAxisFieldName, '!=', null)];
 
         if($scope.filter.xaxis && $scope.filter.yaxis) {
-            if($scope.filter.xaxis.range && $scope.yaxis.range) {
+            if($scope.filter.xaxis.range && $scope.filter.yaxis.range) {
                 filterClauses.push(neon.query.where(xAxisFieldName, '>', $scope.filter.xaxis.range[0]));
                 filterClauses.push(neon.query.where(xAxisFieldName, '<', $scope.filter.xaxis.range[1]));
                 filterClauses.push(neon.query.where(yAxisFieldName, '>', $scope.filter.yaxis.range[0]));
