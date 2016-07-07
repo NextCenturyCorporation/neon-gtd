@@ -34,44 +34,39 @@ angular.module('neonDemo.controllers').controller('scatterPlotController', ['$sc
         $scope.active.type !== "scattergl") {
         $scope.active.type = "scatter";
     }
-    
+
     // resizing and changingType are used to track if we're in a resize action or changing between an SVG plot to a GL plot,
     // so we can prevent spurious plotly relayout events from creating filters.
-    var resizing = false;   
+    var resizing = false;
     var changingType = false;
     var drawingGraph = false;
     var plotting = false;
-    /* Tracking whether we've zoomed on a gl plot before as the event data has slightly different after zomming. */
-    var hasZoomedGL = false;   
+    /* Used to track our data bounds so we know if the view is a subset and should trigger a Neon filter. */
     var scatterOuterBounds = {};
 
     var isWithinDataBounds = function(minx, maxx, miny, maxy) {
         return ((minx > scatterOuterBounds.minx) || (miny > scatterOuterBounds.miny) ||
                 (maxx < scatterOuterBounds.maxx) || (maxy < scatterOuterBounds.maxy));
-    }
+    };
 
     var relayoutHandler = function(evt, data) {
         // Depending on the plot type and the source of the layout event, the x and y ranges can come in any of three formats.
         var bounds = {};
-        var xaxis;
-        var yaxis;
         var layout = $scope.graph[0].layout;
 
         // If we have data and we have been plotted with valid ranges, then check to see if we need to create
         // a filter for this event.
-        if ($scope.data && $scope.data.length > 1 && data && layout.xaxis && layout.xaxis.range) {
+        if($scope.data && $scope.data.length > 1 && data && layout.xaxis && layout.xaxis.range) {
             if(data['xaxis.autorange'] && $scope.functions.isFilterSet()) {
-                 // With autorange enabled on our graph, reset actions have autorange fields, not axis ranges.
+                // With autorange enabled on our graph, reset actions have autorange fields, not axis ranges.
                 $scope.functions.removeNeonFilter(false);
-                hasZoomedGL = false;  // Reset our has Zoomed state when the user resets the view.
                 return;
-            } else if(data.xaxis && _.isArray(data.xaxis) && 
-                      layout.xaxis.autorange && 
+            } else if(data.xaxis && _.isArray(data.xaxis) &&
+                      layout.xaxis.autorange &&
                       (!layout.autosize || isWithinDataBounds(data.xaxis[0], data.xaxis[1], data.yaxis[0], data.yaxis[1]))) {
                 // webgl plots appear to seed xaxis objects in the event data.
                 bounds.xaxis = data.xaxis;
                 bounds.yaxis = data.yaxis;
-                hasZoomedGL = true;
             } else if(data.xaxis && data.xaxis.range && !data.xaxis.autorange) {
                 // webgl plots appear to seed xaxis objects in the event data.
                 bounds.xaxis = data.xaxis.range;
@@ -84,11 +79,11 @@ angular.module('neonDemo.controllers').controller('scatterPlotController', ['$sc
                 // svg plots set attributes on the event data object.
                 bounds.xaxis = [data['xaxis.range[0]'], data['xaxis.range[1]']];
                 bounds.yaxis = [data['yaxis.range[0]'], data['yaxis.range[1]']];
-            } else if ($scope.functions.isFilterSet()) {
+            } else if($scope.functions.isFilterSet()) {
                 // Handle the case where we are switcing layer types and have an active filter alraedy.
                 bounds.xaxis = $scope.graph[0].layout.xaxis;
                 bounds.yaxis = $scope.graph[0].layout.yaxis;
-            } 
+            }
         }
 
         // Create a filter based on the current zoom level if we don't already have a filter for the current zoom level.
@@ -103,10 +98,10 @@ angular.module('neonDemo.controllers').controller('scatterPlotController', ['$sc
     $scope.functions.onInit = function() {
         $scope.graph = $scope.functions.getElement(".graph-div");
         $scope.graph.bind('plotly_relayout', relayoutHandler);
-        $scope.graph.bind('plotly_beforeplot', function(evt) {
+        $scope.graph.bind('plotly_beforeplot', function() {
             plotting = true;
         });
-        $scope.graph.bind('plotly_afterplot', function(evt) {
+        $scope.graph.bind('plotly_afterplot', function() {
             plotting = false;
         });
 
@@ -163,7 +158,7 @@ angular.module('neonDemo.controllers').controller('scatterPlotController', ['$sc
 
         var dataObject = buildDataConfig($scope.data);
         var layout = buildGraphLayout();
-        if ($scope.functions.isFilterSet()) {
+        if($scope.functions.isFilterSet()) {
             layout.xaxis = $scope.graph[0].layout.xaxis;
             layout.xaxis.autorange = false;
             layout.yaxis = $scope.graph[0].layout.yaxis;
@@ -209,9 +204,9 @@ angular.module('neonDemo.controllers').controller('scatterPlotController', ['$sc
         var text = [];
 
         var minx = data[0] ? neon.helpers.getNestedValue(data[0], $scope.active.xAxisField.columnName) : undefined;
-        var maxx = data[0] ? neon.helpers.getNestedValue(data[0], $scope.active.xAxisField.columnName) : undefined;;
-        var miny = data[0] ? neon.helpers.getNestedValue(data[0], $scope.active.yAxisField.columnName) : undefined;;
-        var maxy = data[0] ? neon.helpers.getNestedValue(data[0], $scope.active.yAxisField.columnName) : undefined;;
+        var maxx = data[0] ? neon.helpers.getNestedValue(data[0], $scope.active.xAxisField.columnName) : undefined;
+        var miny = data[0] ? neon.helpers.getNestedValue(data[0], $scope.active.yAxisField.columnName) : undefined;
+        var maxy = data[0] ? neon.helpers.getNestedValue(data[0], $scope.active.yAxisField.columnName) : undefined;
 
         enableGL = (enableGL !== undefined) ? enableGL : false;
 
@@ -266,7 +261,7 @@ angular.module('neonDemo.controllers').controller('scatterPlotController', ['$sc
             maxx: maxx,
             miny: miny,
             maxy: maxy
-        }
+        };
 
         return dataConfig;
     };
@@ -387,21 +382,14 @@ angular.module('neonDemo.controllers').controller('scatterPlotController', ['$sc
         return [$scope.active.xAxisField, $scope.active.yAxisField];
     };
 
-    $scope.functions.updateFilterValues = function(neonFilter) {
-        // TODO NEON-1939
-        console.log("in updateFilterValues");
-        if($scope.functions.getNumberOfFilterClauses(neonFilter) === 4) {
-            //$scope.filter = neonFilter.filter.whereClause.rhs;
-            console.log("update the filter for scatter");
-            // $scope.filter may be the filter.
-        }
+    $scope.functions.updateFilterValues = function() {
+        // Overriding this function to be a no-op since all of the filter management
+        // is in the relayout handler.
     };
 
     $scope.functions.removeFilterValues = function() {
-        // TODO NEON-1939
-        // Ditch the filter
-        // Reset the display (zoom all the way out)
-        console.log("removing filter");
+        // Overriding this function to simply clear our filter value, since all of the filter management
+        // is in the relayout handler.
         $scope.filter = undefined;
     };
 
@@ -412,7 +400,7 @@ angular.module('neonDemo.controllers').controller('scatterPlotController', ['$sc
         var filterClauses = [neon.query.where(xAxisFieldName, '!=', null)];
 
         if($scope.filter.xaxis && $scope.filter.yaxis) {
-            if ($scope.filter.xaxis.range && $scope.yaxis.range) {
+            if($scope.filter.xaxis.range && $scope.yaxis.range) {
                 filterClauses.push(neon.query.where(xAxisFieldName, '>', $scope.filter.xaxis.range[0]));
                 filterClauses.push(neon.query.where(xAxisFieldName, '<', $scope.filter.xaxis.range[1]));
                 filterClauses.push(neon.query.where(yAxisFieldName, '>', $scope.filter.yaxis.range[0]));
@@ -422,7 +410,7 @@ angular.module('neonDemo.controllers').controller('scatterPlotController', ['$sc
                 filterClauses.push(neon.query.where(xAxisFieldName, '<', $scope.filter.xaxis[1]));
                 filterClauses.push(neon.query.where(yAxisFieldName, '>', $scope.filter.yaxis[0]));
                 filterClauses.push(neon.query.where(yAxisFieldName, '<', $scope.filter.yaxis[1]));
-            }  
+            }
         } else {
             if($scope.filter['xaxis.range']) {
                 filterClauses.push(neon.query.where(xAxisFieldName, '>', $scope.filter['xaxis.range'][0]));
