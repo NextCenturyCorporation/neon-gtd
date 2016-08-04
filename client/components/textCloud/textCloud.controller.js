@@ -131,7 +131,7 @@ angular.module('neonDemo.controllers').controller('textCloudController', ['$scop
     };
 
     $scope.functions.createFilterTrayText = function() {
-        return (_.pluck($scope.filters, ($scope.active.showTranslations ? "translated" : "value"))).join(", ");
+        return (_.map($scope.filters, ($scope.active.showTranslations ? "translated" : "value"))).join(", ");
     };
 
     $scope.functions.updateFilterValues = function(neonFilter) {

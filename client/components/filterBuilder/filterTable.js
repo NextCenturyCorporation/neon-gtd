@@ -231,7 +231,7 @@ neon.query.FilterTable.prototype.getDatabaseAndTableNamesForKeys = function(keys
     var nameObjects = [];
     _.forEach(this.filterKeys, function(tableKeys, database) {
         _.forEach(tableKeys, function(key, table) {
-            if(_.contains(keys, key)) {
+            if(_.includes(keys, key)) {
                 nameObjects.push({
                     database: database,
                     table: table
@@ -290,7 +290,7 @@ neon.query.FilterTable.prototype.containsFilterKey = function(keys) {
     // For each filter key, check for any db/table key to be contained in the given keys
     return _.some(this.filterKeys, function(databaseObj) {
         return _.some(_.values(databaseObj), function(key) {
-            return _.contains(keys, key);
+            return _.includes(keys, key);
         });
     });
 };

@@ -400,7 +400,7 @@ angular.module('neonDemo.controllers').controller('newsFeedController', ['$scope
      * @private
      */
     var runTranslation = function(newsProperty, sliceStart, sliceEnd, successCallback) {
-        var dataText = _.pluck($scope.active.data, newsProperty).map(function(data) {
+        var dataText = _.map($scope.active.data, newsProperty).map(function(data) {
             return $.isNumeric(data) ? "" : data;
         });
 

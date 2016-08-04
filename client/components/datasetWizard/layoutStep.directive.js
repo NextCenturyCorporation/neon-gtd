@@ -69,7 +69,7 @@ angular.module('neonDemo.directives')
 
                 _.each($scope.customDatabases, function(db) {
                     if(db.database.name === customVisualization.database) {
-                        var tables = _.pluck(db.customTables, 'table');
+                        var tables = _.map(db.customTables, 'table');
                         customVisualization.availableTables = _.map(tables, function(table) {
                             return table.name;
                         });

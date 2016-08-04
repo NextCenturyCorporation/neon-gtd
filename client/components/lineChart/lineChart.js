@@ -1011,8 +1011,8 @@ charts.LineChart.prototype.toggleSeries = function(series) {
 charts.LineChart.prototype.toggleSeriesGroup = function(seriesId, activity) {
     var me = this;
 
-    var seriesGroup = _.pluck(
-        _.where(me.data, function(datum) {
+    var seriesGroup = _.map(
+        _.filter(me.data, function(datum) {
             return datum.series.split(":")[0] === seriesId;
         }),
         "series"

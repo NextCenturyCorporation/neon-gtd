@@ -219,7 +219,7 @@ module.exports = function(grunt) {
             bootstrap: {
                 expand: true,
                 cwd: "client/bower_components/bootstrap/dist/",
-                src: ["fonts/**"],
+                src: ["fonts/**", "css/bootstrap.min.css", "js/bootstrap.min.js"],
                 dest: "dist/"
             },
             jquery_ui_lightness: {

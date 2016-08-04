@@ -57,7 +57,7 @@ angular.module('neonDemo.directives')
                     // Get each visualization's bindings and save them to our dashboard state parameter
                     visualizationService.getWidgets().forEach(function(widget) {
                         var bindings = widget.callback();
-                        var visualization = _.where(stateParams.dashboard, {
+                        var visualization = _.filter(stateParams.dashboard, {
                             id: widget.id
                         });
                         if(visualization && visualization.length) {
