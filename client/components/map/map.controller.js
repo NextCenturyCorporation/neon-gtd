@@ -853,10 +853,15 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
             var layer = new coreMap.Map.Layer.SelectedPointsLayer("Selected Points");
 
             var createPointAndFeature = function(latitude, longitude) {
-                var point = new OpenLayers.Geometry.Point(neon.helpers.getNestedValue(message.data, longitude), neon.helpers.getNestedValue(message.data, latitude));
-                point.transform(coreMap.Map.SOURCE_PROJECTION, coreMap.Map.DESTINATION_PROJECTION);
-                var feature = new OpenLayers.Feature.Vector(point);
-                feature.attributes = message.data;
+                var feature;
+
+                if(latitude && longitude) {
+                    var point = new OpenLayers.Geometry.Point(neon.helpers.getNestedValue(message.data, longitude), neon.helpers.getNestedValue(message.data, latitude));
+                    point.transform(coreMap.Map.SOURCE_PROJECTION, coreMap.Map.DESTINATION_PROJECTION);
+                    feature = new OpenLayers.Feature.Vector(point);
+                    feature.attributes = message.data;
+                }
+
                 return feature;
             };
 
@@ -878,8 +883,8 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
                     database: message.database,
                     table: message.table
                 });
-                var latitude = pointsLayer ? pointsLayer.latitudeMapping : "latitude";
-                var longitude = pointsLayer ? pointsLayer.longitudeMapping : "longitude";
+                var latitude = (pointsLayer && pointsLayer.latitudeMapping) ? pointsLayer.latitudeMapping : "latitude";
+                var longitude = (pointsLayer && pointsLayer.longitudeMapping) ? pointsLayer.longitudeMapping : "longitude";
                 layer.addFeatures(createPointAndFeature(latitude, longitude));
             }
             $scope.map.addLayer(layer);
