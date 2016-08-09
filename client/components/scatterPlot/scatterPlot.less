@@ -11,7 +11,9 @@
         height: inherit;
 
         .modebar {
-            background-color: @visualization-box-background-transparent;
+            left: 0px;
+            top: 5px;
+            background: rgba(0,0,0,0);
             .modebar-btn {
                 path {
                     fill: @button-background-color;
@@ -33,4 +35,17 @@
             }
         }
     }
+
+    .headers-container {
+        position: absolute;
+        top: 30px;
+        left: 35px;
+        right: 0px;
+        z-index: 1005;
+
+        .filter-reset {
+            background-color: @visualization-box-background-transparent;
+        }
+    }
+
 }
