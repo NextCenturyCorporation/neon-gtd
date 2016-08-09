@@ -246,8 +246,8 @@ angular.module('neonDemo.directives')
                         sizeY: visualization.sizeY,
                         minSizeX: visualization.minSizeX,
                         minSizeY: visualization.minSizeY,
-                        minPixelX: neonVisualizationMinPixel.x,
-                        minPixelY: neonVisualizationMinPixel.y,
+                        minPixelX: neonVisualizationMinPixel.x, // jshint ignore:line
+                        minPixelY: neonVisualizationMinPixel.y, // jshint ignore:line
                         type: visualization.type,
                         id: uuid(),
                         bindings: {}

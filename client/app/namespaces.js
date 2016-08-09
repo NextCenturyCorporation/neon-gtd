@@ -368,7 +368,7 @@ neonWizard.visualizationBindings["timeline-selector"] = [
     }
 ];
 
-var neonVisualizationMinPixel = {
+var neonVisualizationMinPixel = { // jshint ignore:line
     x: 320,
     y: 240
 };

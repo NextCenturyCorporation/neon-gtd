@@ -386,8 +386,8 @@ NeonGTDSetup = (function() {
         VISUALIZATIONS.forEach(function(visualization) {
             visualization.sizeX = visualization.sizeX || Math.floor(dashboardConfig.gridsterColumns * 0.25);
             visualization.sizeY = visualization.sizeY || Math.floor(dashboardConfig.gridsterColumns * 0.20);
-            visualization.minPixelX = visualization.minPixelX || neonVisualizationMinPixel.x;
-            visualization.minPixelY = visualization.minPixelY || neonVisualizationMinPixel.y;
+            visualization.minPixelX = visualization.minPixelX || neonVisualizationMinPixel.x; // jshint ignore:line
+            visualization.minPixelY = visualization.minPixelY || neonVisualizationMinPixel.y; // jshint ignore:line
             visualization.minSizeX = 1;
             visualization.minSizeY = 1;
         });

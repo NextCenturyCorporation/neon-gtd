@@ -28,6 +28,7 @@ var neonDemo = angular.module('neonDemo', [
     'linkify'
 ]);
 
+neonDemo.constant('customFilters', {});
 neonDemo.constant('external', {
     active: 0,
     services: {}
