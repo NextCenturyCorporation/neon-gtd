@@ -31,8 +31,10 @@ describe('Controller: opsClock', function() {
             active: {},
             functions: {}
         };
-        var empty = {};
-        expect($scope.active.dateField).toEqual(empty);
+        $controller('opsClockController', {
+            $scope: $scope
+        });
+        expect($scope.active.dateField).toEqual({});
         expect($scope.active.maxDay).toBe('');
         expect($scope.active.maxTime).toBe('');
     });

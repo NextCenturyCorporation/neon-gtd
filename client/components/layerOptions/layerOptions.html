@@ -4,7 +4,7 @@
 
 <!-- The ng-drag and ng-drop directives are from the ngDraggable library. -->
 <div class="form-group layer-options-container" ng-drop="true" ng-drop-success="functions.reorderLayer($data, $index)" ng-repeat="layer in active.layers | reverse">
-    <div class="form-group layer-options-well neon-well" ng-drag="true" ng-drag-data="layer">
+    <div class="form-group layer-options-well neon-well" ng-drag="!(layer.new || layer.edit)" ng-drag-data="layer">
         <div class="layer-options-row">
             <div class="btn-group layer-options-col layer-options-col-wide" ng-if="!bindings.hideAdvancedOptions">
                 <label class="btn btn-default" ng-cancel-drag ng-class="{true: 'active', false: ''}[layer.show]" title="{{'Layer Visibility ' + (layer.show ? 'On' : 'Off')}}">

@@ -456,5 +456,6 @@ module.exports = function(grunt) {
     ];
 
     grunt.registerTask('no-bower', ['clean:docs', 'clean:war', 'clean:tests', 'clean:dist'].concat(defaultTasks));
-    grunt.registerTask('default', ['clean', 'exec:bower_install'].concat(defaultTasks));
+    grunt.registerTask('build', ['clean', 'exec:bower_install'].concat(defaultTasks));
+    grunt.registerTask('default', ['clean', 'exec:bower_install', 'test'].concat(defaultTasks));
 };

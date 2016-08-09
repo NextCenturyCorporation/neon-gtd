@@ -832,15 +832,17 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
 
             var createPointsAndFeatures = function(latitudeField, longitudeField) {
                 var features = [];
-                message.data.forEach(function(item) {
-                    neon.helpers.getNestedValues(item, [longitudeField, latitudeField]).forEach(function(pointValue) {
-                        var openLayersPoint = new OpenLayers.Geometry.Point(pointValue[latitudeField], pointValue[longitudeField]);
-                        openLayersPoint.transform(coreMap.Map.SOURCE_PROJECTION, coreMap.Map.DESTINATION_PROJECTION);
-                        var feature = new OpenLayers.Feature.Vector(openLayersPoint);
-                        feature.attributes = item;
-                        features.push(feature);
+                if(latitudeField && longitudeField) {
+                    message.data.forEach(function(item) {
+                        neon.helpers.getNestedValues(item, [longitudeField, latitudeField]).forEach(function(pointValue) {
+                            var openLayersPoint = new OpenLayers.Geometry.Point(pointValue[latitudeField], pointValue[longitudeField]);
+                            openLayersPoint.transform(coreMap.Map.SOURCE_PROJECTION, coreMap.Map.DESTINATION_PROJECTION);
+                            var feature = new OpenLayers.Feature.Vector(openLayersPoint);
+                            feature.attributes = item;
+                            features.push(feature);
+                        });
                     });
-                });
+                }
                 return features;
             };
 
@@ -862,8 +864,8 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
                     database: message.database,
                     table: message.table
                 });
-                var latitudeField = pointsLayer ? pointsLayer.latitudeMapping : "latitude";
-                var longitudeField = pointsLayer ? pointsLayer.longitudeMapping : "longitude";
+                var latitudeField = (pointsLayer && pointsLayer.latitudeMapping) ? pointsLayer.latitudeMapping : "latitude";
+                var longitudeField = (pointsLayer && pointsLayer.longitudeMapping) ? pointsLayer.longitudeMapping : "longitude";
                 layer.addFeatures(createPointsAndFeatures(latitudeField, longitudeField));
             }
             $scope.map.addLayer(layer);
