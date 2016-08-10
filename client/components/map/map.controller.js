@@ -829,13 +829,14 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
         if(message.data) {
             var allCoordinates = $scope.functions.getMapping("allCoordinates", message.database, message.table) || [];
             var layer = new coreMap.Map.Layer.SelectedPointsLayer("Selected Points");
+            var data = _.isArray(message.data) ? message.data : [message.data];
 
             var createPointsAndFeatures = function(latitudeField, longitudeField) {
                 var features = [];
                 if(latitudeField && longitudeField) {
-                    message.data.forEach(function(item) {
+                    data.forEach(function(item) {
                         neon.helpers.getNestedValues(item, [longitudeField, latitudeField]).forEach(function(pointValue) {
-                            var openLayersPoint = new OpenLayers.Geometry.Point(pointValue[latitudeField], pointValue[longitudeField]);
+                            var openLayersPoint = new OpenLayers.Geometry.Point(pointValue[longitudeField], pointValue[latitudeField]);
                             openLayersPoint.transform(coreMap.Map.SOURCE_PROJECTION, coreMap.Map.DESTINATION_PROJECTION);
                             var feature = new OpenLayers.Feature.Vector(openLayersPoint);
                             feature.attributes = item;

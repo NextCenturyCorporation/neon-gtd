@@ -26,8 +26,6 @@
 
         <link rel="stylesheet" href="bower_components/angular-gantt/assets/angular-gantt.css" />
         <link rel="stylesheet" href="bower_components/angular-gantt/assets/angular-gantt-plugins.css" />
-        <link rel="stylesheet" href="bower_components/jquery-ui/themes/ui-lightness/jquery-ui.css" />
-        <link rel="stylesheet" href="bower_components/jquery-ui/themes/ui-lightness/jquery.ui.theme.css" />
 
         <link rel="stylesheet" type="text/css" href="app/sprites.css">
         <!-- endbuild -->
@@ -166,13 +164,14 @@
 
         <links-popup></links-popup>
 
-        <!-- Including neon before angular here as neon has lodash and jquery wrapped into it.  If this is
-             loaded first, angular should pick up the included jQuery. -->
+        <!-- Including the neon dependencies prior to loading neon lib. -->
+        <!-- build:js(client) neon.min.js -->
         <script src="bower_components/lodash/dist/lodash.js"></script>
         <script src="bower_components/log4javascript/js/log4javascript.js"></script>
         <script src="bower_components/node-uuid/uuid.js"></script>
         <script src="bower_components/postal/lib/postal.js"></script>
         <script src="bower_components/jquery/dist/jquery.js"></script>
+        <!-- endbuild -->
         <script src="/neon/js/neon-nodeps.min.js"></script>
 
         <!-- Include OpenLayers outside the JS package because OpenLayers scans the index.html file for its own include to extract its relative path. -->
@@ -248,6 +247,7 @@
         
         <script src="components/barChart/barChart.controller.js"></script>
         <script src="components/barChart/barChart.js"></script>
+        
         <script src="components/customFilterList/customFilterList.controller.js"></script>
         <script src="components/dataTable/dataTable.controller.js"></script>
         
