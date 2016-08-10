@@ -16,14 +16,16 @@
             </div>
             <div class="modal-body">
                 <ul>
-                    <li ng-repeat="item in visualizations" ng-init="item.selected = false" ng-class="(item.selected) ? 'selected' : ''">
+                    <li ng-repeat="item in visualizations" ng-class="{true: 'selected', false: ''}[item.selected]">
                         <div class="neon-popup-thumbnail center-block text-center">
-                            <button  ng-click="onItemSelected(item)" tabindex="0">
+                            <a ng-click="onItemSelected(item)" tabindex="0">
                                 <div class="center-block">
-                                    <div class="icon-{{item.icon}} neon-sprite" alt="{{item.name}}"></div>
+                                    <div class="center-block icon-container">
+                                        <div class="icon-{{item.icon}} neon-sprite" alt="{{item.name}}"></div>
+                                    </div>
                                 </div>
-                                <span class="text-uppercase short" ng-bind="item.name"></span>
-                            </button>
+                                <span class="text-uppercase" ng-bind="item.name"></span>
+                            </a>
                         </div>
                     </li>
                 </ul>

@@ -25,6 +25,8 @@
 angular.module('neonDemo.controllers').controller('scatterPlotController', ['$scope', function($scope) {
     $scope.backgroundColor = "#fff";
     $scope.textColor = "#777";
+    $scope.data = [];
+    $scope.pointCount = 0;
 
     $scope.active.type = $scope.bindings.type;
     $scope.active.limit = $scope.bindings.limit;
@@ -122,11 +124,10 @@ angular.module('neonDemo.controllers').controller('scatterPlotController', ['$sc
         return $scope.functions.isFieldValid($scope.active.xAxisField) && $scope.functions.isFieldValid($scope.active.yAxisField);
     };
 
-    $scope.functions.createNeonQueryWhereClause = function() {
-        return neon.query.where($scope.active.xAxisField.columnName, "!=", null);
-    };
+    $scope.functions.addToQuery = function(query, unsharedFilterWhereClause) {
+        var whereClause = neon.query.where($scope.active.xAxisField.columnName, "!=", null);
+        query.where(unsharedFilterWhereClause ? neon.query.and(whereClause, unsharedFilterWhereClause) : whereClause);
 
-    $scope.functions.addToQuery = function(query) {
         var fields = [$scope.active.xAxisField.columnName, $scope.active.yAxisField.columnName];
         if($scope.functions.isFieldValid($scope.active.textField)) {
             fields.push($scope.active.textField.columnName);
@@ -146,13 +147,18 @@ angular.module('neonDemo.controllers').controller('scatterPlotController', ['$sc
 
     $scope.functions.updateData = function(data) {
         $scope.data = data || [];
-        drawGraph();
+        if($scope.data.length) {
+            drawGraph();
+        }
     };
 
     var drawGraph = function() {
         drawingGraph = true;
 
-        if(!$scope.data) {
+        if(!$scope.data.length) {
+            if($scope.graph) {
+                $scope.graph.empty();
+            }
             return;
         }
 
@@ -199,88 +205,55 @@ angular.module('neonDemo.controllers').controller('scatterPlotController', ['$sc
     };
 
     var buildScatterConfig = function(data, enableGL) {
-        var x = [];
-        var y = [];
-        var text = [];
-
-        var minx = data[0] ? neon.helpers.getNestedValue(data[0], $scope.active.xAxisField.columnName) : undefined;
-        var maxx = data[0] ? neon.helpers.getNestedValue(data[0], $scope.active.xAxisField.columnName) : undefined;
-        var miny = data[0] ? neon.helpers.getNestedValue(data[0], $scope.active.yAxisField.columnName) : undefined;
-        var maxy = data[0] ? neon.helpers.getNestedValue(data[0], $scope.active.yAxisField.columnName) : undefined;
+        var xArray = [];
+        var yArray = [];
+        var textArray = [];
 
         enableGL = (enableGL !== undefined) ? enableGL : false;
 
-        _.each(data, function(row) {
-            var xValue = neon.helpers.getNestedValue(row, $scope.active.xAxisField.columnName);
-            x.push(_.escape(xValue));
+        var fields = [$scope.active.xAxisField.columnName, $scope.active.yAxisField.columnName];
+        if($scope.functions.isFieldValid($scope.active.textField)) {
+            fields.push($scope.active.textField.columnName);
+        }
 
-            if(xValue < minx) {
-                minx = xValue;
-            }
-
-            if(xValue > maxx) {
-                maxx = xValue;
-            }
-
-            var yValue = neon.helpers.getNestedValue(row, $scope.active.yAxisField.columnName);
-            y.push(_.escape(yValue));
-
-            if(yValue < miny) {
-                miny = yValue;
-            }
-
-            if(yValue > maxy) {
-                maxy = yValue;
-            }
-
-            if($scope.functions.isFieldValid($scope.active.textField)) {
-                var textVal = row[$scope.active.textField.columnName] || "";
-                if(textVal.length > 50) {
-                    textVal = textVal.substring(0, 51) + '...';
+        data.forEach(function(item) {
+            neon.helpers.getNestedValues(item, fields).forEach(function(pointValue) {
+                xArray.push(_.escape(pointValue[$scope.active.xAxisField.columnName]));
+                yArray.push(_.escape(pointValue[$scope.active.yAxisField.columnName]));
+                if($scope.functions.isFieldValid($scope.active.textField)) {
+                    var textValue = _.escape(pointValue[$scope.active.textField.columnName]) || "";
+                    textArray.push(textValue.length > 50 ? textValue.substring(0, 50) + "..." : textValue);
                 }
-
-                text.push(_.escape(textVal));
-            }
+            });
         });
 
-        var dataConfig = {
-            x: x,
-            y: y,
-            mode: ($scope.bindings.subType || 'markers'),
-            type: (enableGL) ? 'scattergl' : 'scatter',
-            hoverinfo: 'text'
-        };
-
-        if(text.length > 0) {
-            dataConfig.text = text;
-        }
+        $scope.pointCount = xArray.length;
 
         // Save the min and max values to assist with filter creation on GL scatter plots.
         scatterOuterBounds = {
-            minx: minx,
-            maxx: maxx,
-            miny: miny,
-            maxy: maxy
+            minx: _.min(xArray),
+            maxx: _.max(xArray),
+            miny: _.min(yArray),
+            maxy: _.max(yArray)
         };
 
-        return dataConfig;
+        return {
+            x: xArray,
+            y: yArray,
+            hoverinfo: 'text',
+            mode: ($scope.bindings.subType || 'markers'),
+            text: textArray.length > 0 ? textArray : undefined,
+            type: (enableGL) ? 'scattergl' : 'scatter'
+        };
     };
 
     var buildHybridConfig = function(data) {
-        var x = [];
-        var y = [];
-
-        _.each(data, function(row) {
-            x.push(_.escape(neon.helpers.getNestedValue(row, $scope.active.xAxisField.columnName)));
-            y.push(_.escape(neon.helpers.getNestedValue(row, $scope.active.yAxisField.columnName)));
-        });
-
-        return {
-            x: x,
-            y: y,
-            showscale: true,
-            hoverinfo: 'z'
-        };
+        var config = buildScatterConfig(data);
+        config.hoverinfo = 'z';
+        config.mode = undefined;
+        config.type = undefined;
+        config.showscale = true;
+        return config;
     };
 
     var buildHistogramHybridConfig = function(data) {
@@ -494,7 +467,7 @@ angular.module('neonDemo.controllers').controller('scatterPlotController', ['$sc
     };
 
     $scope.handleChangeTextField = function() {
-        $scope.functions.logChangeAndUpdate("textField", $scope.active.textField.columnName);
+        $scope.functions.logChangeAndUpdate("textField", $scope.active.textField ? $scope.active.textField.columnName : undefined);
     };
 
     $scope.handleChangeType = function() {
@@ -505,5 +478,13 @@ angular.module('neonDemo.controllers').controller('scatterPlotController', ['$sc
 
     $scope.handleChangeLimit = function() {
         $scope.functions.logChangeAndUpdate("limit", $scope.active.limit, "button");
+    };
+
+    $scope.functions.createMenuText = function() {
+        return ($scope.pointCount || "No") + " Point" + ($scope.pointCount === 1 ? "" : "s");
+    };
+
+    $scope.functions.showMenuText = function() {
+        return true;
     };
 }]);

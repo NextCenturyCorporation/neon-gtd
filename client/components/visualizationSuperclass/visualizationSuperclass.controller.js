@@ -23,8 +23,8 @@
  * @constructor
  */
 angular.module('neonDemo.controllers').controller('visualizationSuperclassController',
-['$scope', 'external', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', 'LinksPopupService', 'ThemeService', 'TranslationService', 'VisualizationService',
-function($scope, external, connectionService, datasetService, errorNotificationService, filterService, exportService, linksPopupService, themeService, translationService, visualizationService) {
+['$scope', 'external', 'customFilters', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', 'LinksPopupService', 'ThemeService', 'TranslationService', 'VisualizationService',
+function($scope, external, customFilters, connectionService, datasetService, errorNotificationService, filterService, exportService, linksPopupService, themeService, translationService, visualizationService) {
     // Options for the implementation property.
     $scope.SINGLE_LAYER = "singleLayer";
     $scope.MULTIPLE_LAYER = "multipleLayer";
@@ -62,6 +62,14 @@ function($scope, external, connectionService, datasetService, errorNotificationS
      * @default false
      */
     $scope.active.displayOverlapsHeaders = false;
+
+    /**
+     * Whether this visualization should escape the data from its queries (like replacing & with &amp;).  This should only be disabled if this visualization handles escaping the data itself!
+     * @property escapeData
+     * @type Boolean
+     * @default true
+     */
+    $scope.active.escapeData = true;
 
     /**
      * Whether this visualization should query for data in all data layers with the same database and table with a single query instead of querying for data in each data layer with an individual query.
@@ -126,6 +134,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
      * Adds properties to the given Neon query and returns the updated query for the given layers.
      * @method $scope.functions.addToQuery
      * @param {neon.query.Query} query
+     * @param {neon.query.WhereClause} unsharedFilterWhereClause
      * @param {Array} layers
      * @return {neon.query.Query}
      */
@@ -193,20 +202,11 @@ function($scope, external, connectionService, datasetService, errorNotificationS
     };
 
     /**
-     * Creates and returns the Neon where clause for queries for the given layers (or returns undefined).
-     * @method $scope.functions.createNeonQueryWhereClause
-     * @param {Array} layers
-     * @return {neon.query.WhereClause}
-     */
-    $scope.functions.createNeonQueryWhereClause = function() {
-        return undefined;
-    };
-
-    /**
      * Executes the given query using the given connection.
      * @method $scope.functions.executeQuery
      * @param {Object} connection
      * @param {neon.query.Query} query
+     * @return {Object} The object returned by executing a Neon query or undefined if no query was executed
      */
     $scope.functions.executeQuery = function(connection, query) {
         return connection.executeQuery(query);
@@ -445,6 +445,15 @@ function($scope, external, connectionService, datasetService, errorNotificationS
     };
 
     /**
+     * Creates and returns a blank field object.
+     * @method createBlankField
+     * @return {Object}
+     */
+    $scope.functions.createBlankField = function() {
+        return datasetService.createBlankField();
+    };
+
+    /**
      * Creates a new data layer for this visualization using the dataset defaults and set in new & edit mode.
      * @method $scope.functions.createLayer
      */
@@ -530,11 +539,11 @@ function($scope, external, connectionService, datasetService, errorNotificationS
         $scope.functions.onDeleteLayer(layer);
         $scope.active.layers.splice($scope.active.layers.length - 1 - indexReversed, 1);
         if(layer.filterable && $scope.functions.isFilterSet()) {
-            removeNeonFilter({
+            $scope.functions.removeNeonFilter({
                 // Include the deleted layer in the options because it will not be found in the list of active layers.
                 layers: [layer],
-                database: layer.database.name,
-                table: layer.table.name,
+                databaseName: layer.database.name,
+                tableName: layer.table.name,
                 queryAfterFilter: true
             });
         } else if($scope.active.layers.length) {
@@ -615,6 +624,15 @@ function($scope, external, connectionService, datasetService, errorNotificationS
     };
 
     /**
+     * Returns the dashboard configuration for the custom filters.
+     * @method $scope.functions.getCustomFilters
+     * @return {Object}
+     */
+    $scope.functions.getCustomFilters = function() {
+        return customFilters || {};
+    };
+
+    /**
      * Returns the config for the linky library.
      * @method $scope.functions.getLinkyConfig
      * @return {Object}
@@ -652,6 +670,16 @@ function($scope, external, connectionService, datasetService, errorNotificationS
      */
     $scope.functions.getNumberOfFilterClauses = function(neonFilter) {
         return filterService.hasSingleClause(neonFilter) ? 1 : filterService.getMultipleClausesLength(neonFilter);
+    };
+
+    /**
+     * Returns the list of sorted fields for the database and table in the given layer (in alphabetical order).
+     * @method $scope.functions.getSortedFields
+     * @param {Object} layer
+     * @return {Array}
+     */
+    $scope.functions.getSortedFields = function(layer) {
+        return datasetService.getSortedFields(layer.database.name, layer.table.name);
     };
 
     /**
@@ -705,16 +733,16 @@ function($scope, external, connectionService, datasetService, errorNotificationS
      * Builds and executes a query and updates the data for this visualization using the given options.
      * @method $scope.functions.queryAndUpdate
      * @param {Object} [options] The collection of function arguments.
-     * @param {String} [options.databaseName] (Optional) The name of a databse.  If not given, queries and updates all layers.
-     * @param {String} [options.tableName] (Optional) The name of a table.  If not given, queries and updates all layers.
+     * @param {String} [options.database] (Optional) The name of a databse.  If not given, queries and updates all layers.
+     * @param {String} [options.table] (Optional) The name of a table.  If not given, queries and updates all layers.
      * @param {Function} [options.addToQuery=$scope.functions.addToQuery] (Optional) The function to help build the Neon query.  If not given, it uses $scope.functions.addToQuery.
      * @param {Function} [options.executeQuery=$scope.functions.executeQuery] (Optional) The function to execute the Neon query.  If not given, it uses $scope.functions.executeQuery.
      * @param {Function} [options.updateData=$scope.functions.updateData] (Optional) The function to update the data in this visualization.  If not given, it uses $scope.functions.updateData.
      */
-    $scope.functions.queryAndUpdate = function(inputOptions) {
-        var options = inputOptions || {};
-        queryAndUpdate(findQueryAndUpdateData(options.database, options.table), 0, options.addToQuery || $scope.functions.addToQuery, options.executeQuery || $scope.functions.executeQuery,
-                options.updateData || $scope.functions.updateData);
+    $scope.functions.queryAndUpdate = function(options) {
+        var args = options || {};
+        queryAndUpdate(findQueryAndUpdateData(args.database, args.table), 0, args.addToQuery || $scope.functions.addToQuery, args.executeQuery || $scope.functions.executeQuery,
+                args.updateData || $scope.functions.updateData);
     };
 
     /**
@@ -734,12 +762,18 @@ function($scope, external, connectionService, datasetService, errorNotificationS
     /**
      * Removes the Neon filter from the dashboard on all filterable layers in this visualization.
      * @method $scope.functions.removeNeonFilter
-     * @param {Boolean} [queryAfterFilter=false] (Optional)
+     * @param {Object} [options] The collection of function arguments.
+     * @param {Array} [options.layers] (Optional) The layers from which to remove the filter.  If not given, uses active.layers.
+     * @param {String} [options.databaseName] (Optional) The name of a databse.  If not given, removes the filter from all layers.
+     * @param {String} [options.tableName] (Optional) The name of a table.  If not given, removes the filter from all layers.
+     * @param {Array} [options.fields] (Optional) The list of fields on which to filter.  If not given, uses $scope.functions.getFilterFields.
+     * @param {Boolean} [options.queryAfterFilter] (Optional) Whether to run a query and update the data for this visualization after removing the last filter.
+     * @param {Boolean} [options.fromSystem] (Optional) Whether removing filters was triggered by a system event.
+     * @param {Function} [options.callback] (Optional) Function to call on finish.
      */
-    $scope.functions.removeNeonFilter = function(queryAfterFilter) {
-        removeNeonFilter({
-            queryAfterFilter: queryAfterFilter
-        });
+    $scope.functions.removeNeonFilter = function(options) {
+        var args = options || {};
+        removeFiltersForData(findFilterData(args.databaseName, args.tableName, args.fields, args.layers, true), 0, args.queryAfterFilter, args.fromSystem, args.callback);
     };
 
     /**
@@ -754,6 +788,21 @@ function($scope, external, connectionService, datasetService, errorNotificationS
         $scope.active.layers.splice(oldIndex, 1);
         $scope.active.layers.splice(newIndex, 0, layer);
         $scope.functions.onReorderLayers();
+    };
+
+    /**
+     * Builds and runs an ajax request using the given function and calls the given callback with the response.
+     * @method $scope.functions.runRequest
+     * @param {Function} buildRequestFunction A function that takes a {String} host and {String} database type that returns the {Object} request configuration
+     * @param {Function} callback A function that takes the {Object} response
+     */
+    $scope.functions.runRequest = function(buildRequestFunction, callback) {
+        var connection = connectionService.getActiveConnection();
+        $.ajax(buildRequestFunction(connection.host_, connection.databaseType_)).done(function(response) {
+            callback(response);
+        }).fail(function(response) {
+            callback(response);
+        });
     };
 
     /**
@@ -818,15 +867,15 @@ function($scope, external, connectionService, datasetService, errorNotificationS
         if(!layer.new) {
             if($scope.functions.isFilterSet()) {
                 if(layer.filterable) {
-                    updateNeonFilter({
-                        database: layer.database.name,
-                        table: layer.table.name,
+                    $scope.functions.updateNeonFilter({
+                        databaseName: layer.database.name,
+                        tableName: layer.table.name,
                         queryAfterFilter: true
                     });
                 } else {
-                    removeNeonFilter({
-                        database: layer.database.name,
-                        table: layer.table.name,
+                    $scope.functions.removeNeonFilter({
+                        databaseName: layer.database.name,
+                        tableName: layer.table.name,
                         queryAfterFilter: true
                     });
                 }
@@ -857,9 +906,9 @@ function($scope, external, connectionService, datasetService, errorNotificationS
      */
     $scope.functions.updateFields = function(layer) {
         if($scope.functions.isFilterSet()) {
-            removeNeonFilter({
-                database: layer.database.name,
-                table: layer.table.name,
+            $scope.functions.removeNeonFilter({
+                databaseName: layer.database.name,
+                tableName: layer.table.name,
                 fromSystem: true
             });
         }
@@ -890,9 +939,9 @@ function($scope, external, connectionService, datasetService, errorNotificationS
         // For new filterable layers, update the Neon filter for the dashboard or check for existing Neon dashboard filters.
         if(isNew && layer.filterable) {
             if($scope.functions.isFilterSet()) {
-                updateNeonFilter({
-                    database: layer.database.name,
-                    table: layer.table.name,
+                $scope.functions.updateNeonFilter({
+                    databaseName: layer.database.name,
+                    tableName: layer.table.name,
                     queryAfterFilter: true
                 });
             } else {
@@ -906,14 +955,19 @@ function($scope, external, connectionService, datasetService, errorNotificationS
     };
 
     /**
-     * Adds or replaces the Neon filter in the dashboard on all filterable layers based on the filter values set in this visualization.
-     * @method $scope.functions.updateNeonFilter
-     * @param {Boolean} [queryAfterFilter=false] (Optional)
+     * Adds or replaces the Neon filter in the dashboard on filterable layers based on the filter values set in this visualization.
+     * @method updateNeonFilter
+     * @param {Object} [options] The collection of function arguments.
+     * @param {String} [options.databaseName] (Optional) The name of a databse.  If not given, adds a filter on all layers.
+     * @param {String} [options.tableName] (Optional) The name of a table.  If not given, adds a filter on all layers.
+     * @param {Array} [options.fields] (Optional) The list of fields on which to filter.  If not given, uses $scope.functions.getFilterFields.
+     * @param {Function} [options.createNeonFilterClause] (Optional) The function used to create the Neon filter clause.  If not given, uses $scope.functions.createNeonFilterClause.
+     * @param {Boolean} [options.queryAfterFilter] (Optional) Whether to run a query and update the data for this visualization after adding the last filter.
+     * @param {Function} [options.callback] (Optional) Function to call on finish.
      */
-    $scope.functions.updateNeonFilter = function(queryAfterFilter) {
-        updateNeonFilter({
-            queryAfterFilter: queryAfterFilter
-        });
+    $scope.functions.updateNeonFilter = function(options) {
+        var args = options || {};
+        addFiltersForData(findFilterData(args.databaseName, args.tableName, args.fields), 0, args.createNeonFilterClause || $scope.functions.createNeonFilterClause, args.queryAfterFilter, args.callback);
     };
 
     /**
@@ -989,7 +1043,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
             $scope.messenger.unsubscribeAll();
 
             if($scope.functions.isFilterSet()) {
-                removeNeonFilter({
+                $scope.functions.removeNeonFilter({
                     fromSystem: true
                 });
             }
@@ -1164,15 +1218,15 @@ function($scope, external, connectionService, datasetService, errorNotificationS
      */
     var checkNeonDashboardFilters = function(options) {
         var neonFilters = [];
-        var filterFields = [];
+        var neonFilterFields = [];
 
         // Check for Neon filters on all filterable database/table/field combinations in the layers.
         var data = findFilterData();
         data.forEach(function(item) {
-            var neonFilter = filterService.getFilter(item.database, item.table, item.fields);
-            if(neonFilter) {
-                neonFilters.push(neonFilter);
-                filterFields.push(item.fields);
+            var neonFiltersForItem = filterService.getFilters(item.database, item.table, item.fields);
+            if(neonFiltersForItem.length) {
+                neonFilters = neonFilters.concat(neonFiltersForItem);
+                neonFilterFields.push(item.fields);
             }
         });
 
@@ -1188,7 +1242,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
         // Note for single layer visualizations that this will always be true if a filter is set in the Neon dashboard.
         if(neonFilters.length && neonFilters.length === data.length && $scope.functions.needToUpdateFilter(neonFilters)) {
             // Use the first element of the filter arrays because they should all be the same (or equivalent).
-            $scope.functions.updateFilterValues(neonFilters[0], filterFields[0]);
+            $scope.functions.updateFilterValues(neonFilters[0], neonFilterFields[0]);
             runDefaultQueryAndUpdate();
             return;
         }
@@ -1203,31 +1257,34 @@ function($scope, external, connectionService, datasetService, errorNotificationS
      * @method findFilterData
      * @param {String} [databaseName] (Optional)
      * @param {String} [tableName] (Optional)
+     * @param {String} [fields] (Optional)
      * @param {Array} [layers] (Optional)
      * @param {Boolean} [ignoreFilter] (Optional)
      * @return {Array}
      * @private
      */
-    var findFilterData = function(databaseName, tableName, layers, ignoreFilter) {
+    var findFilterData = function(databaseName, tableName, fields, layers, ignoreFilter) {
         var data = [];
         (layers || $scope.getDataLayers()).forEach(function(layer) {
             if(!layer.new && (layer.filterable || ignoreFilter) && ((databaseName && tableName) ? (databaseName === layer.database.name && tableName === layer.table.name) : true)) {
-                var valid = $scope.functions.getFilterFields(layer).every(function(field) {
+                var valid = (fields || $scope.functions.getFilterFields(layer)).every(function(field) {
                     return datasetService.isFieldValid(field);
                 });
                 if(valid) {
                     // Check whether the database/table/filter fields for this layer already exist in the data.
-                    var fields = getFilterFieldNames(layer);
+                    var fieldNames = (fields || $scope.functions.getFilterFields(layer)).map(function(field) {
+                        return field.columnName;
+                    });
                     var index = _.findIndex(data, {
                         database: layer.database.name,
                         table: layer.table.name,
-                        fields: fields
+                        fields: fieldNames
                     });
                     if(index < 0) {
                         data.push({
                             database: layer.database.name,
                             table: layer.table.name,
-                            fields: fields,
+                            fields: fieldNames,
                             layers: [layer]
                         });
                     } else {
@@ -1237,19 +1294,6 @@ function($scope, external, connectionService, datasetService, errorNotificationS
             }
         });
         return data;
-    };
-
-    /**
-     * Returns the list of field names on which filters for the given layer are set.
-     * @method getFilterFieldNames
-     * @param {Object} layer
-     * @return {Array}
-     * @private
-     */
-    var getFilterFieldNames = function(layer) {
-        return $scope.functions.getFilterFields(layer).map(function(field) {
-            return field.columnName;
-        });
     };
 
     /**
@@ -1364,6 +1408,15 @@ function($scope, external, connectionService, datasetService, errorNotificationS
         // Execute the data query, calling the function defined in "done" or "fail" as needed.
         $scope.outstandingDataQuery[item.database][item.table] = executeQueryFunction(connection, query);
 
+        // Visualizations that do not execute data queries will not return a query object.
+        if(!$scope.outstandingDataQuery[item.database][item.table]) {
+            // Redraw any dirty angular elements.
+            $scope.$apply(function() {
+                updateDataFunction([], item.layers);
+            });
+            return;
+        }
+
         $scope.outstandingDataQuery[item.database][item.table].always(function() {
             $scope.outstandingDataQuery[item.database][item.table] = undefined;
         });
@@ -1449,33 +1502,31 @@ function($scope, external, connectionService, datasetService, errorNotificationS
      */
     var buildQuery = function(layers, databaseName, tableName, addToQueryFunction) {
         var query = new neon.query.Query().selectFrom(databaseName, tableName);
-        var whereClause = $scope.functions.createNeonQueryWhereClause(layers);
 
         var unsharedFilterField;
         var unsharedFilterValue;
-        layers.forEach(function(layer) {
-            if(datasetService.isFieldValid(layer.unsharedFilterField) && layer.unsharedFilterValue) {
-                // The unshared filter will be the same for all layers with the same database and table.
-                unsharedFilterField = layer.unsharedFilterField;
-                unsharedFilterValue = layer.unsharedFilterValue;
-            }
-        });
+        // If queryByTable is true, the unshared filter will be the same for all layers with the same database and table.
+        // Otherwise, buildQuery will be called on each layer individually so the layers array will have a single item.
+        if(layers.length && datasetService.isFieldValid(layers[0].unsharedFilterField) && layers[0].unsharedFilterValue) {
+            unsharedFilterField = layers[0].unsharedFilterField;
+            unsharedFilterValue = layers[0].unsharedFilterValue;
+        }
 
+        var unsharedFilterWhereClause;
         if(unsharedFilterField && unsharedFilterValue) {
             var operator = "contains";
             if($.isNumeric(unsharedFilterValue)) {
                 operator = "=";
                 unsharedFilterValue = parseFloat(unsharedFilterValue);
             }
-            var unsharedFilterWhereClause = neon.query.where(unsharedFilterField.columnName, operator, unsharedFilterValue);
-            whereClause = whereClause ? neon.query.and(whereClause, unsharedFilterWhereClause) : unsharedFilterWhereClause;
+            unsharedFilterWhereClause = neon.query.where(unsharedFilterField.columnName, operator, unsharedFilterValue);
         }
 
-        if(whereClause) {
-            query.where(whereClause);
+        if(unsharedFilterWhereClause) {
+            query.where(unsharedFilterWhereClause);
         }
 
-        return addToQueryFunction ? addToQueryFunction(query, layers) : $scope.functions.addToQuery(query, layers);
+        return addToQueryFunction ? addToQueryFunction(query, unsharedFilterWhereClause, layers) : $scope.functions.addToQuery(query, unsharedFilterWhereClause, layers);
     };
 
     /**
@@ -1591,27 +1642,16 @@ function($scope, external, connectionService, datasetService, errorNotificationS
     /************************* FILTERING FUNCTIONS *************************/
 
     /**
-     * Adds or replaces the Neon filter in the dashboard on filterable layers based on the filter values set in this visualization.
-     * @method updateNeonFilter
-     * @param {Object} options The collection of function arguments.
-     * @param {String} [options.databaseName] (Optional) The name of a databse.  If not given, adds a filter on all layers.
-     * @param {String} [options.tableName] (Optional) The name of a table.  If not given, adds a filter on all layers.
-     * @param {Boolean} [options.queryAfterFilter] (Optional) Whether to run a query and update the data for this visualization after adding the last filter.
-     * @private
-     */
-    var updateNeonFilter = function(options) {
-        addFiltersForData(findFilterData(options.database, options.table), 0, options.queryAfterFilter);
-    };
-
-    /**
      * Adds or replaces the Neon filter for the database, table, and fields in the given list of data at the given index and at each index that follows.
      * @method addFiltersForData
      * @param {Array} data Contains {String} database, {String} table, {Array} of {String} fields, and {Array} of {Object} layers
      * @param {Number} index
+     * @param {Function} createNeonFilterClauseFunction
      * @param {Boolean} [queryAfterFilter] (Optional)
+     * @param {Function} callback (Optional)
      * @private
      */
-    var addFiltersForData = function(data, index, queryAfterFilter) {
+    var addFiltersForData = function(data, index, createNeonFilterClauseFunction, queryAfterFilter, callback) {
         if(!data.length || index >= data.length) {
             if($scope.functions.shouldQueryAfterFilter() || queryAfterFilter) {
                 data.forEach(function(item) {
@@ -1619,11 +1659,15 @@ function($scope, external, connectionService, datasetService, errorNotificationS
                 });
             }
 
+            if(callback) {
+                callback();
+            }
+
             return;
         }
 
         var item = data[index];
-        filterService.addFilter($scope.messenger, item.database, item.table, item.fields, $scope.functions.createNeonFilterClause, {
+        filterService.addFilter($scope.messenger, item.database, item.table, item.fields, createNeonFilterClauseFunction, {
             visName: $scope.name,
             text: $scope.functions.createFilterTrayText(item.database, item.table, item.fields)
         }, function() {
@@ -1637,23 +1681,8 @@ function($scope, external, connectionService, datasetService, errorNotificationS
                 source: "user",
                 tags: ["filter", $scope.type]
             });
-            addFiltersForData(data, ++index, queryAfterFilter);
+            addFiltersForData(data, ++index, createNeonFilterClauseFunction, queryAfterFilter, callback);
         });
-    };
-
-    /**
-     * Removes the Neon filter from the dashboard on filterable layers in this visualization.
-     * @method removeNeonFilter
-     * @param {Object} options The collection of function arguments.
-     * @param {Array} [options.layers] (Optional) The layers from which to remove the filter.  If not given, uses active.layers.
-     * @param {String} [options.databaseName] (Optional) The name of a databse.  If not given, removes the filter from all layers.
-     * @param {String} [options.tableName] (Optional) The name of a table.  If not given, removes the filter from all layers.
-     * @param {Boolean} [options.queryAfterFilter] (Optional) Whether to run a query and update the data for this visualization after removing the last filter.
-     * @param {Boolean} [options.fromSystem] (Optional) Whether removing filters was triggered by a system event.
-     * @private
-     */
-    var removeNeonFilter = function(options) {
-        removeFiltersForData(findFilterData(options.database, options.table, options.layers, true), 0, options.queryAfterFilter, options.fromSystem);
     };
 
     /**
@@ -1663,9 +1692,10 @@ function($scope, external, connectionService, datasetService, errorNotificationS
      * @param {Number} index
      * @param {Boolean} queryAfterFilter (Optional)
      * @param {Boolean} fromSystem (Optional)
+     * @param {Function} callback (Optional)
      * @private
      */
-    var removeFiltersForData = function(data, index, queryAfterFilter, fromSystem) {
+    var removeFiltersForData = function(data, index, queryAfterFilter, fromSystem, callback) {
         if(!data.length || index >= data.length) {
             var unfiltered = $scope.getDataLayers().every(function(layer) {
                 return !layer.filterable;
@@ -1679,6 +1709,10 @@ function($scope, external, connectionService, datasetService, errorNotificationS
                 data.forEach(function(item) {
                     runDefaultQueryAndUpdate(item.database, item.table);
                 });
+            }
+
+            if(callback) {
+                callback();
             }
 
             return;
@@ -1698,7 +1732,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
                     tags: ["filter", $scope.type]
                 });
             }
-            removeFiltersForData(data, ++index, queryAfterFilter, fromSystem);
+            removeFiltersForData(data, ++index, queryAfterFilter, fromSystem, callback);
         });
     };
 
@@ -1930,7 +1964,7 @@ function($scope, external, connectionService, datasetService, errorNotificationS
     var updateOtherLayers = function(layer) {
         $scope.active.layers.forEach(function(other) {
             // Layers with the same database/table must all have the same unshared filter and filter setting.
-            if(other.database.name === layer.database.name && other.table.name === layer.table.name) {
+            if($scope.queryByTable && other.database.name === layer.database.name && other.table.name === layer.table.name) {
                 other.unsharedFilterField = $scope.functions.findFieldObject(layer.unsharedFilterField.columnName, "", other);
                 other.unsharedFilterValue = layer.unsharedFilterValue;
                 other.filterable = layer.filterable;

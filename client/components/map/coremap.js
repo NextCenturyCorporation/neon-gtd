@@ -54,8 +54,7 @@ coreMap.Map = function(elementId, opts) {
     this.selector = $("#" + elementId);
     this.onZoomRect = opts.onZoomRect;
     this.responsive = opts.responsive;
-    this.getNestedValue = opts.getNestedValue;
-    this.queryForMapPopupDataFunction = opts.queryForMapPopupDataFunction || function(database, table, id, callback) {
+    this.queryForMapPopupDataFunction = opts.queryForMapPopupDataFunction || function(database, table, idField, id, callback) {
         callback({});
     };
     this.linksPopupService = {};
@@ -402,24 +401,18 @@ coreMap.Map.prototype.createSelectControl =  function(layer) {
 
                 text += '</tr>';
 
-                for(i = 0; i < data.length; i++) {
+                data.forEach(function(item) {
                     text += '<tr>';
-
-                    for(var j = 0; j < feature.layer.clusterPopupFields.length; j++) {
-                        var field = feature.layer.clusterPopupFields[j];
-                        var fieldValue = me.getNestedValue(data[i], field);
-                        if(fieldValue) {
-                            text += '<td>' + fieldValue + '</td>';
-                        } else {
-                            text += '<td></td>';
-                        }
-                    }
-
+                    feature.layer.clusterPopupFields.forEach(function(popupField) {
+                        text += '<td>' + neon.helpers.getNestedValues(item, [popupField]).map(function(value) {
+                            return value[popupField];
+                        }).join(",") + '</td>';
+                    });
                     text += '</tr>';
-                }
+                });
                 text += '</table></div>';
             } else {
-                text = '<div><table class="table table-striped table-condensed">' + getNestedFields(feature.cluster ? feature.attributes : data[0]) + '</table></div>';
+                text = '<div><table class="table table-striped table-condensed">' + getPointPopupText(feature.cluster ? feature.attributes : data[0]) + '</table></div>';
             }
 
             me.featurePopup = new OpenLayers.Popup.FramedCloud("Data",
@@ -435,46 +428,50 @@ coreMap.Map.prototype.createSelectControl =  function(layer) {
 
             $(".olFramedCloudPopupContent td").linky(feature.layer.linkyConfig);
 
-            if(me.linksPopupService && feature.layer.linksSource) {
-                var latitudeValue = me.getNestedValue(data[0], feature.layer.latitudeMapping);
-                var longitudeValue = me.getNestedValue(data[0], feature.layer.longitudeMapping);
-                var key = me.linksPopupService.generatePointKey(latitudeValue, longitudeValue);
-                var tooltip = "latitude " + longitudeValue + ", longitude " + longitudeValue;
-                var link = me.linksPopupService.createLinkHtml(feature.layer.linksSource, key, tooltip);
+            if(!feature.cluster && me.linksPopupService && feature.layer.linksSource) {
+                // Use the latitude and longitude values of the point itself as set by the layer during feature creation.
+                var key = me.linksPopupService.generatePointKey(feature.lat, feature.lon);
 
-                // Position the button below the 'close box' which can have one of a few different 'top' values depending on the location of the point on the layer.
-                var topCss = $(".olPopupCloseBox").css("top");
-                topCss = Number(topCss.substring(0, topCss.length - 2)) + 25;
+                if(me.linksPopupService.hasLinks(feature.layer.linksSource, key)) {
+                    var tooltip = "latitude " + feature.lat + ", longitude " + feature.lon;
+                    var link = me.linksPopupService.createLinkHtml(feature.layer.linksSource, key, tooltip);
 
-                $("#" + me.elementId).find(".olPopupCloseBox").after("<div class='btn btn-default links-popup-button' style='top: " + topCss + "px;'>" + link + "</div>");
+                    // Position the button below the 'close box' which can have one of a few different 'top' values depending on the location of the point on the layer.
+                    var topCss = $(".olPopupCloseBox").css("top");
+                    topCss = Number(topCss.substring(0, topCss.length - 2)) + 25;
+
+                    $("#" + me.elementId).find(".olPopupCloseBox").after("<div class='btn btn-default links-popup-button' style='top: " + topCss + "px;'>" + link + "</div>");
+                }
             }
         };
 
         // Creates and returns table rows in data, recursively
-        var getNestedFields = function(data, fieldName) {
+        var getPointPopupText = function(data, prefix) {
             var text = "";
-            Object.keys(data).forEach(function(datum) {
-                if(datum.indexOf(".") === -1) {
-                    var name = fieldName ? fieldName + "." + datum : datum;
-                    if(typeof data[datum] === "object" && data[datum] && !data[datum].length) {
-                        text += getNestedFields(data[datum], name);
+            Object.keys(data).forEach(function(property) {
+                if(property.indexOf(".") < 0) {
+                    var name = prefix ? prefix + "." + property : property;
+                    if(_.isObject(data[property])) {
+                        text += getPointPopupText(data[property], name);
                     } else {
-                        text += '<tr><th>' + _.escape(name) + '</th><td>' + data[datum] + '</td>';
+                        text += '<tr><th>' + _.escape(name) + '</th><td>' + data[property] + '</td>';
                     }
                 }
             });
             return text;
         };
 
+        var idMapping = feature.layer.idMapping || "_id";
         if(feature.cluster && feature.cluster.length > 1) {
             var ids = [];
-            feature.cluster.forEach(function(obj) {
-                ids.push(obj.attributes._id);
+            feature.cluster.forEach(function(object) {
+                ids.push(neon.helpers.getNestedValues(object.attributes, [idMapping])[0][idMapping]);
             });
-            me.queryForMapPopupDataFunction(feature.layer.database, feature.layer.table, ids, createAndShowFeaturePopup);
+            me.queryForMapPopupDataFunction(feature.layer.database, feature.layer.table, idMapping, ids, createAndShowFeaturePopup);
         } else {
-            var id = feature.cluster && feature.cluster.length === 1 ? feature.cluster[0].attributes._id : feature.attributes._id;
-            me.queryForMapPopupDataFunction(feature.layer.database, feature.layer.table, id, createAndShowFeaturePopup);
+            var object = feature.cluster && feature.cluster.length === 1 ? feature.cluster[0] : feature;
+            var id = neon.helpers.getNestedValues(object.attributes, [idMapping])[0][idMapping];
+            me.queryForMapPopupDataFunction(feature.layer.database, feature.layer.table, idMapping, id, createAndShowFeaturePopup);
         }
     };
 

@@ -260,7 +260,7 @@ angular.module('neonDemo.controllers').controller('newsFeedController', ['$scope
     };
 
     $scope.functions.areDataFieldsValid = function() {
-        return $scope.functions.isFieldValid($scope.active.dateField) || $scope.functions.isFieldValid($scope.active.contentField);
+        return $scope.functions.isFieldValid($scope.active.dateField) && $scope.functions.isFieldValid($scope.active.contentField);
     };
 
     $scope.functions.addToQuery = function(query) {
@@ -271,8 +271,7 @@ angular.module('neonDemo.controllers').controller('newsFeedController', ['$scope
         if($scope.functions.isFieldValid($scope.active.secondaryTitleField)) {
             fields.push($scope.active.secondaryTitleField.columnName);
         }
-        query.withFields(fields).sortBy($scope.active.dateField.columnName, $scope.active.sortDirection).limit($scope.active.total);
-        return query;
+        return query.withFields(fields).sortBy($scope.active.dateField.columnName, $scope.active.sortDirection).limit($scope.active.total);
     };
 
     $scope.functions.updateData = function(data) {
@@ -295,25 +294,32 @@ angular.module('neonDemo.controllers').controller('newsFeedController', ['$scope
      */
     var updateData = function(data) {
         data.forEach(function(item) {
-            var primary = $scope.functions.isFieldValid($scope.active.primaryTitleField) ? neon.helpers.getNestedValue(item, $scope.active.primaryTitleField.columnName) : "";
-            var secondary = $scope.functions.isFieldValid($scope.active.secondaryTitleField) ? neon.helpers.getNestedValue(item, $scope.active.secondaryTitleField.columnName) : "";
-            var createdLinks = createExternalLinksForNewsItemData(primary, secondary);
-
-            var content = neon.helpers.getNestedValue(item, $scope.active.contentField.columnName);
-            if(_.isArray(content)) {
-                content = content.join("\n");
+            var fields = [$scope.active.contentField.columnName, $scope.active.dateField.columnName];
+            if($scope.functions.isFieldValid($scope.active.primaryTitleField)) {
+                fields.push($scope.active.primaryTitleField.columnName);
+            }
+            if($scope.functions.isFieldValid($scope.active.secondaryTitleField)) {
+                fields.push($scope.active.secondaryTitleField.columnName);
             }
 
-            $scope.active.data.push({
-                date: new Date(neon.helpers.getNestedValue(item, $scope.active.dateField.columnName)),
-                primaryTitle: primary,
-                primaryTitleTranslated: primary,
-                secondaryTitle: secondary,
-                secondaryTitleTranslated: secondary,
-                content: content,
-                contentTranslated: content,
-                linksPopupButtonJson: createLinksPopupButtonJson(primary, secondary),
-                showLinksPopupButton: !createdLinks
+            neon.helpers.getNestedValues(item, fields).forEach(function(newsValue) {
+                var primary = $scope.functions.isFieldValid($scope.active.primaryTitleField) ? newsValue[$scope.active.primaryTitleField.columnName] : "";
+                var secondary = $scope.functions.isFieldValid($scope.active.secondaryTitleField) ? newsValue[$scope.active.secondaryTitleField.columnName] : "";
+                var createdLinks = createExternalLinksForNewsItemData(primary, secondary);
+                var content = newsValue[$scope.active.contentField.columnName];
+                var date = newsValue[$scope.active.dateField.columnName] ? new Date(newsValue[$scope.active.dateField.columnName]) : null;
+
+                $scope.active.data.push({
+                    date: date,
+                    primaryTitle: primary,
+                    primaryTitleTranslated: primary,
+                    secondaryTitle: secondary,
+                    secondaryTitleTranslated: secondary,
+                    content: content,
+                    contentTranslated: content,
+                    linksPopupButtonJson: createLinksPopupButtonJson(primary, secondary),
+                    showLinksPopupButton: !createdLinks
+                });
             });
         });
 
@@ -449,19 +455,19 @@ angular.module('neonDemo.controllers').controller('newsFeedController', ['$scope
     };
 
     $scope.handleChangePrimaryTitleField = function() {
-        $scope.functions.logChangeAndUpdate("primaryTitleField", $scope.active.primaryTitleField);
+        $scope.functions.logChangeAndUpdate("primaryTitleField", $scope.active.primaryTitleField ? $scope.active.primaryTitleField.columnName : undefined);
     };
 
     $scope.handleChangeSecondaryTitleField = function() {
-        $scope.functions.logChangeAndUpdate("secondaryTitleField", $scope.active.secondaryTitleField);
+        $scope.functions.logChangeAndUpdate("secondaryTitleField", $scope.active.secondaryTitleField ? $scope.active.secondaryTitleField.columnName : undefined);
     };
 
     $scope.handleChangeDateField = function() {
-        $scope.functions.logChangeAndUpdate("dateField", $scope.active.dateField);
+        $scope.functions.logChangeAndUpdate("dateField", $scope.active.dateField.columnName);
     };
 
     $scope.handleChangeContentField = function() {
-        $scope.functions.logChangeAndUpdate("contentField", $scope.active.contentField);
+        $scope.functions.logChangeAndUpdate("contentField", $scope.active.contentField.columnName);
     };
 
     /**
@@ -490,7 +496,7 @@ angular.module('neonDemo.controllers').controller('newsFeedController', ['$scope
      */
     $scope.getNewsItemStyleClass = function(item) {
         var style = [];
-        if($scope.selectedDate && item.date.getTime() > $scope.selectedDate.getTime()) {
+        if($scope.selectedDate && item.date && item.date.getTime() > $scope.selectedDate.getTime()) {
             style.push("future");
         }
         if(newsHighlights.highlights.primaryTitles.length || newsHighlights.highlights.secondaryTitles.length) {

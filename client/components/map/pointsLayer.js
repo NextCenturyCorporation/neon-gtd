@@ -37,6 +37,7 @@ coreMap.Map.Layer.PointsLayer = OpenLayers.Class(OpenLayers.Layer.Vector, {
     table: '',
     latitudeMapping: '',
     longitudeMapping: '',
+    idMapping: '',
     sizeMapping: '',
     defaultColor: '',
     categoryMapping: '',
@@ -67,10 +68,14 @@ coreMap.Map.Layer.PointsLayer = OpenLayers.Class(OpenLayers.Layer.Vector, {
             this.ClusterClass = new OpenLayers.Class(OpenLayers.Strategy.Cluster, {
                 attribute: null,
                 shouldCluster: function(cluster, feature) {
-                    var clusterVal = me.getValueFromDataElement(me.categoryMapping, cluster.cluster[0].attributes);
-                    var featureVal = me.getValueFromDataElement(me.categoryMapping, feature.attributes);
+                    var clusterValue = neon.helpers.getNestedValues(cluster.cluster[0].attributes, [me.categoryMapping]).map(function(value) {
+                        return value[me.categoryMapping];
+                    });
+                    var featureValue = neon.helpers.getNestedValues(feature.attributes, [me.categoryMapping]).map(function(value) {
+                        return value[me.categoryMapping];
+                    });
                     var superProto = OpenLayers.Strategy.Cluster.prototype;
-                    return (clusterVal === featureVal && superProto.shouldCluster.apply(this, arguments));
+                    return (_.isEqual(clusterValue, featureValue) && superProto.shouldCluster.apply(this, arguments));
                 },
                 CLASS_NAME: "OpenLayers.Strategy.AttributeCluster"
             });
@@ -104,7 +109,6 @@ coreMap.Map.Layer.PointsLayer = OpenLayers.Class(OpenLayers.Layer.Vector, {
 
         this.visibility = true;
         this.colorScale = d3.scale.ordinal().range(neonColors.LIST);
-        this.getNestedValue = neon.helpers.getNestedValue;
     },
 
     createClusterStyle: function() {
@@ -221,7 +225,8 @@ coreMap.Map.Layer.PointsLayer = OpenLayers.Class(OpenLayers.Layer.Vector, {
  * @method calculateColor
  */
 coreMap.Map.Layer.PointsLayer.prototype.calculateColor = function(element) {
-    var category = this.getValueFromDataElement(this.categoryMapping, element);
+    // TODO How should we handle array fields that contain multiple colors?
+    var category = neon.helpers.getNestedValues(element, [this.categoryMapping])[0][this.categoryMapping];
     var color;
 
     if(this.colors[category]) {
@@ -252,8 +257,11 @@ coreMap.Map.Layer.PointsLayer.prototype.calculateColor = function(element) {
  */
 coreMap.Map.Layer.PointsLayer.prototype.calculateMaxRadius = function() {
     var me = this;
-    return d3.max(me.data, function(el) {
-        return me.getValueFromDataElement(me.sizeMapping, el);
+    return d3.max(me.data, function(item) {
+        var values = neon.helpers.getNestedValues(item, [me.sizeMapping]).map(function(value) {
+            return value[me.sizeMapping];
+        }).sort();
+        return values[values.length - 1];
     });
 };
 
@@ -264,8 +272,11 @@ coreMap.Map.Layer.PointsLayer.prototype.calculateMaxRadius = function() {
  */
 coreMap.Map.Layer.PointsLayer.prototype.calculateMinRadius = function() {
     var me = this;
-    return d3.min(me.data, function(el) {
-        return me.getValueFromDataElement(me.sizeMapping, el);
+    return d3.min(me.data, function(item) {
+        var values = neon.helpers.getNestedValues(item, [me.sizeMapping]).map(function(value) {
+            return value[me.sizeMapping];
+        }).sort();
+        return values[0];
     });
 };
 
@@ -277,11 +288,14 @@ coreMap.Map.Layer.PointsLayer.prototype.calculateMinRadius = function() {
  * @method calculateRadius
  */
 coreMap.Map.Layer.PointsLayer.prototype.calculateRadius = function(element) {
+    var me = this;
     var zoomLevel = this.map.zoom;
-    var dataVal = this.getValueFromDataElement(this.sizeMapping, element);
-    var percentOfDataRange = (dataVal - this.minRadius) / this._dataRadiusDiff;
+    // If the size field contains an array of numbers, arbitrarily take the smallest.
+    var size = neon.helpers.getNestedValues(element, [this.sizeMapping]).map(function(value) {
+        return value[me.sizeMapping];
+    }).sort()[0];
+    var percentOfDataRange = (size - this.minRadius) / this._dataRadiusDiff;
     var radius = coreMap.Map.Layer.PointsLayer.MIN_RADIUS + (percentOfDataRange * this._baseRadiusDiff) || coreMap.Map.Layer.PointsLayer.MIN_RADIUS;
-
     return radius * (zoomLevel / 2);
 };
 
@@ -309,41 +323,23 @@ coreMap.Map.Layer.PointsLayer.prototype.createPoint = function(element, longitud
 };
 
 /**
- * Gets a value from a data element using a mapping string or function.
- * @param {String | Function} mapping The mapping from data element object to value.
- * @param {Object} element An element of the data array.
- * @return The value in the data element.
- * @method getValueFromDataElement
- */
-coreMap.Map.Layer.PointsLayer.prototype.getValueFromDataElement = function(mapping, element) {
-    if(typeof mapping === 'function') {
-        return mapping.call(this, element);
-    }
-    return this.getNestedValue(element, mapping);
-};
-
-/**
  * Checks if the mappings exist in the data element
  * @param {Object} element An element of the data array.
  * @return {Boolean} True if element contains all the mappings, false otherwise
  * @method areValuesInDataElement
  */
 coreMap.Map.Layer.PointsLayer.prototype.areValuesInDataElement = function(element) {
-    if(this.getValueFromDataElement(this.latitudeMapping, element) !== undefined &&
-        this.getValueFromDataElement(this.longitudeMapping, element) !== undefined) {
-        return true;
-    }
-
-    return false;
+    var values = neon.helpers.getNestedValues(element, [this.latitudeMapping, this.longitudeMapping]);
+    return values[0][this.latitudeMapping] !== undefined && values[0][this.longitudeMapping] !== undefined;
 };
 
-coreMap.Map.Layer.PointsLayer.prototype.setData = function(data) {
+coreMap.Map.Layer.PointsLayer.prototype.setData = function(data, limit) {
     this.data = data;
     if(this.gradient) {
         this.updateGradient();
     }
     this.updateRadii();
-    this.updateFeatures();
+    this.updateFeatures(limit);
     if(this.dateFilterStrategy) {
         this.dateFilterStrategy.deactivate();
     }
@@ -369,63 +365,66 @@ coreMap.Map.Layer.PointsLayer.prototype.setDateFilter = function(filterBounds) {
  */
 coreMap.Map.Layer.PointsLayer.prototype.updateGradient = function() {
     var me = this;
-
     this.rainbow = new Rainbow();
 
     // Check if category mapping is valid date before creating gradient
+    if(this.data.length) {
+        var category = neon.helpers.getNestedValues(this.data[0], [this.categoryMapping])[0][this.categoryMapping];
+        if(category && !isNaN(new Date(category))) {
+            var startDate = new Date(category);
+            var endDate = new Date(category);
 
-    if(_.isString(me.categoryMapping) && this.data.length) {
-        var value = this.getValueFromDataElement(this.categoryMapping, this.data[0]);
-
-        if(value && !isNaN(new Date(value))) {
-            var minData = _.min(this.data, function(datum) {
-                var date = new Date(me.getValueFromDataElement(me.categoryMapping, datum));
-                return date.getTime();
+            this.data.forEach(function(item) {
+                var dates = neon.helpers.getNestedValues(item, [me.categoryMapping]).filter(function(value) {
+                    return value[me.categoryMapping];
+                }).map(function(value) {
+                    return new Date(value[me.categoryMapping]);
+                }).sort(function(a, b) {
+                    return a.getTime() - b.getTime();
+                });
+                if(dates.length) {
+                    startDate = startDate.getTime() < dates[0].getTime() ? startDate : dates[0];
+                    endDate = endDate.getTime() > dates[dates.length - 1].getTime() ? endDate : dates[dates.length - 1];
+                }
             });
-            var maxData = _.max(this.data, function(datum) {
-                var date = new Date(me.getValueFromDataElement(me.categoryMapping, datum));
-                return date.getTime();
-            });
 
-            var startDate = new Date(this.getValueFromDataElement(this.categoryMapping, minData));
-            var endDate = new Date(this.getValueFromDataElement(this.categoryMapping, maxData));
-            startDate = startDate.getTime();
-            endDate = endDate.getTime();
-
-            if(startDate === endDate) {
-                endDate += 1;
-            }
-
-            this.rainbow.setNumberRange(startDate, endDate);
+            this.rainbow.setNumberRange(startDate.getTime(), endDate.getTime() + (startDate.getTime() === endDate.getTime() ? 1 : 0));
         }
     }
 };
 
-coreMap.Map.Layer.PointsLayer.prototype.updateFeatures = function() {
-    var mapData = [];
+coreMap.Map.Layer.PointsLayer.prototype.updateFeatures = function(limit) {
     var me = this;
+    var mapData = [];
 
-    _.each(this.data, function(element) {
-        var longitude = me.getValueFromDataElement(me.longitudeMapping, element);
-        var latitude = me.getValueFromDataElement(me.latitudeMapping, element);
+    this.pointTotal = 0;
+    this.pointLimit = limit;
 
-        if($.isNumeric(latitude) && $.isNumeric(longitude)) {
-            var pointFeature = me.createPoint(element, longitude, latitude);
+    var dateMapping = this.dateMapping || coreMap.Map.Layer.PointsLayer.DEFAULT_DATE_MAPPING;
+    var fields = [this.latitudeMapping, this.longitudeMapping, dateMapping];
 
-            var date = 'none';
-            var dateMapping = me.dateMapping || coreMap.Map.Layer.PointsLayer.DEFAULT_DATE_MAPPING;
-            if(me.getValueFromDataElement(dateMapping, element)) {
-                date = new Date(me.getValueFromDataElement(dateMapping, element));
+    this.data.forEach(function(item) {
+        var pointValues = neon.helpers.getNestedValues(item, fields);
+        me.pointTotal += pointValues.length;
+        pointValues.slice(0, limit).forEach(function(pointValue) {
+            if($.isNumeric(pointValue[me.latitudeMapping]) && $.isNumeric(pointValue[me.longitudeMapping])) {
+                var pointFeature = me.createPoint(item, pointValue[me.longitudeMapping], pointValue[me.latitudeMapping]);
+
+                // Note: The date mapping must be on the top level of attributes in order for filtering to work.
+                // This means even if the date is in to.date, keep the date at the top level with key "to.date" instead
+                // of in the object "to".
+                pointFeature.attributes[fields.date] = pointValue[dateMapping] ? new Date(pointValue[dateMapping]) : "none";
+
+                // Save the latitude and longitude of the point in the feature itself because the latitude and longitude in the feature attributes may be arrays of multiple values.
+                // Used in the point's popup.
+                pointFeature.lon = pointValue[me.longitudeMapping];
+                pointFeature.lat = pointValue[me.latitudeMapping];
+
+                mapData.push(pointFeature);
             }
-
-            // Note: The date mapping must be on the top level of attributes in order for filtering to work.
-            // This means even if the date is in to.date, keep the date at the top level with key "to.date" instead
-            // of in the object "to".
-            pointFeature.attributes[dateMapping] = date;
-
-            mapData.push(pointFeature);
-        }
+        });
     });
+
     this.destroyFeatures();
     this.addFeatures(mapData);
 };
@@ -455,6 +454,6 @@ coreMap.Map.Layer.PointsLayer.DEFAULT_SELECT_COLOR = "#88d292";
 coreMap.Map.Layer.PointsLayer.DEFAULT_SIZE_MAPPING = "count_";
 coreMap.Map.Layer.PointsLayer.DEFAULT_STROKE_WIDTH = 0;
 coreMap.Map.Layer.PointsLayer.DEFAULT_STROKE_COLOR = "#ffffff";
-coreMap.Map.Layer.PointsLayer.MIN_RADIUS = 1;
-coreMap.Map.Layer.PointsLayer.MAX_RADIUS = 5;
+coreMap.Map.Layer.PointsLayer.MIN_RADIUS = 2;
+coreMap.Map.Layer.PointsLayer.MAX_RADIUS = 8;
 coreMap.Map.Layer.PointsLayer.DEFAULT_CURSOR = "pointer";

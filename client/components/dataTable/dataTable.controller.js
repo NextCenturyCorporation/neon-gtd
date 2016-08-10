@@ -102,23 +102,44 @@ angular.module('neonDemo.controllers').controller('dataTableController', ['$scop
      * @private
      */
     var updateColumns = function() {
+        var OBJECT = "{...}";
+
+        var getCellText = function(data, fields) {
+            var values = data[fields[0]];
+
+            if(_.isArray(values)) {
+                return "[" + [].concat.apply([], values.map(function(item) {
+                    if((_.isArray(item) || _.isObject(item)) && fields.length > 1) {
+                        return getCellText(item, fields.slice(1));
+                    }
+                    return _.isArray(item) ? item.join(",") : (_.isObject(item) ? OBJECT : item);
+                })).join(",") + "]";
+            }
+
+            if(_.isObject(values) && fields.length > 1 && typeof values[fields[1]] !== "undefined") {
+                return getCellText(values, fields.slice(1));
+            }
+
+            return _.isObject($sce.valueOf(values)) ? OBJECT : ("" + values);
+        };
+
         // Use the fields in the order they are defined in the Neon dashboard configuration (so we can't use sorted $scope.active.fields) for the order of the columns.
-        var columnDefinitions = _.map($scope.functions.getUnsortedFields(), function(field) {
+        var columnDefinitions = _.map($scope.functions.getUnsortedFields(), function(fieldObject) {
             var config = {
-                field: field.columnName,
-                headerName: field.prettyName,
+                field: fieldObject.columnName,
+                headerName: fieldObject.prettyName,
                 onCellClicked: handleRowClick,
                 suppressSizeToFit: true,
                 cellRenderer: function(params) {
-                    return neon.helpers.getNestedValue(params.data, params.colDef.field);
+                    return getCellText(params.data, params.colDef.field.split("."));
                 }
             };
 
-            if(field.class) {
-                config.cellClass = field.class;
+            if(fieldObject.class) {
+                config.cellClass = fieldObject.class;
             }
 
-            if(hiddenFields[field.columnName]) {
+            if(hiddenFields[fieldObject.columnName]) {
                 config.hide = true;
             }
 
@@ -315,7 +336,7 @@ angular.module('neonDemo.controllers').controller('dataTableController', ['$scop
 
     $scope.handleChangeSortField = function() {
         updateSort();
-        $scope.functions.logChangeAndUpdate("sortField", $scope.active.sortByField.name);
+        $scope.functions.logChangeAndUpdate("sortField", $scope.active.sortByField.columnName);
     };
 
     $scope.handleChangeSortDirection = function() {

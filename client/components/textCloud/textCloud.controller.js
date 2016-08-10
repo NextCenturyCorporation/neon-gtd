@@ -64,10 +64,11 @@ angular.module('neonDemo.controllers').controller('textCloudController', ['$scop
         return $scope.functions.isFieldValid($scope.active.dataField);
     };
 
-    $scope.functions.executeQuery = function(connection, query) {
-        // Note that the where clause must be null, not undefined.
-        return connection.executeArrayCountQuery($scope.active.database.name, $scope.active.table.name, $scope.active.dataField.columnName, $scope.active.limit,
-                query.filter.whereClause || null);
+    $scope.functions.addToQuery = function(query, unsharedFilterWhereClause) {
+        var whereClause = neon.query.where($scope.active.dataField.columnName, "!=", null);
+        return query.where(unsharedFilterWhereClause ? neon.query.and(whereClause, unsharedFilterWhereClause) : whereClause)
+            .groupBy($scope.active.dataField.columnName).aggregate(neon.query.COUNT, '*', 'count').sortBy('count', neon.query.DESCENDING)
+            .limit($scope.active.limit).enableAggregateArraysByElement();
     };
 
     $scope.functions.updateData = function(data) {
@@ -76,13 +77,14 @@ angular.module('neonDemo.controllers').controller('textCloudController', ['$scop
         if($scope.functions.isFilterSet() && $scope.active.andFilters) {
             cloudData = cloudData.filter(function(item) {
                 var index = _.findIndex($scope.filters, {
-                    value: item.key
+                    value: item[$scope.active.dataField.columnName]
                 });
                 return index === -1;
             });
         }
 
         $scope.active.data = cloudData.map(function(item) {
+            item.key = item[$scope.active.dataField.columnName];
             item.keyTranslated = item.key;
             return item;
         });
@@ -212,6 +214,11 @@ angular.module('neonDemo.controllers').controller('textCloudController', ['$scop
         $scope.functions.logChangeAndUpdate("dataField", $scope.active.dataField.columnName);
     };
 
+    $scope.handleChangeLimit = function() {
+        $scope.active.limit = $scope.active.limit || 1;
+        $scope.functions.logChangeAndUpdate("limit", $scope.active.limit, "button");
+    };
+
     $scope.handleChangeAndFilters = function() {
         $scope.functions.logChangeAndUpdate("andFilters", $scope.active.andFilters, "button");
         $scope.functions.updateNeonFilter();
@@ -269,12 +276,12 @@ angular.module('neonDemo.controllers').controller('textCloudController', ['$scop
             }]
         };
         finalObject.data[0].fields.push({
-            query: "key",
-            pretty: "Key"
+            query: $scope.active.dataField.columnName,
+            pretty: $scope.active.dataField.columnName
         });
         finalObject.data[0].fields.push({
             query: "count",
-            pretty: "Count"
+            pretty: "count"
         });
         return finalObject;
     };
@@ -304,11 +311,11 @@ angular.module('neonDemo.controllers').controller('textCloudController', ['$scop
     };
 
     $scope.functions.createMenuText = function() {
-        return !$scope.functions.isFilterSet() && !$scope.active.data.length ? "No Data" : "";
+        return !$scope.functions.isFilterSet() && !$scope.active.data.length ? "No Data" : "Top " + $scope.active.data.length;
     };
 
     $scope.functions.showMenuText = function() {
-        return !$scope.functions.isFilterSet() && !$scope.active.data.length;
+        return true;
     };
 
     $scope.getFilterData = function() {

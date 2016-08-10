@@ -651,6 +651,77 @@ layouts:
         table: earthquakes
         dataField: net
 
+customFilters: 
+  test: 
+    earthquakes: 
+      -
+        label: Types
+        items:
+          -
+            label: Earthquake
+            field: type
+            value: earthquake
+          -
+            label: Explosion
+            field: type
+            value: explosion
+          -
+            label: Landslide
+            field: type
+            value: landslide
+          -
+            label: Mining Explosion
+            field: type
+            value: mining_explosion
+          -
+            label: Quarry
+            field: type
+            value: quarry
+          -
+            label: Quarry Blast
+            field: type
+            value: quarry_blast
+          -
+            label: Sonicboom
+            field: type
+            value: sonicboom
+      -
+        label: Networks
+        input:
+            field: net
+    myTable: 
+      -
+        label: My Group
+        items:
+          -
+            label: Equals My Value
+            field: myField
+            value: myValue
+          -
+            label: Contains My Value
+            field: myField
+            operator: contains
+            value: myValue
+          -
+            label: Not Null
+            field: myField
+        input:
+            field: myField
+            operator: contains
+      -
+        label: My Group 2
+        multi:
+          myField:
+            -
+              value: A
+            -
+              operator: contains
+              value: B
+            -
+              value:
+                - C
+                - D
+
 files:
   datasets:
     - ./app/config/sample.dataset.config.json

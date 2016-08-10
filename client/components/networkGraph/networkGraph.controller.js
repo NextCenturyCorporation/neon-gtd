@@ -23,7 +23,7 @@
  * @constructor
  */
 angular.module('neonDemo.controllers').controller('networkGraphController', ['$scope', '$timeout', '$filter', function($scope, $timeout, $filter) {
-    $scope.dataIsLimited = false;
+    $scope.isDataLimited = false;
     $scope.bucketizer = dateBucketizer();
     $scope.mediator = undefined;
 
@@ -59,16 +59,12 @@ angular.module('neonDemo.controllers').controller('networkGraphController', ['$s
     $scope.active.selectedNodeIds = [];
 
     $scope.functions.createMenuText = function() {
-        if(!$scope.mediator || !$scope.mediator.getNumberOfNodes()) {
-            return "No Data";
+        if(!$scope.mediator || !$scope.mediator.nodesTotal) {
+            return "No Nodes";
         }
-        var text = $scope.mediator.getNumberOfNodes() + " Nodes";
+        var text = $scope.mediator.nodesTotal + " Nodes" + ($scope.mediator.nodesShown ? "" : " Hidden") + ($scope.isDataLimited ? " [Limited]" : "");
         if($scope.bucketizer && $scope.mediator && $scope.mediator.getSelectedDateBucket()) {
-            var date = $filter("date")($scope.bucketizer.getDateForBucket($scope.mediator.getSelectedDateBucket()).toISOString(), $scope.bucketizer.getDateFormat());
-            text += " (" + date + ")";
-        }
-        if($scope.dataIsLimited) {
-            text += " [Limited]";
+            text += " (" + $filter("date")($scope.bucketizer.getDateForBucket($scope.mediator.getSelectedDateBucket()).toISOString(), $scope.bucketizer.getDateFormat()) + ")";
         }
         return text;
     };
@@ -172,8 +168,7 @@ angular.module('neonDemo.controllers').controller('networkGraphController', ['$s
                 return $scope.functions.getElement(".directed-graph").width();
             },
             redrawGraph: redrawGraphInAngularDigest,
-            updateSelectedNodeIds: updateSelectedNodeIdsInAngularDigest,
-            getNestedValue: neon.helpers.getNestedValue
+            updateSelectedNodeIds: updateSelectedNodeIdsInAngularDigest
         });
 
         $scope.mediator.setBucketizer($scope.bucketizer);
@@ -200,21 +195,31 @@ angular.module('neonDemo.controllers').controller('networkGraphController', ['$s
     var publishNews = function(data) {
         var news = [];
         data.forEach(function(item) {
-            var newsItem = {
-                primaryTitle: neon.helpers.getNestedValue(item, $scope.active.nodeField.columnName)
-            };
+            var fields = [$scope.active.nodeField.columnName];
             if($scope.functions.isFieldValid($scope.active.dateField)) {
-                newsItem.date = new Date(neon.helpers.getNestedValue(item, $scope.active.dateField.columnName));
+                fields.push($scope.active.dateField.columnName);
             }
             if($scope.functions.isFieldValid($scope.active.nameField)) {
-                newsItem.secondaryTitle = neon.helpers.getNestedValue(item, $scope.active.nameField.columnName);
+                fields.push($scope.active.nameField.columnName);
             }
             if($scope.functions.isFieldValid($scope.active.textField)) {
-                newsItem.content = neon.helpers.getNestedValue(item, $scope.active.textField.columnName);
+                fields.push($scope.active.textField.columnName);
+            }
+
+            neon.helpers.getNestedValues(item, fields).forEach(function(value) {
+                news.push({
+                    primaryTitle: value[$scope.active.nodeField.columnName],
+                    secondaryTitle: $scope.functions.isFieldValid($scope.active.nameField) ? value[$scope.active.nameField.columnName] : undefined,
+                    date: $scope.functions.isFieldValid($scope.active.dateField) ? value[$scope.active.dateField.columnName] : undefined,
+                    content: $scope.functions.isFieldValid($scope.active.textField) ? value[$scope.active.textField.columnName] : undefined
+                });
+            });
+
+            // TODO Do we need this?
+            if($scope.functions.isFieldValid($scope.active.textField)) {
                 // Delete the text from the data to improve our memory preformance because we don't need it any longer.
                 delete item[$scope.active.textField.columnName];
             }
-            news.push(newsItem);
         });
 
         $scope.functions.publish("news", {
@@ -242,6 +247,8 @@ angular.module('neonDemo.controllers').controller('networkGraphController', ['$s
     };
 
     $scope.functions.areDataFieldsValid = function() {
+        // This is checked before a query is run, so only return true if runQuery is enabled or node(s) are selected.
+        // Since network graph queries can take a long time, we don't want to run them all the time (only on demand).
         return $scope.functions.isFieldValid($scope.active.nodeField) && ($scope.runQuery || $scope.active.selectedNodeIds.length);
     };
 
@@ -250,6 +257,7 @@ angular.module('neonDemo.controllers').controller('networkGraphController', ['$s
      * @method queryForNetworkGraph
      */
     $scope.queryForNetworkGraph = function() {
+        // Enable runQuery to signal that the next query triggered should be run (not ignored).
         $scope.runQuery = true;
         // TODO Log user button click
         $scope.functions.queryAndUpdate();
@@ -262,6 +270,7 @@ angular.module('neonDemo.controllers').controller('networkGraphController', ['$s
      * @private
      */
     $scope.queryForNodeList = function() {
+        // Enable runQuery to signal that the next query triggered should be run (not ignored).
         $scope.runQuery = true;
         // TODO Log user button click
         $scope.functions.queryAndUpdate({
@@ -275,18 +284,19 @@ angular.module('neonDemo.controllers').controller('networkGraphController', ['$s
 
     var updateNodeListData = function(data) {
         if(data) {
+            // Reset runQuery on a response containing data (as opposed to a reset in which the data is null).
             $scope.runQuery = false;
         }
         var items = data || [];
         _.each(items, function(item) {
             var nodeId = item[$scope.active.nodeField.columnName];
-            if($scope.existingNodeIds.indexOf(nodeId) < 0) {
-                $scope.existingNodeIds.push(nodeId);
+            if($scope.active.existingNodeIds.indexOf(nodeId) < 0) {
+                $scope.active.existingNodeIds.push(nodeId);
             }
         });
 
         // Sort the nodes so they are displayed in alphabetical order in the options dropdown.
-        $scope.existingNodeIds.sort(function(a, b) {
+        $scope.active.existingNodeIds.sort(function(a, b) {
             if(typeof a === "string" && typeof b === "string") {
                 return a.toLowerCase().localeCompare(b.toLowerCase());
             }
@@ -368,11 +378,12 @@ angular.module('neonDemo.controllers').controller('networkGraphController', ['$s
 
     $scope.functions.updateData = function(data) {
         if(data) {
+            // Reset runQuery on a response containing data (as opposed to a reset in which the data is null).
             $scope.runQuery = false;
         }
 
         var graphData = data || [];
-        $scope.dataIsLimited = graphData.length ? (graphData.length >= $scope.active.limit) : false;
+        $scope.isDataLimited = graphData.length ? (graphData.length >= $scope.active.limit) : false;
         $scope.active.legend = graphData.length ? $scope.mediator.createLegend($scope.active.clusterNodes, $scope.functions.isFieldValid($scope.active.flagField), $scope.tooltip.flagLabel) : [];
 
         recreateGraph();
@@ -426,35 +437,35 @@ angular.module('neonDemo.controllers').controller('networkGraphController', ['$s
     };
 
     $scope.handleChangeNameField = function() {
-        $scope.functions.logChangeAndUpdate("nameField", $scope.active.nameField.columnName);
+        $scope.functions.logChangeAndUpdate("nameField", $scope.active.nameField ? $scope.active.nameField.columnName : undefined);
     };
 
     $scope.handleChangeSizeField = function() {
-        $scope.functions.logChangeAndUpdate("sizeField", $scope.active.sizeField.columnName);
+        $scope.functions.logChangeAndUpdate("sizeField", $scope.active.sizeField ? $scope.active.sizeField.columnName : undefined);
     };
 
     $scope.handleChangeLinkedNodeField = function() {
-        $scope.functions.logChangeAndUpdate("linkedNodeField", $scope.active.linkedNodeField.columnName);
+        $scope.functions.logChangeAndUpdate("linkedNodeField", $scope.active.linkedNodeField ? $scope.active.linkedNodeField.columnName : undefined);
     };
 
     $scope.handleChangeLinkedNameField = function() {
-        $scope.functions.logChangeAndUpdate("linkedNameField", $scope.active.linkedNameField.columnName);
+        $scope.functions.logChangeAndUpdate("linkedNameField", $scope.active.linkedNameField ? $scope.active.linkedNameField.columnName : undefined);
     };
 
     $scope.handleChangeLinkedSizeField = function() {
-        $scope.functions.logChangeAndUpdate("linkedSizeField", $scope.active.linkedSizeField.columnName);
+        $scope.functions.logChangeAndUpdate("linkedSizeField", $scope.active.linkedSizeField ? $scope.active.linkedSizeField.columnName : undefined);
     };
 
     $scope.handleChangeDateField = function() {
-        $scope.functions.logChangeAndUpdate("dateField", $scope.active.dateField.columnName);
+        $scope.functions.logChangeAndUpdate("dateField", $scope.active.dateField ? $scope.active.dateField.columnName : undefined);
     };
 
     $scope.handleChangeFlagField = function() {
-        $scope.functions.logChangeAndUpdate("flagField", $scope.active.flagField.columnName);
+        $scope.functions.logChangeAndUpdate("flagField", $scope.active.flagField ? $scope.active.flagField.columnName : undefined);
     };
 
     $scope.handleChangeTextField = function() {
-        $scope.functions.logChangeAndUpdate("textField", $scope.active.textField.columnName);
+        $scope.functions.logChangeAndUpdate("textField", $scope.active.textField ? $scope.active.textField.columnName : undefined);
     };
 
     $scope.handleChangeLimit = function() {
@@ -462,11 +473,13 @@ angular.module('neonDemo.controllers').controller('networkGraphController', ['$s
     };
 
     $scope.handleToggleHideSimpleNetworks = function() {
-        $scope.functions.logChangeAndUpdate("hideSimpleNetworks", $scope.active.limit, "button");
+        $scope.runQuery = true;
+        $scope.functions.logChangeAndUpdate("hideSimpleNetworks", $scope.active.hideSimpleNetworks, "button");
     };
 
     $scope.handleToggleClusterNodes = function() {
-        $scope.functions.logChangeAndUpdate("clusterNodes", $scope.active.limit, "button");
+        $scope.runQuery = true;
+        $scope.functions.logChangeAndUpdate("clusterNodes", $scope.active.clusterNodes, "button");
     };
 
     $scope.functions.hideHeaders = function() {
@@ -484,7 +497,7 @@ angular.module('neonDemo.controllers').controller('networkGraphController', ['$s
                 query: $scope.active.linkedNodeField.columnName,
                 pretty: $scope.active.linkedNodeField.prettyName
             }];
-            query.groupBy($scope.active.nodeField.columnName, $scope.active.linkedNodeField);
+            query.groupBy($scope.active.nodeField.columnName, $scope.active.linkedNodeField.columnName);
         } else if($scope.functions.isFieldValid($scope.active.nodeField)) {
             fields = [{
                 query: $scope.active.nodeField.columnName,
@@ -517,15 +530,15 @@ angular.module('neonDemo.controllers').controller('networkGraphController', ['$s
     $scope.functions.addToBindings = function(bindings) {
         bindings.feedName = $scope.bindFeedName ? $scope.bindFeedName : undefined;
         bindings.feedType = $scope.bindFeedType ? $scope.bindFeedType : undefined;
-        bindings.nodeField = $scope.functions.isFieldValid($scope.active.nodeField) ? $scope.active.nodeField : undefined;
-        bindings.nameField = $scope.functions.isFieldValid($scope.active.nameField) ? $scope.active.nameField : undefined;
-        bindings.sizeField = $scope.functions.isFieldValid($scope.active.sizeField) ? $scope.active.sizeField : undefined;
-        bindings.dateField = $scope.functions.isFieldValid($scope.active.dateField) ? $scope.active.dateField : undefined;
-        bindings.flagField = $scope.functions.isFieldValid($scope.active.flagField) ? $scope.active.flagField : undefined;
-        bindings.textField = $scope.functions.isFieldValid($scope.active.textField) ? $scope.active.textField : undefined;
-        bindings.linkedNodeField = $scope.functions.isFieldValid($scope.active.linkedNodeField) ? $scope.active.linkedNodeField : undefined;
-        bindings.linkedNameField = $scope.functions.isFieldValid($scope.active.linkedNameField) ? $scope.active.linkedNameField : undefined;
-        bindings.linkedSizeField = $scope.functions.isFieldValid($scope.active.linkedSizeField) ? $scope.active.linkedSizeField : undefined;
+        bindings.nodeField = $scope.functions.isFieldValid($scope.active.nodeField) ? $scope.active.nodeField.columnName : undefined;
+        bindings.nameField = $scope.functions.isFieldValid($scope.active.nameField) ? $scope.active.nameField.columnName : undefined;
+        bindings.sizeField = $scope.functions.isFieldValid($scope.active.sizeField) ? $scope.active.sizeField.columnName : undefined;
+        bindings.dateField = $scope.functions.isFieldValid($scope.active.dateField) ? $scope.active.dateField.columnName : undefined;
+        bindings.flagField = $scope.functions.isFieldValid($scope.active.flagField) ? $scope.active.flagField.columnName : undefined;
+        bindings.textField = $scope.functions.isFieldValid($scope.active.textField) ? $scope.active.textField.columnName : undefined;
+        bindings.linkedNodeField = $scope.functions.isFieldValid($scope.active.linkedNodeField) ? $scope.active.linkedNodeField.columnName : undefined;
+        bindings.linkedNameField = $scope.functions.isFieldValid($scope.active.linkedNameField) ? $scope.active.linkedNameField.columnName : undefined;
+        bindings.linkedSizeField = $scope.functions.isFieldValid($scope.active.linkedSizeField) ? $scope.active.linkedSizeField.columnName : undefined;
         bindings.flagMode = $scope.active.flagMode || undefined;
         bindings.tooltipIdLabel = $scope.tooltip.idLabel || undefined;
         bindings.tooltipDataLabel = $scope.tooltip.dataLabel || undefined;

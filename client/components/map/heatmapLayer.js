@@ -93,8 +93,6 @@ coreMap.Map.Layer.HeatmapLayer = OpenLayers.Class(OpenLayers.Layer.Heatmap, {
         // to true.  We want the later to be active at any map scale.
         this.alwaysInRange = true;
 
-        this.getNestedValue = neon.helpers.getNestedValue;
-
         // When we are added to a map, add a resize handler on the map so we know when to rerender
         // our canvas.
         this.events.register('added', this, function() {
@@ -121,68 +119,58 @@ coreMap.Map.Layer.HeatmapLayer = OpenLayers.Class(OpenLayers.Layer.Heatmap, {
 });
 
 /**
- * Gets a value from a data element using a mapping string or function.
- * @param {String | Function} mapping The mapping from data element object to value.
- * @param {Object} element An element of the data array.
- * @return The value in the data element.
- * @method getValueFromDataElement
- */
-coreMap.Map.Layer.HeatmapLayer.prototype.getValueFromDataElement = function(mapping, element) {
-    if(typeof mapping === 'function') {
-        return mapping.call(this, element);
-    }
-    return this.getNestedValue(element, mapping);
-};
-
-/**
  * Checks if the mappings exist in the data element
  * @param {Object} element An element of the data array.
  * @return {Boolean} True if element contains all the mappings, false otherwise
  * @method areValuesInDataElement
  */
 coreMap.Map.Layer.HeatmapLayer.prototype.areValuesInDataElement = function(element) {
-    if(this.getValueFromDataElement(this.latitudeMapping, element) !== undefined &&
-        this.getValueFromDataElement(this.longitudeMapping, element) !== undefined) {
-        return true;
-    }
-
-    return false;
+    var values = neon.helpers.getNestedValues(element, [this.latitudeMapping, this.longitudeMapping]);
+    return values[0][this.latitudeMapping] !== undefined && values[0][this.longitudeMapping] !== undefined;
 };
 
-coreMap.Map.Layer.HeatmapLayer.prototype.setData = function(data) {
+coreMap.Map.Layer.HeatmapLayer.prototype.setData = function(data, limit) {
     this.data = data;
-    this.updateFeatures();
+    this.updateFeatures(limit);
 };
 
 /**
  * Creates a point to be added to the heatmap layer.
- * @param {Object} element One data element of the map's data array.
- * @param {number} longitude The longitude value of the data element
- * @param {number} latitude The latitude value of the data element.
+ * @param {Number} size The size value of the data element.
+ * @param {Number} longitude The longitude value of the data element
+ * @param {Number} latitude The latitude value of the data element.
  * @return {Object} an object containing the location and value for the heatmap.
  * @method createHeatmapDataPoint
  */
-coreMap.Map.Layer.HeatmapLayer.prototype.createHeatmapDataPoint = function(element, longitude, latitude) {
-    var value = this.getValueFromDataElement(this.sizeMapping, element);
+coreMap.Map.Layer.HeatmapLayer.prototype.createHeatmapDataPoint = function(size, longitude, latitude) {
     var point = new OpenLayers.LonLat(longitude, latitude);
 
     return {
         lonlat: point,
-        value: value
+        value: size
     };
 };
 
-coreMap.Map.Layer.HeatmapLayer.prototype.updateFeatures = function() {
-    var mapData = [];
+coreMap.Map.Layer.HeatmapLayer.prototype.updateFeatures = function(limit) {
     var me = this;
-    _.each(this.data, function(element) {
-        var longitude = me.getValueFromDataElement(me.longitudeMapping, element);
-        var latitude = me.getValueFromDataElement(me.latitudeMapping, element);
+    var mapData = [];
 
-        if($.isNumeric(latitude) && $.isNumeric(longitude)) {
-            mapData.push(me.createHeatmapDataPoint(element, longitude, latitude));
-        }
+    this.pointTotal = 0;
+    this.pointLimit = limit;
+
+    var fields = [this.latitudeMapping, this.longitudeMapping, this.sizeMapping];
+
+    this.data.forEach(function(item) {
+        var pointValues = neon.helpers.getNestedValues(item, fields);
+        me.pointTotal += pointValues.length;
+        pointValues.slice(0, limit).forEach(function(pointValue) {
+            if($.isNumeric(pointValue[me.latitudeMapping]) && $.isNumeric(pointValue[me.longitudeMapping])) {
+                // TODO What should be the default value of the size?  Currently it looks like undefined is acceptable.
+                mapData.push(me.createHeatmapDataPoint(pointValue[me.sizeMapping], pointValue[me.longitudeMapping], pointValue[me.latitudeMapping]));
+            }
+        });
     });
+
     this.setDataSet({
         max: 1,
         data: mapData

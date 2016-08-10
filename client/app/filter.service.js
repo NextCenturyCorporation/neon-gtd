@@ -63,10 +63,10 @@ angular.module("neonDemo.services")
      * @method addFilter
      */
     service.addFilter = function(messenger, database, table, attributes, createFilterClauseFunction, filterName, successCallback, errorCallback) {
-        var filter = service.getFilter(database, table, attributes);
+        var filters = service.getFilters(database, table, attributes);
         var relations = datasetService.getRelations(database, table, attributes);
 
-        if(filter) {
+        if(filters.length) {
             replaceFilter(messenger, relations, createFilterClauseFunction, getFilterNameString(filterName, relations), successCallback, errorCallback);
         } else {
             addNewFilter(messenger, relations, createFilterClauseFunction, getFilterNameString(filterName, relations), successCallback, errorCallback);
@@ -184,22 +184,22 @@ angular.module("neonDemo.services")
     };
 
     /*
-     * Returns the filter that matches the given database, table, and attributes.
+     * Returns the filters that match the given database, table, and attributes.
      * @param {String} database The database name
      * @param {String} table The table name
      * @param {Array} attributes The list of field names
      * @param {Boolean} includeAllFilters If false, ignores any filters whose name starts with the
      * filterBuildPrefix variable. Otherwise it searches all filters.
-     * @method getFilter
-     * @return The filter that matches the given database, table, and attributes, or undefined if not found.
+     * @method getFilters
+     * @return {Array}
      */
-    service.getFilter = function(database, table, attributes, includeAllFilters) {
+    service.getFilters = function(database, table, attributes, includeAllFilters) {
         var checkClauses = function(clause) {
             if(clause.type === "where" && attributes.indexOf(clause.lhs) >= 0) {
                 return true;
             } else if(clause.type !== "where") {
-                for(var j = 0; j < clause.whereClauses.length; j++) {
-                    if(!checkClauses(clause.whereClauses[j])) {
+                for(var i = 0; i < clause.whereClauses.length; i++) {
+                    if(!checkClauses(clause.whereClauses[i])) {
                         return false;
                     }
                 }
@@ -207,16 +207,15 @@ angular.module("neonDemo.services")
             }
         };
 
-        for(var i = 0; i < service.filters.length; i++) {
-            if((includeAllFilters || service.filters[i].filter.filterName.indexOf(service.filterBuildPrefix) !== 0) &&
-                service.filters[i].dataSet.databaseName === database && service.filters[i].dataSet.tableName === table) {
-                if(checkClauses(service.filters[i].filter.whereClause)) {
-                    return service.filters[i];
-                }
+        var filters = [];
+        service.filters.forEach(function(filter) {
+            if((includeAllFilters || filter.filter.filterName.indexOf(service.filterBuildPrefix) !== 0) && filter.dataSet.databaseName === database && filter.dataSet.tableName === table &&
+                checkClauses(filter.filter.whereClause)) {
+                filters.push(filter);
             }
-        }
+        });
 
-        return undefined;
+        return filters;
     };
 
     /*
@@ -548,10 +547,9 @@ angular.module("neonDemo.services")
             _.each(relation.fields, function(field) {
                 attrs.push(field.related[0]);
             });
-            var filter = service.getFilter(relation.database, relation.table, attrs);
-            if(filter) {
-                keys.push(filter.id);
-            }
+            keys = keys.concat(service.getFilters(relation.database, relation.table, attrs).map(function(filter) {
+                return filter.id;
+            }));
         });
         return keys;
     };

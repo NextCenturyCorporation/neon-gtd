@@ -571,7 +571,9 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
             setDateTimePickerStart($scope.bucketizer.getStartDate());
             setDateTimePickerEnd($scope.bucketizer.getEndDate());
         }
-        $scope.functions.updateNeonFilter(true);
+        $scope.functions.updateNeonFilter({
+            queryAfterFilter: true
+        });
     };
 
     $scope.handleToggleShowAnimationControls = function() {
@@ -648,7 +650,13 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
         $scope.data = [];
     };
 
-    var buildValidDatesQuery = function(query) {
+    var buildValidDatesQuery = function(query, unsharedFilterWhereClause) {
+        var validDatesWhereClause = neon.query.and(
+            neon.query.where($scope.active.dateField.columnName, '>=', new Date("1970-01-01T00:00:00.000Z")),
+            neon.query.where($scope.active.dateField.columnName, '<=', new Date("2025-01-01T00:00:00.000Z"))
+        );
+        query.where(unsharedFilterWhereClause ? neon.query.and(validDatesWhereClause, unsharedFilterWhereClause) : validDatesWhereClause);
+
         var yearGroupClause = new neon.query.GroupByFunctionClause(neon.query.YEAR, $scope.active.dateField.columnName, $scope.active.YEAR);
         var monthGroupClause = new neon.query.GroupByFunctionClause(neon.query.MONTH, $scope.active.dateField.columnName, $scope.active.MONTH);
         var dayGroupClause = new neon.query.GroupByFunctionClause(neon.query.DAY, $scope.active.dateField.columnName, $scope.active.DAY);
@@ -665,44 +673,23 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
             query.groupBy(yearGroupClause, monthGroupClause, dayGroupClause, hourGroupClause);
         }
 
-        query.aggregate(neon.query.COUNT, '*', 'count');
-        // TODO: Does this need to be an aggregate on the date field? What is MIN doing or is this just an arbitrary function to include the date with the query?
-        query.aggregate(neon.query.MIN, $scope.active.dateField.columnName, 'date');
-        query.sortBy('date', neon.query.ASCENDING);
-
-        return query;
+        return query.aggregate(neon.query.COUNT, '*', 'count').enableAggregateArraysByElement();
     };
 
-    $scope.functions.createNeonQueryWhereClause = function() {
-        return neon.query.and(
-            neon.query.where($scope.active.dateField.columnName, '>=', new Date("1970-01-01T00:00:00.000Z")),
-            neon.query.where($scope.active.dateField.columnName, '<=', new Date("2025-01-01T00:00:00.000Z"))
-        );
-    };
-
-    /**
-     * Helper method for queryForChartData(). Creates the Query object for invalid dates to be used by this moethod.
-     * @method buildInvalidDatesQuery
-     * @private
-     * @return {neon.query.Query} query The Query object to be used by queryForChartData()
-     */
-    var buildInvalidDatesQuery = function(query) {
-        // Replace the where clause created by $scope.functions.createNeonQueryWhereClause with an invalid date where clause.
-        query.filter.whereClause.whereClauses[0] = neon.query.or(
+    var buildInvalidDatesQuery = function(query, unsharedFilterWhereClause) {
+        var invalidDatesWhereClause = neon.query.or(
             neon.query.where($scope.active.dateField.columnName, '<', new Date("1970-01-01T00:00:00.000Z")),
             neon.query.where($scope.active.dateField.columnName, '>', new Date("2025-01-01T00:00:00.000Z")),
             neon.query.where($scope.active.dateField.columnName, '=', null)
         );
-
-        query.aggregate(neon.query.COUNT, '*', 'invalidCount');
-
-        return query;
+        query.where(unsharedFilterWhereClause ? neon.query.and(invalidDatesWhereClause, unsharedFilterWhereClause) : invalidDatesWhereClause);
+        return query.aggregate(neon.query.COUNT, '*', 'invalidCount').enableAggregateArraysByElement();
     };
 
-    $scope.functions.addToQuery = function(query) {
+    $scope.functions.addToQuery = function(query, unsharedFilterWhereClause) {
         var queryGroup = new neon.query.QueryGroup();
-        var validDatesQuery = buildValidDatesQuery(angular.copy(query));
-        var invalidDatesQuery = buildInvalidDatesQuery(query);
+        var validDatesQuery = buildValidDatesQuery(angular.copy(query), unsharedFilterWhereClause);
+        var invalidDatesQuery = buildInvalidDatesQuery(query, unsharedFilterWhereClause);
 
         queryGroup.addQuery(validDatesQuery);
         queryGroup.addQuery(invalidDatesQuery);
@@ -866,7 +853,8 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
                 },
                 updateData: function(data) {
                     if(data) {
-                        $scope.referenceStartDate = new Date(getDateField(data[0]));
+                        var dates = data.length ? getDates(data[0]) : [];
+                        $scope.referenceStartDate = dates.length ? dates[0] : new Date();
                         queryForMaxDate(callback);
                     }
                 }
@@ -889,7 +877,8 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
                 },
                 updateData: function(data) {
                     if(data) {
-                        $scope.referenceEndDate = new Date(getDateField(data[0]));
+                        var dates = data.length ? getDates(data[0]) : [];
+                        $scope.referenceEndDate = dates.length ? dates[dates.length - 1] : new Date();
                         callback();
                     }
                 }
@@ -898,14 +887,21 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
     };
 
     /**
-     * Finds and returns the date field in the data. If the date contains '.', representing that the date is in an object
+     * Finds and returns the date(s) in the date field in the data. If the date contains '.', representing that the date is in an object
      * within the data, it will find the nested value.
-     * @param {Object} data
-     * @method getDateField
+     * @method getDates
+     * @param {Object} dataItem
+     * @return {Array}
      * @private
      */
-    var getDateField = function(data) {
-        return neon.helpers.getNestedValue(data, $scope.active.dateField.columnName);
+    var getDates = function(dataItem) {
+        return neon.helpers.getNestedValues(dataItem, [$scope.active.dateField.columnName]).filter(function(value) {
+            return value[$scope.active.dateField.columnName];
+        }).map(function(value) {
+            return new Date(value[$scope.active.dateField.columnName]);
+        }).sort(function(a, b) {
+            return a.getTime() - b.getTime();
+        });
     };
 
     /**
@@ -936,10 +932,10 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
             // Fill our data into the appropriate interval buckets.
             var resultDate;
             for(i = 0; i < rawLength; i++) {
-                resultDate = new Date(data[i].date);
+                resultDate = new Date(Date.UTC(data[i].year, (data[i].month || 1) - 1, data[i].day || 1, data[i].hour || 0));
                 var bucketIndex = $scope.bucketizer.getBucketIndex(resultDate);
                 if(queryData[bucketIndex]) {
-                    queryData[bucketIndex].value = data[i].count;
+                    queryData[bucketIndex].value += data[i].count;
                 }
             }
         }

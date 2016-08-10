@@ -1,0 +1,30 @@
+<div class="custom-filter-list">
+    <label ng-show="!active.customFilters.length" ng-bind="'No custom filters were defined in the dashboard configuration file for the chosen table.'"></label>
+    <ul>
+        <li ng-if="!!group.label" ng-repeat="group in active.customFilters">
+            <label ng-bind="group.label"></label>
+            <ul>
+                <li class="item" ng-if="!!item.label" ng-repeat="item in group.items">
+                    <span class="cell glyphicon glyphicon-plus" title="{{'Add Filter on ' + item.label}}" ng-click="toggleFilterAndAddOrRemove(item)" ng-show="!item.on"></span>
+                    <span class="cell glyphicon glyphicon-remove" title="{{'Remove Filter on ' + item.label}}" ng-click="toggleFilterAndAddOrRemove(item)" ng-show="item.on"></span>
+                    <span class="cell glyphicon glyphicon-transfer" title="{{'Replace All Filters with Filter on ' + item.label}}" ng-click="replaceFilters(item)"></span>
+                    <span class="cell" ng-class="{true: 'filtered', false: ''}[item.on]" ng-bind="item.label"></span>
+                </li>
+            </ul>
+        </li>
+    </ul>
+    <ul>
+        <li ng-if="!!group.label && !!group.input.field" ng-repeat="group in active.customFilters">
+            <label ng-bind="'Add Custom Filter on ' + group.label"></label>
+            <div class="form-group custom">
+                <div class="input-group">
+                    <input type="text" class="form-control" placeholder="{{group.label}}" ng-model="group.input.value" ng-keyup="$event.keyCode == 13 && addCustomFilter(group)">
+                    <div class="input-group-btn">
+                        <button type="button" class="btn btn-default" title="Add Custom Filter" ng-click="addCustomFilter(group)">
+                            <span class="glyphicon glyphicon-plus"></span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </li>
+</div>

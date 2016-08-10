@@ -31,6 +31,7 @@ angular.module('neonDemo.controllers').controller('aggregationTableController', 
     $scope.active.aggregationField = {};
     $scope.active.groupField = {};
     $scope.active.limit = $scope.bindings.limit || 100;
+    $scope.active.aggregateArraysByElement = false;
 
     var handleRowClick = function(cell) {
         if($scope.active.gridOptions.api.getSelectedNodes()[0] && $scope.active.gridOptions.api.getSelectedNodes()[0].id === cell.rowIndex) {
@@ -107,11 +108,10 @@ angular.module('neonDemo.controllers').controller('aggregationTableController', 
         return $scope.functions.isFieldValid($scope.active.groupField) && ($scope.active.aggregation === "count" || $scope.functions.isFieldValid($scope.active.aggregationField));
     };
 
-    $scope.functions.createNeonQueryWhereClause = function() {
-        return neon.query.where($scope.active.groupField.columnName, "!=", null);
-    };
+    $scope.functions.addToQuery = function(query, unsharedFilterWhereClause) {
+        var whereClause = neon.query.where($scope.active.groupField.columnName, "!=", null);
+        query.where(unsharedFilterWhereClause ? neon.query.and(whereClause, unsharedFilterWhereClause) : whereClause);
 
-    $scope.functions.addToQuery = function(query) {
         if($scope.functions.isFilterSet()) {
             var filterClause = $scope.functions.createNeonFilterClause({
                 database: $scope.active.database.name,
@@ -137,6 +137,10 @@ angular.module('neonDemo.controllers').controller('aggregationTableController', 
 
         if($scope.active.limit) {
             query.limit($scope.active.limit);
+        }
+
+        if($scope.active.aggregateArraysByElement) {
+            query.enableAggregateArraysByElement();
         }
 
         return query.groupBy($scope.active.groupField.columnName);
@@ -294,6 +298,10 @@ angular.module('neonDemo.controllers').controller('aggregationTableController', 
 
     $scope.handleChangeLimit = function() {
         $scope.functions.logChangeAndUpdate("limit", $scope.active.limit, "button");
+    };
+
+    $scope.handleChangeAggregateArraysByElement = function() {
+        $scope.functions.logChangeAndUpdate("aggregateArraysByElement", $scope.active.aggregateArraysByElement, "button");
     };
 
     $scope.functions.createMenuText = function() {

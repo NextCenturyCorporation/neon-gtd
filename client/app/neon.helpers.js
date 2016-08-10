@@ -42,22 +42,70 @@ neon.safeApply = function($scope, func) {
 
 neon.helpers = {
     /**
-     * Finds and returns the field value in data. If field contains '.', representing that the field is in an object within data, it will
-     * find the nested field value.
-     * @param {Object} data
-     * @param {String} field
-     * @method getNestedValue
+     * Finds and returns an array of objects with the values in the given data item for the fields with the given names.  Names with one or more periods represent nested fields of objects in the data.
+     * Values in arrays will be split into individual objects in the result array so that the result array has each combination of the different values in the arrays.
+     * @method getNestedValues
+     * @param {Object} dataItem
+     * @param {Array} nestedFields
+     * @return {Array} An array of one or more objects mapping each nested field name to its value.
      */
-    getNestedValue: function(data, field) {
-        var fieldArray = field.split(".");
-        var dataValue = data;
-        fieldArray.forEach(function(field) {
-            if(dataValue) {
-                dataValue = dataValue[field];
+    getNestedValues: function(dataItem, nestedFields) {
+        var headsToTails = {};
+        nestedFields.forEach(function(nestedField) {
+            var nestedArray = nestedField.split(".");
+            if(dataItem[nestedField] !== undefined && !headsToTails[nestedField]) {
+                headsToTails[nestedField] = [];
+            } else if(nestedArray.length > 1) {
+                if(!headsToTails[nestedArray[0]]) {
+                    headsToTails[nestedArray[0]] = [];
+                }
+                headsToTails[nestedArray[0]].push(nestedArray.slice(1).join("."));
             }
         });
-        return dataValue;
+
+        var getNestedValueForField = function(headField) {
+            if(_.isArray(dataItem[headField]) && headsToTails[headField].length) {
+                return [].concat.apply([], dataItem[headField].map(function(item) {
+                    return neon.helpers.getNestedValues(item, headsToTails[headField]);
+                }));
+            }
+
+            if(_.isObject(dataItem[headField]) && headsToTails[headField].length) {
+                return neon.helpers.getNestedValues(dataItem[headField], headsToTails[headField]);
+            }
+
+            return dataItem[headField];
+        };
+
+        var getNestedValuesForFields = function(headFields, currentResults) {
+            if(!headFields.length) {
+                return currentResults;
+            }
+
+            var nestedValue = getNestedValueForField(headFields[0]);
+            var updatedResults = [].concat.apply([], currentResults.map(function(currentResult) {
+                if(_.isArray(nestedValue)) {
+                    return nestedValue.map(function(value) {
+                        var updatedResult = _.cloneDeep(currentResult);
+                        if(_.isObject(value)) {
+                            Object.keys(value).forEach(function(valueField) {
+                                updatedResult[headFields[0] + "." + valueField] = value[valueField];
+                            });
+                        } else {
+                            updatedResult[headFields[0]] = value;
+                        }
+                        return updatedResult;
+                    });
+                }
+                currentResult[headFields[0]] = nestedValue;
+                return currentResult;
+            }));
+            return getNestedValuesForFields(headFields.slice(1), updatedResults);
+        };
+
+        return getNestedValuesForFields(Object.keys(headsToTails), [{}]);
     },
+
     /**
      * Escapes all values in the given data, recursively.
      * @param {Object|Array} data

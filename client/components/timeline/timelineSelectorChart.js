@@ -221,12 +221,8 @@ charts.TimelineSelectorChart = function(element, configuration) {
                     extent1 = [d0, d1];
                 } else {
                     extent1 = extent0.map(timeFunction.round);
-
-                    // if empty when rounded, use floor & ceil instead
-                    if(extent1[0] >= extent1[1]) {
-                        extent1[0] = timeFunction.floor(extent0[0]);
-                        extent1[1] = timeFunction.ceil(extent0[1]);
-                    }
+                    extent1[0] = timeFunction.floor(extent0[0]);
+                    extent1[1] = timeFunction.ceil(extent0[1]);
                 }
 
                 if(extent1[0] < extent1[1]) {

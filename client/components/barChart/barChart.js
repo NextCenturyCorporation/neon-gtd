@@ -623,11 +623,10 @@ charts.BarChart.prototype.drawXAxis_ = function(chart) {
             return "rotate(-60)";
         })
         .text(function(d) {
-            if(d.length > 6) {
-                return d.substring(0, 6) + '...';
-            } else {
-                return d;
+            if(_.isArray(d)) {
+                return "[" + (d[0] || "") + (d.length > 1 ? ",..." : "") + "]";
             }
+            return d.length > 6 ? d.substring(0, 6) + "..." : d;
         })
         .on('mouseover', function(d) {
             me.showTooltipXaxis_(d, d3.event);
@@ -811,9 +810,8 @@ charts.BarChart.prototype.removeDataWithNoMatchingCategory_ = function(aggregate
         var key = item.key;
 
         return _.isUndefined(_.find(me.categories, function(category) {
-            // dates won't compare with === since they are different object, so compare using the time values
-            if(key instanceof Date && category instanceof Date) {
-                return category.getTime() === key.getTime();
+            if(_.isArray(category)) {
+                return category.join(",") === key;
             }
             return category === key;
         }));

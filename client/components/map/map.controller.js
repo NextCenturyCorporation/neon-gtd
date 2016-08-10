@@ -47,11 +47,11 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
     $scope.functions.createMenuText = function() {
         var text = "";
         $scope.active.layers.forEach(function(layer) {
-            if(!layer.new && layer.show) {
-                text += (text ? ", " : "") + layer.name;
-                if(layer.queryLimited) {
-                    text += " (" + $filter('number')(layer.queryLimited) + " limit)";
-                }
+            if(!layer.new && layer.show && layer.olLayer.data) {
+                var limit = layer.olLayer.pointLimit <= layer.olLayer.pointTotal;
+                var count = $filter("number")(limit ? layer.olLayer.pointLimit : layer.olLayer.pointTotal);
+                text += (text ? ", " : "") + layer.name + (limit ? " (" + count + " limit)" : "");
+                layer.message = "Showing " + count + " points" + (limit ? " (limited)" : "") + " from " + $filter("number")(layer.olLayer.data.length) + " data records.";
             }
         });
         return text;
@@ -67,23 +67,24 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
      * Queries for the map popup data using the given database, table, and ID and updates the map using the given function.
      * @param {String} database
      * @param {String} table
-     * @param {Number} or {String} id
+     * @param {String} idField
+     * @param {Array | Number | String} id
      * @param {Function} updateDataFunction
      * @method queryForMapPopupData
      * @private
      */
-    var queryForMapPopupData = function(database, table, id, updateDataFunction) {
+    var queryForMapPopupData = function(database, table, idField, id, updateDataFunction) {
         $scope.functions.queryAndUpdate({
             database: database,
             table: table,
             addToQuery: function(query) {
                 if(_.isArray(id)) {
                     var whereClauses = id.map(function(value) {
-                        return neon.query.where("_id", "=", value);
+                        return neon.query.where(idField, "=", value);
                     });
                     query.where(neon.query.or.apply(neon.query, whereClauses));
                 } else {
-                    query.where("_id", "=", id);
+                    query.where(idField, "=", id);
                 }
                 return query;
             },
@@ -106,7 +107,6 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
     $scope.functions.onInit = function() {
         $scope.map = new coreMap.Map($scope.visualizationId, {
             responsive: false,
-            getNestedValue: neon.helpers.getNestedValue,
             queryForMapPopupDataFunction: queryForMapPopupData,
             mapBaseLayer: {
                 color: $scope.active.baseLayerColor || 'light',
@@ -292,6 +292,7 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
         layer.dateField = $scope.functions.findFieldObject(config.dateField, neonMappings.DATE, layer);
         layer.sizeField = $scope.functions.findFieldObject(config.sizeField, neonMappings.SIZE, layer);
         layer.colorField = $scope.functions.findFieldObject(config.colorField, neonMappings.COLOR, layer);
+        layer.idField = $scope.functions.findFieldObject(config.idField, neonMappings.ID, layer);
         layer.sourceLatitudeField = $scope.functions.findFieldObject(config.sourceLatitudeField, neonMappings.SOURCE_LATITUDE_FIELD, layer);
         layer.sourceLongitudeField = $scope.functions.findFieldObject(config.sourceLongitudeField, neonMappings.SOURCE_LONGITUDE_FIELD, layer);
         layer.targetLatitudeField = $scope.functions.findFieldObject(config.targetLatitudeField, neonMappings.TARGET_LATITUDE_FIELD, layer);
@@ -345,7 +346,7 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
         layer.gradientColorCode3 = config.gradientColorCode3;
         layer.gradientColorCode4 = config.gradientColorCode4;
         layer.gradientColorCode5 = config.gradientColorCode5;
-        layer.applyTransientDateFilter = config.applyTransientDateFilter;
+        layer.applyTransientDateFilter = config.applyTransientDateFilter || false;
         layer.popupFields = config.popupFields || [];
         updateFields(layer, config);
         return layer;
@@ -460,18 +461,13 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
     };
 
     $scope.functions.updateData = function(data, layers) {
-        $scope.dataBounds = $scope.dataBounds || computeDataBounds(data || []);
+        $scope.dataBounds = computeDataBounds(data || []);
+        zoomToDataBounds();
 
         (layers || $scope.active.layers).forEach(function(layer) {
             if(layer.olLayer) {
-                layer.queryLimited = data && data.length >= layer.limit ? layer.limit : 0;
-                // Only use elements up to the limit of this layer; other layers for this database/table may have a higher limit.
-                var layerData = data ? data.slice(0, layer.limit) : [];
-
-                // Set the data and update features. The layers check for valid points, thus empty layers are possible
-                // outcomes of Neon queries.
                 layer.error = undefined;
-                var colorMappings  = layer.olLayer.setData(angular.copy(layerData));
+                var colorMappings = layer.olLayer.setData(angular.copy(data || []), layer.limit);
 
                 // Update the legend
                 var index = _.findIndex($scope.active.legend.layers, {
@@ -508,7 +504,7 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
 
                 if(layer.type !== $scope.NODE_AND_ARROW_LAYER) {
                     layer.olLayer.linksSource = generatePointLinksSource(layer.database.name, layer.table.name);
-                    createExternalLinks(layerData, layer.olLayer.linksSource, layer.latitudeField.columnName, layer.longitudeField.columnName);
+                    createExternalLinks(data || [], layer.olLayer.linksSource, layer.latitudeField.columnName, layer.longitudeField.columnName);
                 }
             }
         });
@@ -543,42 +539,28 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
                 maxLat: -90
             };
 
+            var recalculateBounds = function(data, longitudeField, latitudeField) {
+                data.forEach(function(item) {
+                    neon.helpers.getNestedValues(item, [longitudeField, latitudeField]).forEach(function(pointValue) {
+                        bounds = calculateMinMaxBounds(bounds, pointValue[latitudeField], pointValue[longitudeField]);
+                    });
+                });
+            };
+
             $scope.active.layers.forEach(function(layer) {
                 if(!layer.new) {
-                    var latitude;
-                    var longitude;
-                    var sourceLatitude;
-                    var sourceLongitude;
-                    var targetLatitude;
-                    var targetLongitude;
-
                     if(layer.type === $scope.NODE_AND_ARROW_LAYER) {
-                        sourceLatitude = $scope.functions.isFieldValid(layer.sourceLatitudeField) ? layer.sourceLatitudeField.columnName : coreMap.Map.Layer.NodeLayer.DEFAULT_SOURCE_LATITUDE_MAPPING;
-                        sourceLongitude = $scope.functions.isFieldValid(layer.sourceLongitudeField) ? layer.sourceLongitudeField.columnName : coreMap.Map.Layer.NodeLayer.DEFAULT_SOURCE_LONGITUDE_MAPPING;
-                        targetLatitude = $scope.functions.isFieldValid(layer.targetLatitudeField) ? layer.targetLatitudeField.columnName : coreMap.Map.Layer.NodeLayer.DEFAULT_TARGET_LATITUDE_MAPPING;
-                        targetLongitude = $scope.functions.isFieldValid(layer.targetLongitudeField) ? layer.targetLongitudeField.columnName : coreMap.Map.Layer.NodeLayer.DEFAULT_TARGET_LONGITUDE_MAPPING;
+                        var sourceLatitudeField = $scope.functions.isFieldValid(layer.sourceLatitudeField) ? layer.sourceLatitudeField.columnName : coreMap.Map.Layer.NodeLayer.DEFAULT_SOURCE_LATITUDE_MAPPING;
+                        var sourceLongitudeField = $scope.functions.isFieldValid(layer.sourceLongitudeField) ? layer.sourceLongitudeField.columnName : coreMap.Map.Layer.NodeLayer.DEFAULT_SOURCE_LONGITUDE_MAPPING;
+                        var targetLatitudeField = $scope.functions.isFieldValid(layer.targetLatitudeField) ? layer.targetLatitudeField.columnName : coreMap.Map.Layer.NodeLayer.DEFAULT_TARGET_LATITUDE_MAPPING;
+                        var targetLongitudeField = $scope.functions.isFieldValid(layer.targetLongitudeField) ? layer.targetLongitudeField.columnName : coreMap.Map.Layer.NodeLayer.DEFAULT_TARGET_LONGITUDE_MAPPING;
+                        recalculateBounds(data, targetLongitudeField, targetLatitudeField);
+                        recalculateBounds(data, sourceLongitudeField, sourceLatitudeField);
                     } else {
-                        latitude = $scope.functions.isFieldValid(layer.latitudeField) ? layer.latitudeField.columnName : coreMap.Map.Layer.HeatmapLayer.DEFAULT_LATITUDE_MAPPING;
-                        longitude = $scope.functions.isFieldValid(layer.longitudeField) ? layer.longitudeField.columnName : coreMap.Map.Layer.HeatmapLayer.DEFAULT_LONGITUDE_MAPPING;
+                        var latitudeField = $scope.functions.isFieldValid(layer.latitudeField) ? layer.latitudeField.columnName : coreMap.Map.Layer.HeatmapLayer.DEFAULT_LATITUDE_MAPPING;
+                        var longitudeField = $scope.functions.isFieldValid(layer.longitudeField) ? layer.longitudeField.columnName : coreMap.Map.Layer.HeatmapLayer.DEFAULT_LONGITUDE_MAPPING;
+                        recalculateBounds(data, longitudeField, latitudeField);
                     }
-
-                    data.forEach(function(item) {
-                        var latitudeValue;
-                        var longitudeValue;
-                        if(layer.type === $scope.NODE_AND_ARROW_LAYER) {
-                            latitudeValue = neon.helpers.getNestedValue(item, targetLatitude);
-                            longitudeValue = neon.helpers.getNestedValue(item, targetLongitude);
-                            bounds = calculateMinMaxBounds(bounds, latitudeValue, longitudeValue);
-
-                            latitudeValue = neon.helpers.getNestedValue(item, sourceLatitude);
-                            longitudeValue = neon.helpers.getNestedValue(item, sourceLongitude);
-                            bounds = calculateMinMaxBounds(bounds, latitudeValue, longitudeValue);
-                        } else {
-                            latitudeValue = neon.helpers.getNestedValue(item, latitude);
-                            longitudeValue = neon.helpers.getNestedValue(item, longitude);
-                            bounds = calculateMinMaxBounds(bounds, latitudeValue, longitudeValue);
-                        }
-                    });
                 }
             });
 
@@ -632,24 +614,19 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
      * @private
      */
     var createExternalLinks = function(data, source, latitudeField, longitudeField) {
-        data.forEach(function(row) {
-            var latitudeValue = neon.helpers.getNestedValue(row, latitudeField);
-            var longitudeValue = neon.helpers.getNestedValue(row, longitudeField);
-            var key = $scope.functions.getLinksPopupService().generatePointKey(latitudeValue, longitudeValue);
-
-            var linkData = {};
-            linkData[neonMappings.POINT] = {};
-            linkData[neonMappings.POINT][neonMappings.LATITUDE] = latitudeValue;
-            linkData[neonMappings.POINT][neonMappings.LONGITUDE] = longitudeValue;
-
-            $scope.functions.createLinksForData(neonMappings.POINT, linkData, key, source);
+        data.forEach(function(item) {
+            neon.helpers.getNestedValues(item, [longitudeField, latitudeField]).forEach(function(pointValue) {
+                var linkData = {};
+                linkData[neonMappings.POINT] = {};
+                linkData[neonMappings.POINT][neonMappings.LATITUDE] = pointValue[longitudeField];
+                linkData[neonMappings.POINT][neonMappings.LONGITUDE] = pointValue[latitudeField];
+                $scope.functions.createLinksForData(neonMappings.POINT, linkData, $scope.functions.getLinksPopupService().generatePointKey(pointValue[longitudeField], pointValue[latitudeField]), source);
+            });
         });
     };
 
-    $scope.functions.addToQuery = function(query, layers) {
-        var queryFields = {
-            _id: true
-        };
+    $scope.functions.addToQuery = function(query, unsharedFilterWhereClause, layers) {
+        var queryFields = {};
         var limit;
 
         var addFields = function(layerFields) {
@@ -674,7 +651,8 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
                 layer.nodeSizeField,
                 layer.colorField,
                 layer.dateField,
-                layer.sizeField
+                layer.sizeField,
+                layer.idField
             ];
 
             if(layer.popupFields) {
@@ -852,17 +830,20 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
             var allCoordinates = $scope.functions.getMapping("allCoordinates", message.database, message.table) || [];
             var layer = new coreMap.Map.Layer.SelectedPointsLayer("Selected Points");
 
-            var createPointAndFeature = function(latitude, longitude) {
-                var feature;
-
-                if(latitude && longitude) {
-                    var point = new OpenLayers.Geometry.Point(neon.helpers.getNestedValue(message.data, longitude), neon.helpers.getNestedValue(message.data, latitude));
-                    point.transform(coreMap.Map.SOURCE_PROJECTION, coreMap.Map.DESTINATION_PROJECTION);
-                    feature = new OpenLayers.Feature.Vector(point);
-                    feature.attributes = message.data;
+            var createPointsAndFeatures = function(latitudeField, longitudeField) {
+                var features = [];
+                if(latitudeField && longitudeField) {
+                    message.data.forEach(function(item) {
+                        neon.helpers.getNestedValues(item, [longitudeField, latitudeField]).forEach(function(pointValue) {
+                            var openLayersPoint = new OpenLayers.Geometry.Point(pointValue[latitudeField], pointValue[longitudeField]);
+                            openLayersPoint.transform(coreMap.Map.SOURCE_PROJECTION, coreMap.Map.DESTINATION_PROJECTION);
+                            var feature = new OpenLayers.Feature.Vector(openLayersPoint);
+                            feature.attributes = item;
+                            features.push(feature);
+                        });
+                    });
                 }
-
-                return feature;
+                return features;
             };
 
             /*
@@ -874,7 +855,7 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
             if(allCoordinates.length) {
                 var features = [];
                 for(var i = 0; i < allCoordinates.length; i++) {
-                    features.push(createPointAndFeature(allCoordinates[i].latitude, allCoordinates[i].longitude));
+                    features = features.concat(createPointsAndFeatures(allCoordinates[i].latitude, allCoordinates[i].longitude));
                 }
                 layer.addFeatures(features);
             } else {
@@ -883,9 +864,9 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
                     database: message.database,
                     table: message.table
                 });
-                var latitude = (pointsLayer && pointsLayer.latitudeMapping) ? pointsLayer.latitudeMapping : "latitude";
-                var longitude = (pointsLayer && pointsLayer.longitudeMapping) ? pointsLayer.longitudeMapping : "longitude";
-                layer.addFeatures(createPointAndFeature(latitude, longitude));
+                var latitudeField = (pointsLayer && pointsLayer.latitudeMapping) ? pointsLayer.latitudeMapping : "latitude";
+                var longitudeField = (pointsLayer && pointsLayer.longitudeMapping) ? pointsLayer.longitudeMapping : "longitude";
+                layer.addFeatures(createPointsAndFeatures(latitudeField, longitudeField));
             }
             $scope.map.addLayer(layer);
             $scope.selectedPointLayer = layer;
@@ -951,12 +932,13 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
             categoryMapping: $scope.functions.isFieldValid(layer.colorField) ? layer.colorField.columnName : "",
             dateMapping: $scope.functions.isFieldValid(layer.dateField) ? layer.dateField.columnName : "",
             sizeMapping: $scope.functions.isFieldValid(layer.sizeField) ? layer.sizeField.columnName : "",
+            idMapping: $scope.functions.isFieldValid(layer.idField) ? layer.idField.columnName : "",
             defaultColor: layer.colorCode || "",
             sourceLatitudeMapping: $scope.functions.isFieldValid(layer.sourceLatitudeField) ? layer.sourceLatitudeField.columnName : "",
             sourceLongitudeMapping: $scope.functions.isFieldValid(layer.sourceLongitudeField) ? layer.sourceLongitudeField.columnName : "",
             targetLatitudeMapping: $scope.functions.isFieldValid(layer.targetLatitudeField) ? layer.targetLatitudeField.columnName : "",
             targetLongitudeMapping: $scope.functions.isFieldValid(layer.targetLongitudeField) ? layer.targetLongitudeField.columnName : "",
-            lineMapping: $scope.functions.isFieldValid(layer.nodeSizeField) ? layer.lineColorField.columnName : "",
+            lineMapping: $scope.functions.isFieldValid(layer.lineColorField) ? layer.lineColorField.columnName : "",
             nodeMapping: $scope.functions.isFieldValid(layer.nodeColorField) ? layer.nodeColorField.columnName : "",
             lineWeightMapping: $scope.functions.isFieldValid(layer.lineSizeField) ? layer.lineSizeField.columnName : "",
             nodeWeightMapping: $scope.functions.isFieldValid(layer.nodeSizeField) ? layer.nodeSizeField.columnName : "",
@@ -1087,6 +1069,7 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
         bindings.colorField = $scope.functions.isFieldValid(layer.colorField) ? layer.colorField.columnName : "";
         bindings.dateField = $scope.functions.isFieldValid(layer.dateField) ? layer.dateField.columnName : "";
         bindings.sizeField = $scope.functions.isFieldValid(layer.sizeField) ? layer.sizeField.columnName : "";
+        bindings.idField = $scope.functions.isFieldValid(layer.idField) ? layer.idField.columnName : "";
         bindings.colorCode = layer.colorCode || "";
         bindings.lineColorField = $scope.functions.isFieldValid(layer.lineColorField) ? layer.lineColorField.columnName : "";
         bindings.nodeColorField = $scope.functions.isFieldValid(layer.nodeColorField) ? layer.nodeColorField.columnName : "";

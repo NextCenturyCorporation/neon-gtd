@@ -48,6 +48,7 @@ angular.module('neonDemo.controllers').controller('singleLayerController', ['$sc
     var getColorMaps = $scope.functions.getColorMaps;
     var getFilterKey = $scope.functions.getFilterKey;
     var getMapping = $scope.functions.getMapping;
+    var getSortedFields = $scope.functions.getSortedFields;
     var getUnsortedFields = $scope.functions.getUnsortedFields;
 
     /******************** SUBCLASS ABSTRACT FUNCTIONS ********************/
@@ -142,6 +143,23 @@ angular.module('neonDemo.controllers').controller('singleLayerController', ['$sc
      */
     $scope.functions.getMapping = function(key) {
         return getMapping($scope.active.database.name, $scope.active.table.name, key);
+    };
+
+    /**
+     * Returns the list of sorted fields (in alphabetical order) for the given database and table or for this visualization's active database and table.
+     * @method $scope.functions.getSortedFields
+     * @param {Object} [database] (Optional)
+     * @param {Object} [table] (Optional)
+     * @return {Array}
+     */
+    $scope.functions.getSortedFields = function(database, table) {
+        if(database && table) {
+            return getSortedFields({
+                database: database,
+                table: table
+            });
+        }
+        return getSortedFields($scope.active);
     };
 
     /**
@@ -241,10 +259,10 @@ angular.module('neonDemo.controllers').controller('singleLayerController', ['$sc
         if($scope.queryTitle) {
             return $scope.queryTitle;
         }
-        var title = $scope.active.unsharedFilterValue ? $scope.active.unsharedFilterValue + " " : "";
         if($scope.bindings.title) {
-            return title + $scope.bindings.title;
+            return $scope.bindings.title;
         }
+        var title = $scope.active.unsharedFilterValue ? $scope.active.unsharedFilterValue + " " : "";
         if(_.keys($scope.active).length) {
             return title + ($scope.active.table ? $scope.active.table.prettyName : "");
         }

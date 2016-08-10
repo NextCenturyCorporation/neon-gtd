@@ -31,6 +31,7 @@ angular.module('neonDemo.controllers').controller('barChartController', ['$scope
     $scope.active.aggregationField = {};
     $scope.active.groupField = {};
     $scope.active.limit = $scope.bindings.limit || 100;
+    $scope.active.aggregateArraysByElement = false;
 
     $scope.functions.createMenuText = function() {
         if($scope.queryLimit > 0) {
@@ -69,6 +70,10 @@ angular.module('neonDemo.controllers').controller('barChartController', ['$scope
         $scope.functions.logChangeAndUpdate("limit", $scope.active.limit);
     };
 
+    $scope.handleChangeAggregateArraysByElement = function() {
+        $scope.functions.logChangeAndUpdate("aggregateArraysByElement", $scope.active.aggregateArraysByElement);
+    };
+
     $scope.functions.updateFilterValues = function(neonFilter) {
         if($scope.functions.getNumberOfFilterClauses(neonFilter) === 1) {
             $scope.filter = neonFilter.filter.whereClause.rhs;
@@ -91,12 +96,9 @@ angular.module('neonDemo.controllers').controller('barChartController', ['$scope
         $scope.active.aggregationField = $scope.functions.findFieldObject("aggregationField", neonMappings.Y_AXIS);
     };
 
-    $scope.functions.createNeonQueryWhereClause = function() {
-        return neon.query.where($scope.active.groupField.columnName, '!=', null);
-    };
-
-    $scope.functions.addToQuery = function(query) {
-        query.limit($scope.active.limit).groupBy($scope.active.groupField);
+    $scope.functions.addToQuery = function(query, unsharedFilterWhereClause) {
+        var whereClause = neon.query.where($scope.active.groupField.columnName, '!=', null);
+        query.where(unsharedFilterWhereClause ? neon.query.and(whereClause, unsharedFilterWhereClause) : whereClause);
 
         if($scope.filter) {
             var filterClause = $scope.functions.createNeonFilterClause({
@@ -117,8 +119,11 @@ angular.module('neonDemo.controllers').controller('barChartController', ['$scope
             query.aggregate(neon.query.AVG, $scope.active.aggregationField.columnName, COUNT_FIELD_NAME);
         }
 
-        query.sortBy(COUNT_FIELD_NAME, neon.query.DESCENDING);
-        return query;
+        if($scope.active.aggregateArraysByElement) {
+            query.enableAggregateArraysByElement();
+        }
+
+        return query.limit($scope.active.limit).groupBy($scope.active.groupField).sortBy(COUNT_FIELD_NAME, neon.query.DESCENDING);
     };
 
     $scope.functions.createNeonFilterClause = function(databaseAndTableName, fieldName) {

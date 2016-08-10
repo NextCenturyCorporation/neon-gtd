@@ -133,19 +133,15 @@ angular.module('neonDemo.controllers').controller('lineChartController', ['$scop
         return $scope.functions.isFieldValid(layer.dateField) && (layer.aggregationType !== "count" ? $scope.functions.isFieldValid(layer.aggregationField) : true);
     };
 
-    $scope.functions.createNeonQueryWhereClause = function(layers) {
+    $scope.functions.addToQuery = function(query, unsharedFilterWhereClause, layers) {
         // The line chart will only query for data from one layer at a time.
         var layer = layers[0];
 
-        return neon.query.and(
+        var validDatesWhereClause = neon.query.and(
             neon.query.where(layer.dateField.columnName, '>=', new Date("1970-01-01T00:00:00.000Z")),
             neon.query.where(layer.dateField.columnName, '<=', new Date("2025-01-01T00:00:00.000Z"))
         );
-    };
-
-    $scope.functions.addToQuery = function(query, layers) {
-        // The line chart will only query for data from one layer at a time.
-        var layer = layers[0];
+        query.where(unsharedFilterWhereClause ? neon.query.and(validDatesWhereClause, unsharedFilterWhereClause) : validDatesWhereClause);
 
         var yearGroupClause = new neon.query.GroupByFunctionClause(neon.query.YEAR, layer.dateField.columnName, 'year');
         var monthGroupClause = new neon.query.GroupByFunctionClause(neon.query.MONTH, layer.dateField.columnName, 'month');
@@ -195,7 +191,7 @@ angular.module('neonDemo.controllers').controller('lineChartController', ['$scop
             query.aggregate(neon.query.MAX, layer.aggregationField.columnName, COUNT_FIELD_NAME);
         }
 
-        query.aggregate(neon.query.MIN, layer.dateField.columnName, 'date').sortBy('date', neon.query.ASCENDING);
+        query.aggregate(neon.query.MIN, layer.dateField.columnName, 'date').sortBy('date', neon.query.ASCENDING).enableAggregateArraysByElement();
 
         if(!layer.filter && $scope.functions.isFilterSet()) {
             var filterClause = $scope.functions.createNeonFilterClause({
@@ -507,32 +503,29 @@ angular.module('neonDemo.controllers').controller('lineChartController', ['$scop
     };
 
     /**
-     * Creates a series object to use when drawing the given layer. Creates dates in the object from minDate
-     * to maxDate and sets all dates not in the given data to zero.
+     * Creates a series object to use when drawing the given layer. Creates dates in the object from start
+     * to end and sets all dates not in the given data to zero.
      * @param {Object} layer
      * @param {Array} data
-     * @param {Date} minDate
-     * @param {Date} maxDate
+     * @param {Date} start
+     * @param {Date} end
      * @return {Object}
      * @method zeroPadData
      * @private
      */
-    var zeroPadData = function(layer, data, minDate, maxDate) {
+    var zeroPadData = function(layer, data, start, end) {
         $scope.dateStringToDataIndex = {};
 
         var i = 0;
-        var start = zeroOutDate(minDate);
-        var end = zeroOutDate(maxDate);
-
         var numBuckets;
         var millis;
 
         if($scope.active.granularity === $scope.active.DAY) {
             millis = (1000 * 60 * 60 * 24);
-            numBuckets = Math.ceil(Math.abs(end - start) / millis) + 1;
+            numBuckets = Math.ceil((end - start) / millis);
         } else {
             millis = (1000 * 60 * 60);
-            numBuckets = Math.ceil(Math.abs(end - start) / millis) + 1;
+            numBuckets = Math.ceil((end - start) / millis);
         }
 
         var startTime = start.getTime();
@@ -602,7 +595,7 @@ angular.module('neonDemo.controllers').controller('lineChartController', ['$scop
         var indexDate;
         for(i = 0; i < data.length; i++) {
             indexDate = new Date(data[i].date);
-            var dataIndex = Math.floor(Math.abs(indexDate - start) / millis);
+            var dataIndex = Math.floor((indexDate - start) / millis);
 
             if(dataIndex >= 0 && dataIndex + 1 <= numBuckets) {
                 if($scope.functions.isFieldValid(layer.groupField)) {
@@ -626,7 +619,7 @@ angular.module('neonDemo.controllers').controller('lineChartController', ['$scop
                 }
 
                 // Save the mapping from date string to data index so we can find the data index using the chart brush extent while calculating aggregations for brushed line charts.
-                $scope.dateStringToDataIndex[indexDate.toDateString()] = Math.floor(Math.abs(indexDate - start) / millis);
+                $scope.dateStringToDataIndex[indexDate.toDateString()] = Math.floor((indexDate - start) / millis);
             }
         }
 
@@ -715,13 +708,16 @@ angular.module('neonDemo.controllers').controller('lineChartController', ['$scop
      * @param date
      * @returns {Date}
      */
-    var zeroOutDate = function(date) {
+    var zeroOutDate = function(date, adjustment) {
         var zeroed = new Date(date);
         zeroed.setUTCMinutes(0);
         zeroed.setUTCSeconds(0);
         zeroed.setUTCMilliseconds(0);
         if($scope.active.granularity === $scope.active.DAY) {
             zeroed.setUTCHours(0);
+            zeroed.setUTCDate(zeroed.getUTCDate() + (adjustment || 0));
+        } else {
+            zeroed.setUTCHours(zeroed.getUTCHours() + (adjustment || 0));
         }
         return zeroed;
     };
@@ -931,8 +927,8 @@ angular.module('neonDemo.controllers').controller('lineChartController', ['$scop
                     var range = d3.extent($scope.data[layer.id], function(d) {
                         return new Date(d.date);
                     });
-                    min = range[0];
-                    max = range[1];
+                    min = zeroOutDate(range[0]);
+                    max = zeroOutDate(range[1], 1);
 
                     if(min < minDate || !minDate) {
                         minDate = min;
@@ -943,8 +939,8 @@ angular.module('neonDemo.controllers').controller('lineChartController', ['$scop
                 }
             });
         } else {
-            minDate = $scope.extent[0];
-            maxDate = $scope.extent[1];
+            minDate = zeroOutDate($scope.extent[0]);
+            maxDate = zeroOutDate($scope.extent[1]);
         }
 
         return {

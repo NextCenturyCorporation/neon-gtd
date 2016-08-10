@@ -17,6 +17,8 @@
 
 var XDATA = {};
 
+var VISUALIZATIONS = neonVisualizations || [];
+
 /*
  * NeonGTDSetup collects a number of helper functions used to setup the single page Neon GTD app and the OWF widgets that
  * break NeonGTD into individual OWF-compliant widgets.
@@ -203,7 +205,24 @@ NeonGTDSetup = (function() {
     };
 
     NeonGTDSetup.prototype.saveLayouts = function(layouts) {
-        this.angularApp.constant('layouts', layouts);
+        Object.keys(layouts).forEach(function(layout) {
+            layouts[layout].forEach(function(visualization) {
+                var visualizationConfig = _.find(VISUALIZATIONS, function(visualizationConfig) {
+                    return visualizationConfig.type === visualization.type;
+                });
+                if(visualizationConfig) {
+                    visualization.name = visualizationConfig.name;
+                    visualization.sizeX = visualization.sizeX || visualizationConfig.sizeX;
+                    visualization.sizeY = visualization.sizeY || visualizationConfig.sizeY;
+                    visualization.minSizeX = visualization.minSizeX || visualizationConfig.minSizeX;
+                    visualization.minSizeY = visualization.minSizeY || visualizationConfig.minSizeY;
+                    visualization.minPixelX = visualization.minPixelX || visualizationConfig.minPixelX;
+                    visualization.minPixelY = visualization.minPixelY || visualizationConfig.minPixelY;
+                }
+            });
+        });
+
+        this.angularApp.value('layouts', layouts);
     };
 
     NeonGTDSetup.prototype.readLayoutFilesAndSaveLayouts = function($http, layouts, layoutFiles, callback) {
@@ -288,6 +307,37 @@ NeonGTDSetup = (function() {
         this.angularApp.constant('opencpu', opencpuConfig);
     };
 
+    NeonGTDSetup.prototype.saveCustomFilters = function(config) {
+        var customFilters = config.customFilters || {};
+
+        Object.keys(customFilters).forEach(function(database) {
+            Object.keys(customFilters[database]).forEach(function(table) {
+                customFilters[database][table].forEach(function(group) {
+                    group.input = group.input || {};
+                    group.input.operator = group.input.operator || "=";
+                    group.items = group.items || [];
+                    group.items.forEach(function(item) {
+                        item.label = item.label || item.value || item.field;
+                        item.value = item.value || null;
+                        item.operator = item.operator || (item.value === null ? "!=" : "=");
+                        item.multi = item.multi || {};
+                        Object.keys(item.multi).forEach(function(field) {
+                            item.multi[field] = {
+                                where: angular.copy(item.multi[field])
+                            };
+                            item.multi[field].where.forEach(function(where) {
+                                where.value = where.value ? (_.isArray(where.value) ? where.value : [where.value]) : [null];
+                                where.operator = where.operator || (where.value[0] === null ? "!=" : "=");
+                            });
+                        });
+                    });
+                });
+            });
+        });
+
+        this.angularApp.value("customFilters", customFilters);
+    };
+
     NeonGTDSetup.prototype.saveDashboards = function(config) {
         var helpConfig = (config.help || {
             guide: undefined,
@@ -319,35 +369,30 @@ NeonGTDSetup = (function() {
             });
         }
 
-        var visualizations = neonVisualizations || [];
         (config.visualizations || []).forEach(function(visualization) {
-            var index = _.findIndex(visualizations, {
+            var index = _.findIndex(VISUALIZATIONS, {
                 type: visualization.type
             });
             if(index < 0) {
-                visualizations.push(visualization);
+                VISUALIZATIONS.push(visualization);
             } else if(visualization.exclude) {
-                visualizations.splice(index, 1);
+                VISUALIZATIONS.splice(index, 1);
             } else {
-                visualizations[index] = visualization;
+                VISUALIZATIONS[index] = visualization;
             }
         });
 
-        // Most visualizations should have a minimum size of about 300px square to have space for their UI elements.
-        // TODO Use the browser width to determine the minimum size for visualizations and update it on browser resize.
-        visualizations.forEach(function(visualization) {
-            visualization.sizeX = visualization.sizeX || Math.floor(dashboardConfig.gridsterColumns * visualization.minSizePercentageX);
-            visualization.sizeY = visualization.sizeY || Math.floor(dashboardConfig.gridsterColumns * visualization.minSizePercentageY);
-            visualization.minSizeX = Math.floor(dashboardConfig.gridsterColumns * visualization.minSizePercentageX);
-            visualization.minSizeY = Math.floor(dashboardConfig.gridsterColumns * visualization.minSizePercentageY);
+        // Note that minimum sizes of visualizations will be updated automatically in the main controller whenever gridster is resized or new visualizations are added to the layout.
+        VISUALIZATIONS.forEach(function(visualization) {
+            visualization.sizeX = visualization.sizeX || Math.floor(dashboardConfig.gridsterColumns * 0.25);
+            visualization.sizeY = visualization.sizeY || Math.floor(dashboardConfig.gridsterColumns * 0.20);
+            visualization.minPixelX = visualization.minPixelX || neonVisualizationMinPixel.x; // jshint ignore:line
+            visualization.minPixelY = visualization.minPixelY || neonVisualizationMinPixel.y; // jshint ignore:line
+            visualization.minSizeX = 1;
+            visualization.minSizeY = 1;
         });
 
-        this.angularApp.constant('visualizations', visualizations);
-    };
-
-    NeonGTDSetup.prototype.saveVisualizations = function(config) {
-        var visualizations = (config.visualizations || []);
-        this.angularApp.constant('visualizations', visualizations);
+        this.angularApp.value('visualizations', VISUALIZATIONS);
     };
 
     NeonGTDSetup.prototype.saveExternal = function(services) {
