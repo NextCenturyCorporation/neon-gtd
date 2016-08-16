@@ -17,7 +17,7 @@
     },
 
     "dashboard": {
-        "gridsterColumns": 24,
+        "gridsterColumns": 12,
         "gridsterMargins": 10,
         "hideNavbarItems": false,
         "hideAdvancedOptions": false,
@@ -185,10 +185,12 @@
 
     "layouts": {
         "default": [{
-            "sizeX": 12,
+            "sizeX": 6,
+            "sizeY": 3,
             "type": "timeline"
         }, {
-            "sizeX": 12,
+            "sizeX": 6,
+            "sizeY": 6,
             "type": "map",
             "bindings": {
                 "config": [
@@ -199,7 +201,8 @@
                 ]
             }
         }, {
-            "sizeX": 12,
+            "sizeX": 6,
+            "sizeY": 3,
             "type": "lineChart",
             "bindings": {
                 "config": [
@@ -210,19 +213,30 @@
                 ]
             }
         }, {
+            "sizeX": 4,
+            "sizeY": 3,
             "type": "aggregationTable"
         }, {
+            "sizeX": 4,
+            "sizeY": 3,
             "type": "barChart"
         }, {
+            "sizeX": 4,
+            "sizeY": 3,
             "type": "opsClock"
         }, {
+            "sizeX": 6,
+            "sizeY": 3,
             "type": "dataTable"
         }, {
+            "sizeX": 6,
+            "sizeY": 3,
             "type": "filterBuilder"
         }],
 
         "example-with-bindings": [{
-            "sizeX": 12,
+            "sizeX": 6,
+            "sizeY": 3,
             "type": "timeline",
             "bindings": {
                 "title": "myTitle",
@@ -234,7 +248,8 @@
                 "overrideEndDate": "1388534399000"
             }
         }, {
-            "sizeX": 12,
+            "sizeX": 6,
+            "sizeY": 3,
             "type": "map",
             "bindings": {
                 "title": "myTitle",
@@ -274,7 +289,8 @@
                 }]
             }
         }, {
-            "sizeX": 12,
+            "sizeX": 6,
+            "sizeY": 3,
             "type": "lineChart",
             "bindings": {
                 "title": "myTitle",
@@ -296,7 +312,8 @@
                 }]
             }
         }, {
-            "sizeX": 12,
+            "sizeX": 6,
+            "sizeY": 3,
             "type": "dataTable",
             "bindings": {
                 "title": "myTitle",
@@ -307,7 +324,8 @@
                 "limit": 500
             }
         }, {
-            "sizeX": 6,
+            "sizeX": 4,
+            "sizeY": 3,
             "type": "aggregationTable",
             "bindings": {
                 "title": "myTitle",
@@ -319,7 +337,8 @@
                 "limit": 100
             }
         }, {
-            "sizeX": 6,
+            "sizeX": 4,
+            "sizeY": 3,
             "type": "barChart",
             "bindings": {
                 "title": "myTitle",
@@ -331,7 +350,8 @@
                 "limit": 50
             }
         }, {
-            "sizeX": 6,
+            "sizeX": 4,
+            "sizeY": 3,
             "type": "newsFeed",
             "bindings": {
                 "title": "myTitle",
@@ -343,7 +363,8 @@
                 "contentField": "mag"
             }
         }, {
-            "sizeX": 6,
+            "sizeX": 4,
+            "sizeY": 3,
             "type": "opsClock",
             "bindings": {
                 "title": "myTitle",
@@ -352,7 +373,8 @@
                 "dateField": "time"
             }
         }, {
-            "sizeX": 6,
+            "sizeX": 4,
+            "sizeY": 3,
             "type": "scatterPlot",
             "bindings": {
                 "title": "myTitle",
@@ -364,7 +386,8 @@
                 "limit": "time"
             }
         }, {
-            "sizeX": 6,
+            "sizeX": 4,
+            "sizeY": 3,
             "type": "sunburstChart",
             "bindings": {
                 "title": "myTitle",
@@ -375,7 +398,8 @@
                 "arcValue": "count"
             }
         }, {
-            "sizeX": 6,
+            "sizeX": 4,
+            "sizeY": 3,
             "type": "textCloud",
             "bindings": {
                 "title": "myTitle",

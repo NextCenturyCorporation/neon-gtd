@@ -15,7 +15,7 @@ user_ale:
 #  sendLogs: false
 
 dashboard:
-  gridsterColumns: 24
+  gridsterColumns: 12
   gridsterMargins: 10
   hideNavbarItems: false
   hideAdvancedOptions: false
@@ -360,10 +360,12 @@ datasets:
 layouts:
   default:
     -
-      sizeX: 12
+      sizeX: 6
+      sizeY: 3
       type: timeline
     -
-      sizeX: 12
+      sizeX: 6
+      sizeY: 6
       type: map
       bindings:
         config:
@@ -371,7 +373,8 @@ layouts:
             database: test
             table: earthquakes
     -
-      sizeX: 12
+      sizeX: 6
+      sizeY: 3
       type: lineChart
       bindings:
         config:
@@ -379,27 +382,40 @@ layouts:
             database: test
             table: earthquakes
     -
+      sizeX: 4
+      sizeY: 3
       type: aggregationTable
     -
+      sizeX: 4
+      sizeY: 3
       type: barChart
     -
+      sizeX: 4
+      sizeY: 3
       type: opsClock
     -
+      sizeX: 6
+      sizeY: 3
       type: dataTable
     -
+      sizeX: 6
+      sizeY: 3
       type: filterBuilder
   all-visualizations:
     -
-      sizeX: 12
+      sizeX: 6
+      sizeY: 3
       type: timeline
     -
-      sizeX: 12
+      sizeX: 6
+      sizeY: 3
       type: timeline
       bindings:
         database: uscontracts
         table: testcontracts
     -
-      sizeX: 12
+      sizeX: 6
+      sizeY: 3
       type: map
       bindings:
         config:
@@ -421,7 +437,8 @@ layouts:
             lineSizeField: annualRev
             applyTransientDateFilter: false
     -
-      sizeX: 12
+      sizeX: 6
+      sizeY: 3
       type: lineChart
       bindings:
         config:
@@ -429,29 +446,29 @@ layouts:
             database: test
             table: earthquakes
     -
+      sizeX: 4
+      sizeY: 3
       type: aggregationTable
     -
+      sizeX: 4
+      sizeY: 3
       type: barChart
     -
+      sizeX: 4
+      sizeY: 3
       type: opsClock
     -
-      type: dataTable
-    -
-      type: filterBuilder
-    -
+      sizeX: 4
+      sizeY: 3
       type: scatterPlot
       bindings:
         type: heatmapScatter
         xAxisField: mag
         yAxisField: depth
     -
-      type: dataTable
-      bindings:
-        database: uscontracts
-        table: testcontracts
-    -
+      sizeX: 4
+      sizeY: 3
       type: newsFeed
-      sizeY: 6
       bindings:
         database: uscontracts
         table: testcontracts
@@ -460,16 +477,34 @@ layouts:
         secondaryTitleField: ag
         contentField: desc
     -
+      sizeX: 4
+      sizeY: 3
       type: textCloud
-      sizeY: 6
       bindings:
         database: uscontracts
         table: testcontracts
         dataField: desc_array
     -
+      sizeX: 4
+      sizeY: 3
+      type: sunburstChart
+      bindings:
+        database: uscontracts
+        table: testcontracts
+        groupFields: prod2,prod3,prod4,prod6
+        valueField: base
+    -
+      sizeX: 8
+      sizeY: 3
+      type: filterBuilder
+    -
+      sizeX: 6
+      sizeY: 3
+      type: dataTable
+    -
+      sizeX: 6
+      sizeY: 3
       type: ganttChart
-      sizeX: 12
-      sizeY: 6
       bindings:
         database: uscontracts
         table: testcontracts
@@ -478,17 +513,15 @@ layouts:
         endField: completion
         colorField: state
     -
-      type: sunburstChart
-      sizeX: 9
-      sizeY: 9
+      sizeX: 6
+      sizeY: 3
+      type: dataTable
       bindings:
         database: uscontracts
         table: testcontracts
-        groupFields: prod2,prod3,prod4,prod6
-        valueField: base
     -
-      sizeX: 9
-      sizeY: 9
+      sizeX: 6
+      sizeY: 3
       type: networkGraph
       bindings:
         database: uscontracts
@@ -500,7 +533,8 @@ layouts:
         dateField: signed
   example-with-bindings:
     -
-      sizeX: 12
+      sizeX: 6
+      sizeY: 3
       type: timeline
       bindings:
         title: myTitle
@@ -511,7 +545,8 @@ layouts:
         overrideStartDate: 1/1/2013
         overrideEndDate: "1388534399000"
     -
-      sizeX: 12
+      sizeX: 6
+      sizeY: 3
       type: map
       bindings:
         title: myTitle
@@ -550,7 +585,8 @@ layouts:
               -
                 net
     -
-      sizeX: 12
+      sizeX: 6
+      sizeY: 3
       type: lineChart
       bindings:
         title: myTitle
@@ -571,7 +607,8 @@ layouts:
             aggregationField: mag
             groupField: type
     -
-      sizeX: 12
+      sizeX: 6
+      sizeY: 3
       type: dataTable
       bindings:
         title: myTitle
@@ -581,7 +618,8 @@ layouts:
         sortDirection: 1
         limit: 500
     -
-      sizeX: 6
+      sizeX: 4
+      sizeY: 3
       type: aggregationTable
       bindings:
         title: myTitle
@@ -592,7 +630,8 @@ layouts:
         aggregationField: mag
         limit: 100
     -
-      sizeX: 6
+      sizeX: 4
+      sizeY: 3
       type: barChart
       bindings:
         title: myTitle
@@ -603,7 +642,8 @@ layouts:
         aggregationField: mag
         limit: 50
     -
-      sizeX: 6
+      sizeX: 4
+      sizeY: 3
       type: newsFeed
       bindings:
         title: myTitle
@@ -614,7 +654,8 @@ layouts:
         dateField: time
         contentField: mag
     -
-      sizeX: 6
+      sizeX: 4
+      sizeY: 3
       type: opsClock
       bindings:
         title: myTitle
@@ -622,7 +663,8 @@ layouts:
         table: earthquakes
         dateField: time
     -
-      sizeX: 6
+      sizeX: 4
+      sizeY: 3
       type: scatterPlot
       bindings:
         title: myTitle
@@ -633,7 +675,8 @@ layouts:
         yAxisField: mag
         limit: time
     -
-      sizeX: 6
+      sizeX: 4
+      sizeY: 3
       type: sunburstChart
       bindings:
         title: myTitle
@@ -643,7 +686,8 @@ layouts:
         valueField: type
         arcValue: count
     -
-      sizeX: 6
+      sizeX: 4
+      sizeY: 3
       type: textCloud
       bindings:
         title: myTitle
