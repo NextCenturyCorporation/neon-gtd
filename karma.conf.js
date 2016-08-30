@@ -75,7 +75,8 @@ module.exports = function(config){
     browsers : ['PhantomJS'],
 
     junitReporter : {
-      outputFile: 'reports/unitTests.xml',
+      outputDir: 'reports',
+      outputFile: 'unitTests.xml',
       suite: 'unit'
     }
 
