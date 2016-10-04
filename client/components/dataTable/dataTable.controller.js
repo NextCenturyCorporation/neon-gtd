@@ -195,14 +195,14 @@ angular.module('neonDemo.controllers').controller('dataTableController', ['$scop
                     tags: ["datagrid", "row"]
                 });
 
+                $scope.active.gridOptions.api.selectIndex(cell.rowIndex, false);
+                $scope.selectedRowId = cell.rowIndex;
+
                 $scope.functions.publish("data_table_select", {
-                    data: $scope.active.gridOptions.rowData[cell.rowIndex],
+                    data: $scope.active.gridOptions.api.getSelectedRows()[0],
                     database: $scope.active.database.name,
                     table: $scope.active.table.name
                 });
-
-                $scope.active.gridOptions.api.selectIndex(cell.rowIndex, false);
-                $scope.selectedRowId = cell.rowIndex;
             });
         }
     };

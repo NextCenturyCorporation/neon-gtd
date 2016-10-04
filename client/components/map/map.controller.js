@@ -22,7 +22,7 @@
  * @class mapController
  * @constructor
  */
-angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$filter', function($scope, $filter) {
+angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$filter', 'DatasetService', function($scope, $filter, datasetService) {
     $scope.POINT_LAYER = coreMap.Map.POINTS_LAYER;
     $scope.CLUSTER_LAYER = coreMap.Map.CLUSTER_LAYER;
     $scope.HEATMAP_LAYER = coreMap.Map.HEATMAP_LAYER;
@@ -865,8 +865,12 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
                     database: message.database,
                     table: message.table
                 });
-                var latitudeField = (pointsLayer && pointsLayer.latitudeMapping) ? pointsLayer.latitudeMapping : "latitude";
-                var longitudeField = (pointsLayer && pointsLayer.longitudeMapping) ? pointsLayer.longitudeMapping : "longitude";
+                // If no mapping is provided, check the table before just blindly assigning lat/lon.
+
+                var latitudeField = (pointsLayer && pointsLayer.latitudeMapping) ? pointsLayer.latitudeMapping :
+                    (datasetService.getMapping(message.database, message.table, 'latitude') || "latitude");
+                var longitudeField = (pointsLayer && pointsLayer.longitudeMapping) ? pointsLayer.longitudeMapping :
+                    (datasetService.getMapping(message.database, message.table, 'longitude') || "longitude");
                 layer.addFeatures(createPointsAndFeatures(latitudeField, longitudeField));
             }
             $scope.map.addLayer(layer);
