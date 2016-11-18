@@ -94,7 +94,7 @@ var saveNeonConfig = function($http, config) {
     NeonGTDSetup.saveCustomFilters(config);
     NeonGTDSetup.saveDashboards(config);
 
-    var files = (config.files || []);
+    var externalConfigs = (config.externalConfigs || []);
     var layouts = (config.layouts || {});
     if(!(layouts.default)) {
         layouts.default = [];
@@ -104,19 +104,26 @@ var saveNeonConfig = function($http, config) {
     // Read the external application services config file and create the services, then read each layout config file and add the layouts,
     // then read each dataset config file and add the datasets, then start angular.
     NeonGTDSetup.readAndSaveExternalServices((config.externalServices || {}), function() {
-        NeonGTDSetup.readLayoutFilesAndSaveLayouts($http, layouts, (files.layouts || []), function() {
-            NeonGTDSetup.readDatasetFilesAndSaveDatasets($http, datasets, (files.datasets || []), startAngular);
+        NeonGTDSetup.readLayoutFilesAndSaveLayouts($http, layouts, (externalConfigs.layouts || []), function() {
+            NeonGTDSetup.readDatasetFilesAndSaveDatasets($http, datasets, (externalConfigs.datasets || []), startAngular);
         });
     });
 };
 
 angular.element(document).ready(function() {
     var $http = angular.injector(['ng']).get('$http');
-    $http.get("./app/config/config.yaml").then(function(response) {
-        saveNeonConfig($http, jsyaml.load(response.data));
-    }, function() {
-        $http.get("./app/config/config.json").then(function(response) {
-            saveNeonConfig($http, response.data);
-        });
+    neon.widget.getProperty('gtd-global-config', function(result) {
+        if (result !== null) {
+            saveNeonConfig($http, JSON.parse(result.value));
+        } else {
+            // Get legacy config file
+            $http.get("./app/config/config.yaml").then(function(response) {
+                saveNeonConfig($http, jsyaml.load(response.data));
+            }, function() {
+                $http.get("./app/config/config.json").then(function(response) {
+                    saveNeonConfig($http, response.data);
+                });
+            });
+        }
     });
 });

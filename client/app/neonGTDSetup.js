@@ -225,18 +225,15 @@ NeonGTDSetup = (function() {
         this.angularApp.value('layouts', layouts);
     };
 
-    NeonGTDSetup.prototype.readLayoutFilesAndSaveLayouts = function($http, layouts, layoutFiles, callback) {
+    NeonGTDSetup.prototype.readLayoutFilesAndSaveLayouts = function($http, layouts, layoutConfigs, callback) {
         var me = this;
-        if(layoutFiles.length) {
-            var layoutFile = layoutFiles.shift();
-            $http.get(layoutFile).then(function(response) {
-                var layoutConfig = layoutFile.substring(layoutFile.length - 4) === "yaml" ? jsyaml.load(response.data) : response.data;
-                if(layoutConfig.name && layoutConfig.layout) {
+        if(layoutConfigs.length) {
+            var layout = layoutConfigs.shift();
+            me.getExternalConfig($http, layout, function(layoutConfig) {
+                if(layoutConfig && layoutConfig.name && layoutConfig.layout) {
                     layouts[layoutConfig.name] = layoutConfig.layout;
                 }
-                me.readLayoutFilesAndSaveLayouts($http, layouts, layoutFiles, callback);
-            }, function() {
-                me.readLayoutFilesAndSaveLayouts($http, layouts, layoutFiles, callback);
+                me.readLayoutFilesAndSaveLayouts($http, layouts, layoutConfigs, callback);
             });
         } else {
             this.saveLayouts(layouts);
@@ -246,22 +243,37 @@ NeonGTDSetup = (function() {
         }
     };
 
+    NeonGTDSetup.prototype.getExternalConfig = function($http, config, callback) {
+        if(config.key) {
+            neon.widget.getProperty(config.key, function(result) {
+                callback(JSON.parse(result.value));
+            });
+        } else if(config.file) {
+            var file = config.file;
+            $http.get(file).then(function(response) {
+                var parsedConfig = file.substring(file.length - 4) === "yaml" ? jsyaml.load(response.data) : response.data;
+                callback(parsedConfig);
+            }, function() {
+                callback();
+            });
+        } else {
+            callback();
+        }
+    };
+
     NeonGTDSetup.prototype.saveDatasets = function(datasets) {
         this.angularApp.value('datasets', datasets);
     };
 
-    NeonGTDSetup.prototype.readDatasetFilesAndSaveDatasets = function($http, datasets, datasetFiles, callback) {
+    NeonGTDSetup.prototype.readDatasetFilesAndSaveDatasets = function($http, datasets, datasetConfigs, callback) {
         var me = this;
-        if(datasetFiles.length) {
-            var datasetFile = datasetFiles.shift();
-            $http.get(datasetFile).then(function(response) {
-                var datasetConfig = datasetFile.substring(datasetFile.length - 4) === "yaml" ? jsyaml.load(response.data) : response.data;
-                if(datasetConfig.dataset) {
+        if(datasetConfigs.length) {
+            var dataset = datasetConfigs.shift();
+            me.getExternalConfig($http, dataset, function(datasetConfig) {
+                if(datasetConfig && datasetConfig.dataset) {
                     datasets.push(datasetConfig.dataset);
                 }
-                me.readDatasetFilesAndSaveDatasets($http, datasets, datasetFiles, callback);
-            }, function() {
-                me.readDatasetFilesAndSaveDatasets($http, datasets, datasetFiles, callback);
+                me.readDatasetFilesAndSaveDatasets($http, datasets, datasetConfigs, callback);
             });
         } else {
             this.saveDatasets(datasets);
