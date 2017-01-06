@@ -113,7 +113,7 @@ var saveNeonConfig = function($http, config) {
 angular.element(document).ready(function() {
     var $http = angular.injector(['ng']).get('$http');
     neon.widget.getProperty('gtd-global-config', function(result) {
-        if (result !== null) {
+        if (result !== null && result.value !== null) {
             saveNeonConfig($http, JSON.parse(result.value));
         } else {
             // Get legacy config file
