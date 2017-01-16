@@ -488,6 +488,37 @@ angular.module('neonDemo.controllers').controller('newsFeedController', ['$scope
         $scope.functions.logChangeAndUpdate("limit", $scope.active.limit, "button");
     };
 
+    $scope.functions.createExportDataObject = function(exportId, query) {
+        var finalObject = {
+            name: "News_Feed",
+            data: [{
+                query: query,
+                name: "newsFeed-" + exportId,
+                fields: [],
+                ignoreFilters: query.ignoreFilters_,
+                selectionOnly: query.selectionOnly_,
+                ignoredFilterIds: query.ignoredFilterIds_,
+                type: "query"
+            }]
+        };
+        var fieldsToAdd = [
+            $scope.active.dateField,
+            $scope.active.primaryTitleField,
+            $scope.active.secondaryTitleField,
+            $scope.active.contentField
+        ];
+
+        fieldsToAdd.forEach(function(field) {
+            if (field && field.columnName) {
+                finalObject.data[0].fields.push({
+                    query: field.columnName,
+                    pretty: field.prettyName || field.columnName
+                });
+            }
+        });
+        return finalObject;
+    };
+
     /**
      * Returns the style class for the given news item.
      * @param {Object} item
