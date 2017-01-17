@@ -1183,6 +1183,13 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
     };
 
     $scope.functions.createExportDataObject = function(exportId, query) {
+        // Exporting only supports one query, but the timeline has a query for the timeline and a
+        // query for the invalid records. Only export the timeline data
+        if (query && query.queries && query.queries.length >= 1) {
+            var timelineQuery = query.queries[0];
+            delete query.queries;
+            _.assign(query, timelineQuery);
+        }
         var finalObject = {
             name: "Timeline",
             data: [{
@@ -1198,8 +1205,6 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
         // The timelineSelector always asks for count and date, so it's fine to hard-code these in.
         // GroupBy clauses will always be added to the query in the same order, so this takes advantage
         // of that to add the pretty names of the clauses in the same order for as many as were added.
-        // TODO NEON-1973
-        /*
         var counter = 0;
         var prettyNames = ["Year", "Month", "Day", "Hour"];
         query.groupByClauses.forEach(function(field) {
@@ -1209,7 +1214,6 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
             });
             counter++;
         });
-        */
         finalObject.data[0].fields.push({
             query: "count",
             pretty: "Count"
