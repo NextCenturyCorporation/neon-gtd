@@ -382,7 +382,7 @@ charts.TimelineSelectorChart = function(element, configuration) {
         var width = xRange(d3.time[this.granularity].utc.offset(date, 1)) - x;
         var y = yRange(Math.max(MIN_VALUE, value));
         var height = Math.abs(yRange(value) - yRange(MIN_VALUE));
-        highlight.attr("x", x - 1).attr("width", width + 2).attr("y", y - 1).attr("height", height + 2).style("visibility", "visible");
+        highlight.attr("x", x - 1).attr("width", width + 2).attr("y", y - 1).attr("height", ((isNaN(height) ? MIN_VALUE : height) + 2)).style("visibility", "visible");
     };
 
     /**
@@ -719,7 +719,7 @@ charts.TimelineSelectorChart = function(element, configuration) {
             var axis = me.drawFocusChart(series);
             var y = axis.y;
             var yAxis = axis.yAxis;
-            var yContext = me.logarithmic ? d3.scale.log().range([heightContext, 0]) : d3.scale.linear().range([heightContext, 0]);
+            var yContext = me.logarithmic ? d3.scale.log().clamp(true).range([heightContext, 0]) : d3.scale.linear().range([heightContext, 0]);
             yContext.domain(y.domain());
 
             if(me.primarySeries.name === series.name) {
@@ -772,7 +772,7 @@ charts.TimelineSelectorChart = function(element, configuration) {
                             return yContext(Math.max(MIN_VALUE, d.value));
                         })
                         .attr("height", function(d) {
-                            var height = yContext(d.value) - yContext(MIN_VALUE);
+                            var height = isNaN(yContext(d.value) - yContext(MIN_VALUE)) ? MIN_VALUE : yContext(d.value) - yContext(MIN_VALUE);
                             var offset = height / height || 0;
                             var calculatedHeight = Math.abs(height) + (offset * barheight);
                             return calculatedHeight;
@@ -1034,7 +1034,7 @@ charts.TimelineSelectorChart = function(element, configuration) {
 
         var focus = me.svg.select(".focus-" + series.name + " ." + series.name);
 
-        var yFocus = me.logarithmic ? d3.scale.log().range([me.heightFocus, 0]) : d3.scale.linear().range([me.heightFocus, 0]);
+        var yFocus = me.logarithmic ? d3.scale.log().clamp(true).range([me.heightFocus, 0]) : d3.scale.linear().range([me.heightFocus, 0]);
 
         if(me.primarySeries.name === series.name) {
             me.yFocus = yFocus;
@@ -1106,7 +1106,7 @@ charts.TimelineSelectorChart = function(element, configuration) {
                     return yFocus(Math.max(MIN_VALUE, d.value));
                 })
                 .attr("height", function(d) {
-                    var height = yFocus(d.value) - yFocus(MIN_VALUE);
+                    var height = isNaN(yFocus(d.value) - yFocus(MIN_VALUE)) ? MIN_VALUE : yFocus(d.value) - yFocus(MIN_VALUE);
                     var offset = height / height || 0;
                     var calculatedHeight = Math.abs(height) + (offset * barheight);
                     return calculatedHeight;

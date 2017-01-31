@@ -452,7 +452,7 @@ charts.LineChart.prototype.drawLines = function(opts) {
         .call(xAxis);
 
     var startRange = (me.height - (me.margin.top + me.margin.bottom));
-    me.y = (me.logarithmic ? d3.scale.log().range([startRange, 0]) : d3.scale.linear().range([startRange, 0]));
+    me.y = (me.logarithmic ? d3.scale.log().clamp(true).range([startRange, 0]) : d3.scale.linear().range([startRange, 0]));
 
     var yAxis = d3.svg.axis()
         .scale(me.y)
