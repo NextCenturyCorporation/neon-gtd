@@ -58,6 +58,7 @@ charts.TimelineSelectorChart = function(element, configuration) {
     this.TOOLTIP_ID = 'tooltip';
     this.xDomain = [];
     this.collapsed = true;
+    this.logarithmic = false;
 
     // The highlight bars for each date for both the context and focus timelines.
     this.focusHighlights = [];
@@ -107,6 +108,7 @@ charts.TimelineSelectorChart = function(element, configuration) {
             left: this.DEFAULT_MARGIN
         };
         this.granularity = configuration.granularity || this.granularity;
+        this.logarithmic = configuration.logarithmic || this.logarithmic;
         this.redrawOnResize();
 
         return this;
@@ -376,9 +378,10 @@ charts.TimelineSelectorChart = function(element, configuration) {
     this.showHighlight = function(date, value, highlight, xRange, yRange) {
         // TODO Create x, width, y, and height functions to combine the calculations for both the highlight bar and the other bars.
         var x = xRange(date);
+        var MIN_VALUE = this.logarithmic ? 1 : 0;
         var width = xRange(d3.time[this.granularity].utc.offset(date, 1)) - x;
-        var y = yRange(Math.max(0, value));
-        var height = Math.abs(yRange(value) - yRange(0));
+        var y = yRange(Math.max(MIN_VALUE, value));
+        var height = Math.abs(yRange(value) - yRange(MIN_VALUE));
         highlight.attr("x", x - 1).attr("width", width + 2).attr("y", y - 1).attr("height", height + 2).style("visibility", "visible");
     };
 
@@ -533,6 +536,7 @@ charts.TimelineSelectorChart = function(element, configuration) {
     this.render = function(values) {
         var me = this;
         var i = 0;
+        var MIN_VALUE = me.logarithmic ? 1 : 0;
 
         this.width = this.determineWidth(this.d3element) - this.config.marginFocus.left - this.config.marginFocus.right;
         // Depending on the granularity, the bars are not all the same width (months are different
@@ -715,7 +719,7 @@ charts.TimelineSelectorChart = function(element, configuration) {
             var axis = me.drawFocusChart(series);
             var y = axis.y;
             var yAxis = axis.yAxis;
-            var yContext = d3.scale.linear().range([heightContext, 0]);
+            var yContext = me.logarithmic ? d3.scale.log().range([heightContext, 0]) : d3.scale.linear().range([heightContext, 0]);
             yContext.domain(y.domain());
 
             if(me.primarySeries.name === series.name) {
@@ -765,10 +769,10 @@ charts.TimelineSelectorChart = function(element, configuration) {
                             return me.xContext(d3.time[me.granularity].utc.offset(d.date, 1)) - me.xContext(d.date);
                         })
                         .attr("y", function(d) {
-                            return yContext(Math.max(0, d.value));
+                            return yContext(Math.max(MIN_VALUE, d.value));
                         })
                         .attr("height", function(d) {
-                            var height = yContext(d.value) - yContext(0);
+                            var height = yContext(d.value) - yContext(MIN_VALUE);
                             var offset = height / height || 0;
                             var calculatedHeight = Math.abs(height) + (offset * barheight);
                             return calculatedHeight;
@@ -791,10 +795,10 @@ charts.TimelineSelectorChart = function(element, configuration) {
                                 return me.xContext(d.date);
                             })
                             .y0(function(d) {
-                                return yContext(Math.min(0, d.value));
+                                return yContext(Math.min(MIN_VALUE, d.value));
                             })
                             .y1(function(d) {
-                                return yContext(Math.max(0, d.value));
+                                return yContext(Math.max(MIN_VALUE, d.value));
                             });
                     }
 
@@ -866,8 +870,8 @@ charts.TimelineSelectorChart = function(element, configuration) {
                     class: "mini-axis",
                     x1: 0,
                     x2: me.width - (xOffset * 2),
-                    y1: y(0),
-                    y2: y(0)
+                    y1: y(MIN_VALUE),
+                    y2: y(MIN_VALUE)
                 });
 
             charts.push({
@@ -983,6 +987,10 @@ charts.TimelineSelectorChart = function(element, configuration) {
         this.granularity = granularity;
     };
 
+    this.setYAxisScaleLogarithmic = function(isLogarithmic) {
+        this.logarithmic = isLogarithmic;
+    };
+
     this.redrawChart = function() {
         var extent = this.brush.extent();
         this.render(this.data);
@@ -1020,12 +1028,13 @@ charts.TimelineSelectorChart = function(element, configuration) {
      */
     this.drawFocusChart = function(series) {
         var me = this;
+        var MIN_VALUE = me.logarithmic ? 1 : 0;
 
         me.svg.select(".focus-" + series.name).select(".x.axis").call(me.xAxisFocus);
 
         var focus = me.svg.select(".focus-" + series.name + " ." + series.name);
 
-        var yFocus = d3.scale.linear().range([me.heightFocus, 0]);
+        var yFocus = me.logarithmic ? d3.scale.log().range([me.heightFocus, 0]) : d3.scale.linear().range([me.heightFocus, 0]);
 
         if(me.primarySeries.name === series.name) {
             me.yFocus = yFocus;
@@ -1043,13 +1052,13 @@ charts.TimelineSelectorChart = function(element, configuration) {
         var minY = d3.min(dataShown.map(function(d) {
             return d.value;
         }));
-        minY = minY < 0 ? minY : 0;
+        minY = me.logarithmic ? 1 : (minY < 0 ? minY : 0);
 
         // Use highest value for Y-axis domain, or 0 if there is no data
         var maxY = d3.max(dataShown.map(function(d) {
             return d.value;
         }));
-        maxY = maxY ? maxY : 0;
+        maxY = maxY ? maxY : MIN_VALUE;
 
         yFocus.domain([minY, maxY]);
 
@@ -1094,10 +1103,10 @@ charts.TimelineSelectorChart = function(element, configuration) {
                     return me.xFocus(d3.time[me.granularity].utc.offset(d.date, 1)) - me.xFocus(d.date);
                 })
                 .attr("y", function(d) {
-                    return yFocus(Math.max(0, d.value));
+                    return yFocus(Math.max(MIN_VALUE, d.value));
                 })
                 .attr("height", function(d) {
-                    var height = yFocus(d.value) - yFocus(0);
+                    var height = yFocus(d.value) - yFocus(MIN_VALUE);
                     var offset = height / height || 0;
                     var calculatedHeight = Math.abs(height) + (offset * barheight);
                     return calculatedHeight;
@@ -1122,10 +1131,10 @@ charts.TimelineSelectorChart = function(element, configuration) {
                         return me.xFocus(d.date);
                     })
                     .y0(function(d) {
-                        return yFocus(Math.min(0, d.value));
+                        return yFocus(Math.min(MIN_VALUE, d.value));
                     })
                     .y1(function(d) {
-                        return yFocus(Math.max(0, d.value));
+                        return yFocus(Math.max(MIN_VALUE, d.value));
                     });
             }
 
@@ -1238,8 +1247,8 @@ charts.TimelineSelectorChart = function(element, configuration) {
                 .attr({
                     x1: 0,
                     x2: me.width - (xOffset * 2),
-                    y1: y(0),
-                    y2: y(0)
+                    y1: y(me.logarithmic ? 1 : 0),
+                    y2: y(me.logarithmic ? 1 : 0)
                 });
 
             me.svg.selectAll(".focus-" + series.name + " g.y.axis.series-y")

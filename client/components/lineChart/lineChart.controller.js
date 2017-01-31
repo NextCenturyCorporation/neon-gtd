@@ -26,6 +26,8 @@ angular.module('neonDemo.controllers').controller('lineChartController', ['$scop
     var COUNT_FIELD_NAME = 'value';
     $scope.active.HOUR = "hour";
     $scope.active.DAY = "day";
+    $scope.active.LINEAR_SCALE = "linear";
+    $scope.active.LOG_SCALE = "logarithmic";
 
     $scope.extent = [];
     $scope.colorMappings = [];
@@ -40,6 +42,7 @@ angular.module('neonDemo.controllers').controller('lineChartController', ['$scop
 
     $scope.active.granularity = $scope.bindings.granularity ? $scope.bindings.granularity.toLowerCase() : $scope.active.DAY;
     $scope.active.showTrendlines = false;
+    $scope.active.yAxisScale = $scope.bindings.yAxisScale === $scope.active.LOG_SCALE ? $scope.active.LOG_SCALE : $scope.active.LINEAR_SCALE;
 
     $scope.functions.createMenuText = function() {
         if(!$scope.hideNoDataError) {
@@ -98,6 +101,25 @@ angular.module('neonDemo.controllers').controller('lineChartController', ['$scop
             tags: ["linechart", "trendline", $scope.active.showTrendlines]
         });
         $scope.chart.showTrendlines($scope.active.showTrendlines);
+    };
+
+    $scope.changeYAxisScale = function() {
+        XDATA.userALE.log({
+            activity: "alter",
+            action: "click",
+            elementId: "linechart",
+            elementType: "button",
+            elementSub: "linechart-yAxisScale-" + $scope.active.yAxisScale,
+            elementGroup: "chart_group",
+            source: "user",
+            tags: ["linechart", "yAxisScale", $scope.active.yAxisScale]
+        });
+
+        if($scope.chart) {
+            $scope.chart.setYAxisScaleLogarithmic($scope.active.yAxisScale === $scope.active.LOG_SCALE);
+            $scope.chart.draw();
+            $scope.chart.showTrendlines($scope.active.showTrendlines);
+        }
     };
 
     /**
@@ -670,7 +692,8 @@ angular.module('neonDemo.controllers').controller('lineChartController', ['$scop
             hoverListener: onHover,
             responsive: true,
             granularity: $scope.active.granularity,
-            seriesToColors: colorMappings
+            seriesToColors: colorMappings,
+            logarithmic: $scope.active.yAxisScale === $scope.active.LOG_SCALE
         };
 
         // Destroy the old chart and rebuild it.
@@ -1067,6 +1090,7 @@ angular.module('neonDemo.controllers').controller('lineChartController', ['$scop
 
     $scope.functions.addToBindings = function(bindings) {
         bindings.granularity = $scope.active.granularity;
+        bindings.yAxisScale = $scope.active.yAxisScale;
         return bindings;
     };
 }]);

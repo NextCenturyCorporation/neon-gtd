@@ -28,6 +28,8 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
     $scope.active.MONTH = "month";
     $scope.active.DAY = "day";
     $scope.active.HOUR = "hour";
+    $scope.active.LINEAR_SCALE = "linear";
+    $scope.active.LOG_SCALE = "logarithmic";
 
     var DAY_HOUR_BUCKETIZER = dateBucketizer();
     var MONTH_BUCKETIZER = monthBucketizer();
@@ -58,6 +60,7 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
     $scope.active.numberValid = 0;
     $scope.active.primarySeries = undefined;
     $scope.active.showFocus = "on_filter";
+    $scope.active.yAxisScale = $scope.active.LINEAR_SCALE;
 
     // Animation controls.
     $scope.active.animatingTime = false;
@@ -433,6 +436,8 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
             updateBucketizer();
         }
 
+        $scope.active.yAxisScale = $scope.bindings.yAxisScale === $scope.active.LOG_SCALE ? $scope.active.LOG_SCALE : $scope.active.LINEAR_SCALE;
+
         $scope.functions.getElement(".neon-datetimepicker").on("hide.bs.dropdown", function() {
             return false;
         });
@@ -533,6 +538,22 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
         // Resize the dropdown toggle to an arbitrary small value to stop the date filter notification from wrapping in small timeline
         // visualizations.  It will be automatically resized based on the visualization width after a short delay.
         $scope.functions.getElement(".neon-datetimepicker .dropdown-toggle").css("max-width", "40px");
+    };
+
+    $scope.handleChangeYAxisScale = function() {
+        XDATA.userALE.log({
+            activity: "alter",
+            action: "click",
+            elementId: "timeline",
+            elementType: "button",
+            elementSub: "showFocus",
+            elementGroup: "chart_group",
+            source: "user",
+            tags: ["timeline", "yAxisScale", $scope.active.yAxisScale]
+        });
+
+        $scope.chart.setYAxisScaleLogarithmic($scope.active.yAxisScale === $scope.active.LOG_SCALE);
+        $scope.chart.redrawChart();
     };
 
     $scope.handleChangeShowFocus = function() {
@@ -806,6 +827,7 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
                 updateChartTimesAndTotal();
                 addTimeSeriesAnalysis($scope.data[0].data, timelineData);
                 $scope.chart.updateGranularity($scope.active.granularity);
+                $scope.chart.setYAxisScaleLogarithmic($scope.active.yAxisScale === $scope.active.LOG_SCALE);
                 $scope.chart.render($scope.data);
                 $scope.chart.renderExtent($scope.extent);
             };
@@ -831,6 +853,7 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
             $scope.active.showNoDataError = !$scope.data || !$scope.data.length || !$scope.data[0].data || !$scope.data[0].data.length;
             updateChartTimesAndTotal();
             $scope.chart.updateGranularity($scope.active.granularity);
+            $scope.chart.setYAxisScaleLogarithmic($scope.active.yAxisScale === $scope.active.LOG_SCALE);
             $scope.chart.render($scope.data);
             $scope.chart.renderExtent($scope.extent);
         }
@@ -1018,6 +1041,7 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
                 $scope.active.displayEventProbabilities = true;
             });
             $scope.chart.updateGranularity($scope.active.granularity);
+            $scope.chart.setYAxisScaleLogarithmic($scope.active.yAxisScale === $scope.active.LOG_SCALE);
             $scope.chart.render($scope.data);
             $scope.chart.renderExtent($scope.extent);
         }).fail(function() {
@@ -1224,6 +1248,7 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
     $scope.functions.addToBindings = function(bindings) {
         bindings.dateField = $scope.functions.isFieldValid($scope.active.dateField) ? $scope.active.dateField.columnName : undefined;
         bindings.granularity = $scope.active.granularity || undefined;
+        bindings.yAxisScale = $scope.active.yAxisScale || undefined;
         return bindings;
     };
 

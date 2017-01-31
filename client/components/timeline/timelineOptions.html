@@ -56,6 +56,21 @@
     <div class="clearfix"></div>
 </div>
 
+<div class="form-group">
+    <label>Y-Axis Scale</label>
+    <div class="btn-group">
+      <label class="btn btn-default" ng-class="{true: 'active', false: ''}[active.yAxisScale === active.LINEAR_SCALE]">
+        <input type="radio" style="display:none" ng-model="active.yAxisScale" ng-value="active.LINEAR_SCALE" ng-change="handleChangeYAxisScale()">
+        <span ng-bind="active.LINEAR_SCALE"></span>
+      </label>
+      <label class="btn btn-default" ng-class="{true: 'active', false: ''}[active.yAxisScale === active.LOG_SCALE]">
+        <input type="radio" style="display:none" ng-model="active.yAxisScale" ng-value="active.LOG_SCALE" ng-change="handleChangeYAxisScale()">
+        <span ng-bind="active.LOG_SCALE"></span>
+      </label>
+    </div>
+    <div class="clearfix"></div>
+</div>
+
 <div class="form-group" ng-hide="!active.numberInvalid">
     <label>Invalid Dates</label>
     <div class="btn-group">

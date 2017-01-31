@@ -46,6 +46,7 @@ charts.LineChart = function(rootElement, selector, opts) {
     this.x = [];
     this.y = [];
     this.xDomain = [];
+    this.logarithmic = opts.logarithmic || false;
 
     this.hiddenSeries = [];
 
@@ -93,6 +94,10 @@ charts.LineChart.prototype.determineHeight = function(element) {
 
 charts.LineChart.prototype.setGranularity = function(granularity) {
     this.granularity = granularity;
+};
+
+charts.LineChart.prototype.setYAxisScaleLogarithmic = function(isLogarithmic) {
+    this.logarithmic = isLogarithmic;
 };
 
 charts.LineChart.prototype.showTrendlines = function(display) {
@@ -446,7 +451,8 @@ charts.LineChart.prototype.drawLines = function(opts) {
         .attr("transform", "translate(" + me.xOffset + "," + (me.height - (me.margin.top + me.margin.bottom)) + ")")
         .call(xAxis);
 
-    me.y = d3.scale.linear().range([(me.height - (me.margin.top + me.margin.bottom)), 0]);
+    var startRange = (me.height - (me.margin.top + me.margin.bottom));
+    me.y = (me.logarithmic ? d3.scale.log().range([startRange, 0]) : d3.scale.linear().range([startRange, 0]));
 
     var yAxis = d3.svg.axis()
         .scale(me.y)
@@ -457,7 +463,7 @@ charts.LineChart.prototype.drawLines = function(opts) {
     var minY = d3.min(fullDataSet, function(d) {
         return d[me.yAttribute];
     });
-    minY = minY < 0 ? minY : 0;
+    minY = me.logarithmic ? 1 : (minY < 0 ? minY : 0);
     me.y.domain([minY, d3.max(fullDataSet, function(d) {
         return d[me.yAttribute];
     })]);
