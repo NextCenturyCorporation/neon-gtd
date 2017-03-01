@@ -17,6 +17,18 @@
 </div>
 
 <div class="form-group">
+    <label>Minimum Font Size</label>
+    <div class="input-group">
+        <input type="number" min="1" class="form-control" ng-model="active.minFontSize" required>
+        <div class="input-group-btn">
+            <button type="button" class="btn btn-default refresh" title="Refresh" ng-click="handleChangeFontSize()">
+                <span class="glyphicon glyphicon-refresh"></span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="form-group">
     <label>Show Records With</label>
     <div class="btn-group">
         <label class="btn btn-default" ng-class="{true: 'active', false: ''}[active.andFilters]">

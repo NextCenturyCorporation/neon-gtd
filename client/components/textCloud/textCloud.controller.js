@@ -26,6 +26,7 @@ angular.module('neonDemo.controllers').controller('textCloudController', ['$scop
     $scope.active.dataField = {};
     $scope.active.andFilters = true;
     $scope.active.limit = 40;
+    $scope.active.minFontSize = 14;
     $scope.active.textColor = "#111";
     $scope.active.data = [];
     $scope.filters = [];
@@ -45,9 +46,9 @@ angular.module('neonDemo.controllers').controller('textCloudController', ['$scop
     var updateTagcloudPluginSettings = function() {
         $.fn.tagcloud.defaults = {
             size: {
-                start: 130,
-                end: 250,
-                unit: '%'
+                start: $scope.active.minFontSize,
+                end: $scope.active.minFontSize*2,
+                unit: 'pt'
             },
             color: {
                 start: '#aaaaaa',
@@ -217,6 +218,17 @@ angular.module('neonDemo.controllers').controller('textCloudController', ['$scop
     $scope.handleChangeLimit = function() {
         $scope.active.limit = $scope.active.limit || 1;
         $scope.functions.logChangeAndUpdate("limit", $scope.active.limit, "button");
+    };
+
+    $scope.handleChangeFontSize = function() {
+        $scope.active.minFontSize = $scope.active.minFontSize || 1;
+        $.fn.tagcloud.defaults.size = {
+            start: $scope.active.minFontSize,
+            end: $scope.active.minFontSize*2,
+            unit: 'pt'
+        };
+        $scope.functions.logChangeAndUpdate("minFontSize", $scope.active.minFontSize, "button");
+        updateTextStyle();
     };
 
     $scope.handleChangeAndFilters = function() {
