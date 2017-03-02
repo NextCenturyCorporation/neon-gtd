@@ -504,17 +504,6 @@ layouts:
     -
       sizeX: 6
       sizeY: 3
-      type: ganttChart
-      bindings:
-        database: uscontracts
-        table: testcontracts
-        rowTitle-field: desc
-        startField: signed
-        endField: completion
-        colorField: state
-    -
-      sizeX: 6
-      sizeY: 3
       type: dataTable
       bindings:
         database: uscontracts

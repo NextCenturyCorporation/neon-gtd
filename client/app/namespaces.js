@@ -262,18 +262,6 @@ neonWizard.visualizationBindings["count-by"] = [
 ];
 neonWizard.visualizationBindings["directed-graph"] = [];
 neonWizard.visualizationBindings["filter-builder"] = [];
-neonWizard.visualizationBindings["gantt-chart"] = [
-    {
-        label: "Start Field",
-        name: "bind-start-field"
-    },{
-        label: "End Field",
-        name: "bind-end-field"
-    },{
-        label: "Color Field",
-        name: "bind-color-field"
-    }
-];
 neonWizard.visualizationBindings.linechart = [
     {
         label: "Date Granularity",
@@ -398,10 +386,6 @@ var neonVisualizations = [{   // jshint ignore:line
     name: "Filter Builder",
     type: "filterBuilder",
     icon: "CreateFilter64"
-}, {
-    name: "Gantt Chart",
-    type: "ganttChart",
-    icon: "Gantt64"
 }, {
     name: "Line Chart",
     type: "lineChart",

@@ -23,9 +23,6 @@
         <link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.css" />
         <!-- endbower -->
 
-        <link rel="stylesheet" href="bower_components/angular-gantt/assets/angular-gantt.css" />
-        <link rel="stylesheet" href="bower_components/angular-gantt/assets/angular-gantt-plugins.css" />
-
         <link rel="stylesheet" type="text/css" href="app/sprites.css">
         <!-- endbuild -->
 
@@ -83,9 +80,6 @@
         <script src="bower_components/ngDraggable/ngDraggable.js"></script>
         <script src="bower_components/remarkable-bootstrap-notify/bootstrap-notify.js"></script>
         <!-- endbower -->
-
-        <script src="bower_components/angular-gantt/dist/angular-gantt.js"></script>
-        <script src="bower_components/angular-gantt/dist/angular-gantt-plugins.js"></script>
 
         <script src="bower_components/user-ale/helper-libs/javascript/userale.js"></script>
         <script src="bower_components/user-ale/helper-libs/javascript/userale-worker.js"></script>
@@ -225,12 +219,7 @@
                 'ui.bootstrap.datetimepicker',
                 'linkify',
 
-                'agGrid',
-
-                'gantt',
-                'gantt.tooltips',
-                'gantt.tree',
-                'gantt.groups'
+                'agGrid'
             ]);
 
             neonDemo.config(["$routeProvider", "$locationProvider", function($routeProvider, $locationProvider) {
@@ -308,7 +297,6 @@
         <script src="components/filterBuilder/filterTable.js"></script>
         <script src="components/filterNotification/filterNotification.directive.js"></script>
         <script src="components/filterTray/filterTray.directive.js"></script>
-        <script src="components/ganttChart/ganttChart.controller.js"></script>
         <script src="components/import/import.directive.js"></script>
         <script src="components/import/removeDataset.directive.js"></script>
         <script src="components/layerOptions/layerOptions.directive.js"></script>

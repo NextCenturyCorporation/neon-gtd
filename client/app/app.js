@@ -26,12 +26,7 @@ var neonDemo = angular.module('neonDemo', [
     'ui.bootstrap.datetimepicker',
     'linkify',
 
-    'agGrid',
-
-    'gantt',
-    'gantt.tooltips',
-    'gantt.tree',
-    'gantt.groups'
+    'agGrid'
 ]);
 
 neonDemo.config(["$routeProvider", "$locationProvider", function($routeProvider, $locationProvider) {
