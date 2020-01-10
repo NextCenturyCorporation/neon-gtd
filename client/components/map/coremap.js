@@ -83,8 +83,46 @@ coreMap.Map.BOX_COLOR = "#f20101";
 coreMap.Map.BOX_WIDTH = 4;
 coreMap.Map.BOX_OPACITY = 0.9;
 
+/*
+Map Tile provisioning.
+
+coreMap can handle 3 types of basemaps
+    OSM - OpenStreetMaps
+    WMS - OGC Web Mapping Service
+    WMTS - OGC Web Mapping Tile Server
+
+    In each case the proper DESTINATION_PROJECTION must be set to the values supported by your map source.
+
+    +  OpenStreetMaps supports EPSG:900913 (and others - see also   http://openstreetmapdata.com/info/projections)
+    +  Many WMS servers will support latitude and longitude coordinates on the WGS 84 ellipsoid or EPSG:4326
+    +  The ESRI tile servers in the examples (below) support Spherical Mercator projection EPSG:3857
+
+    In the case of WMS and WMTS the supported projections can be determined from the GetCapabilities call
+
+    OpenLayers 2 Maps will NOT re-project a layer onto the map. Once the map is created (initMap() below) the projection is
+    fixed and base layer tiles will not appear properly (or perhaps not at all) it the layer projection differs from that
+    of the map object.
+
+Configuration:
+    Step 1: Determine and set coreMap.Map.DESTINATION_PROJECTION
+    Step 2: Set up coreMap.Map.MAP_TILES (see examples for OSM, WMS and WMTS below)
+
+    Build and run.
+
+ */
+
+// Source projection never changes. It is the lat/lon coordinate space for points and boxes
+// that will be projected onto the base map
 coreMap.Map.SOURCE_PROJECTION = new OpenLayers.Projection("EPSG:4326");
+
+// Open Street Maps projection:
 coreMap.Map.DESTINATION_PROJECTION = new OpenLayers.Projection("EPSG:900913");
+
+// WMS Tile example projection
+//coreMap.Map.DESTINATION_PROJECTION = new OpenLayers.Projection("EPSG:4326");
+
+// ESRI WMTS Tile server projection
+//coreMap.Map.DESTINATION_PROJECTION = new OpenLayers.Projection("EPSG:3857");
 
 coreMap.Map.POINTS_LAYER = 'points';
 coreMap.Map.HEATMAP_LAYER = 'heatmap';
@@ -92,17 +130,105 @@ coreMap.Map.CLUSTER_LAYER = 'cluster';
 coreMap.Map.NODE_LAYER = 'nodes and arrows';
 
 coreMap.Map.MAP_TILES = {
-    light: {
-        http: "http://a.basemaps.cartocdn.com/light_all/${z}/${x}/${y}.png",
-        https: "https://cartodb-basemaps-a.global.ssl.fastly.net/light_all/${z}/${x}/${y}.png",
-        backgroundColor: "#CDD2D4"
-    },
     dark: {
+        mapType: "OSM", // could be WMS or WMTS
         http: "http://a.basemaps.cartocdn.com/dark_all/${z}/${x}/${y}.png",
         https: "https://cartodb-basemaps-a.global.ssl.fastly.net/dark_all/${z}/${x}/${y}.png",
         backgroundColor: "#242426"
+    },
+
+    light: {
+        mapType: "OSM", // could be WMS or WMTS
+        http: "http://a.basemaps.cartocdn.com/light_all/${z}/${x}/${y}.png",
+        https: "https://cartodb-basemaps-a.global.ssl.fastly.net/light_all/${z}/${x}/${y}.png",
+        backgroundColor: "#CDD2D4"
     }
 };
+
+/* Open Street Map examples
+   set DESTINATION_PROJECTION to
+            coreMap.Map.DESTINATION_PROJECTION = new OpenLayers.Projection("EPSG:900913");
+   and coreMap.Map.MAP_TILES to:
+
+    dark: {
+        mapType: "OSM", // could be WMS or WMTS
+        http: "http://a.basemaps.cartocdn.com/dark_all/${z}/${x}/${y}.png",
+        https: "https://cartodb-basemaps-a.global.ssl.fastly.net/dark_all/${z}/${x}/${y}.png",
+        backgroundColor: "#242426"
+    },
+
+    light: {
+        mapType: "OSM", // could be WMS or WMTS
+        http: "http://a.basemaps.cartocdn.com/light_all/${z}/${x}/${y}.png",
+        https: "https://cartodb-basemaps-a.global.ssl.fastly.net/light_all/${z}/${x}/${y}.png",
+        backgroundColor: "#CDD2D4"
+    }
+*/
+
+/* WMS Example
+   set DESTINATION_PROJECTION to
+            coreMap.Map.DESTINATION_PROJECTION = new OpenLayers.Projection("EPSG:4326");
+   and coreMap.Map.MAP_TILES to:
+
+       light: {
+        mapType: "WMS", // could be WMS or WMTS
+        http: "http://vmap0.tiles.osgeo.org/wms/vmap0",
+        https: "http://vmap0.tiles.osgeo.org/wms/vmap0",
+        backgroundColor: "#242426",
+        options: {
+            layers: 'basic',
+            version:'1.1.1'
+        }
+    },
+    dark: {
+        mapType: "WMS", // could be WMS or WMTS
+        http: "http://demo.mapserver.org/cgi-bin/wms",
+        https: "http://demo.mapserver.org/cgi-bin/wms",
+        backgroundColor: "#242426",
+        options: {
+            layers: 'bluemarble',
+            version:'1.1.1'
+        }
+    }
+ */
+
+/* WMTS Example
+
+  WMTS layers are supported provided you can look at the GetCapabilities to provision 3 properties:
+    matrixSet - the identifier specified in the node //Contents/TileMatrixSet/Identifier
+    layer - the name of the layer specified in the node //Contents/Layer/Identifier
+    style - the name of the style from //Contents/Layer/Style/Identifier
+
+    You will also need to extract the supported projections probably from //Contents/TileMatrixSet/SupportedCRS
+
+   For example from a GetCapbilities call to the USGS Topo servers
+        https://basemap.nationalmap.gov/arcgis/rest/services/USGSTopo/MapServer/WMTS/1.0.0/WMTSCapabilities.xml
+
+   set DESTINATION_PROJECTION to
+        coreMap.Map.DESTINATION_PROJECTION = new OpenLayers.Projection("EPSG:3857");
+
+   and coreMap.Map.MAP_TILES to:
+
+    light: {
+        mapType: "WMTS", // could be WMS or WMTS
+        http: "https://basemap.nationalmap.gov/arcgis/rest/services/USGSTopo/MapServer/WMTS",
+        https: "https://basemap.nationalmap.gov/arcgis/rest/services/USGSTopo/MapServer/WMTS",
+        backgroundColor: "#242426",
+        matrixSet: "default028mm",
+        layer: "Canvas_World_Light_Gray_Base",
+        style: "default"
+    },
+    dark: {
+        mapType: "WMTS", // could be WMS or WMTS
+        http: "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryTopo/MapServer/WMTS",
+        https: "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryTopo/MapServer/WMTS",
+        backgroundColor: "#242426",
+        matrixSet: "default028mm",
+        layer: "USGSImageryTopo",
+        style: "default"
+    }
+
+*/
 
 /**
  * Resets the select control by temporarily removing it from the map
@@ -259,7 +385,10 @@ coreMap.Map.prototype.initializeMap = function() {
         width: this.width,
         height: this.height
     });
-    this.map = new OpenLayers.Map(this.elementId);
+    var options = {
+        projection:coreMap.Map.DESTINATION_PROJECTION
+    };
+    this.map = new OpenLayers.Map(this.elementId,options);
     // Set fallThrough to true so users can trigger modal data-toggle events from the links popup button inside the map popup.
     this.map.events.fallThrough = true;
     this.map.layerContainerDiv.style.removeProperty("z-index");
@@ -525,14 +654,34 @@ coreMap.Map.prototype.setupLayers = function() {
  * @method addBaseLayer
  */
 coreMap.Map.prototype.addBaseLayer = function() {
+    // checking by MAP_TILES['Light']['http']
     var tilesURL = coreMap.Map.MAP_TILES[this.baseLayerColor][this.baseLayerProtocol];
     $("#" + this.elementId + " .olMapViewport").css("background-color", coreMap.Map.MAP_TILES[this.baseLayerColor].backgroundColor);
+    var tilesType = coreMap.Map.MAP_TILES[this.baseLayerColor].mapType;
 
-    this.baseLayer = new OpenLayers.Layer.OSM("OSM", tilesURL, {
-        attribution:  "Map tiles by CartoDB, under CC BY 3.0. Data by OpenStreetMap, under ODbL.",
-        wrapDateLine: false
-    });
-
+    if(tilesType && tilesType !== null) {
+        switch(tilesType){
+            case 'OSM':
+                  this.baseLayer = new OpenLayers.Layer.OSM("OSM", tilesURL, {
+                      attribution:  "Map tiles by CartoDB, under CC BY 3.0. Data by OpenStreetMap, under ODbL.",
+                      wrapDateLine: false
+                  });
+                  break;
+            case 'WMS':
+                   this.baseLayer = new OpenLayers.Layer.WMS("WMS",tilesURL,
+                                            coreMap.Map.MAP_TILES[this.baseLayerColor].options);
+                   break;
+            case 'WMTS':
+                    this.baseLayer = new OpenLayers.Layer.WMTS( {name: "WMTS", url: tilesURL,
+                        layer: coreMap.Map.MAP_TILES[this.baseLayerColor].layer,
+                        style: coreMap.Map.MAP_TILES[this.baseLayerColor].style,
+                        matrixSet: coreMap.Map.MAP_TILES[this.baseLayerColor].matrixSet
+                    });
+            default:
+                //log an error
+                console.log("Unrecognized map type in coreMap.Map.MAP_TILES");
+        }
+    }
     this.map.addLayer(this.baseLayer);
 };
 
